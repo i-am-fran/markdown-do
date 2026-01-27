@@ -80,10 +80,6 @@ export class TodoFile {
 		return this.tasks.filter((t) => t.status === 'pending')
 	}
 
-	getInProgressTasks(): Task[] {
-		return this.tasks.filter((t) => t.status === 'in-progress')
-	}
-
 	getCompletedTasks(): Task[] {
 		return this.tasks.filter((t) => t.status === 'completed')
 	}
@@ -162,8 +158,19 @@ export class TodoFile {
 				const lastTask = sectionTasks[sectionTasks.length - 1]
 				return lastTask.lineNumber + 1
 			}
-			// No tasks in section yet, insert after the header
-			return existingSection.lineNumber + 1
+			// No tasks in section yet, insert after the header with blank line if needed
+			const insertLine = existingSection.lineNumber + 1
+			// Check if there's already a blank line after the header
+			if (
+				insertLine < this.lines.length &&
+				this.lines[insertLine].trim() !== ''
+			) {
+				// No blank line, add one
+				this.lines.splice(insertLine, 0, '')
+				this.parse(this.lines.join('\n'))
+				return insertLine + 1
+			}
+			return insertLine + 1 // After the blank line
 		}
 
 		// Section doesn't exist, create it at the end
@@ -178,12 +185,12 @@ export class TodoFile {
 
 		// Add blank line before section if there's content
 		if (insertPos > 0) {
-			this.lines.splice(insertPos, 0, '', sectionHeader)
-			return insertPos + 2 // After blank line and header
+			this.lines.splice(insertPos, 0, '', sectionHeader, '')
+			return insertPos + 3 // After blank line, header, and blank line
 		}
 
-		this.lines.splice(insertPos, 0, sectionHeader)
-		return insertPos + 1 // After header
+		this.lines.splice(insertPos, 0, sectionHeader, '')
+		return insertPos + 2 // After header and blank line
 	}
 
 	private findInsertPosition(): number {
@@ -215,7 +222,6 @@ export class TodoFile {
 
 		const checkboxMap: Record<TaskStatus, string> = {
 			pending: ' ',
-			'in-progress': '/',
 			completed: 'x',
 		}
 		const updatedLine = `- [${checkboxMap[task.status]}] ${text}`
@@ -229,8 +235,7 @@ export class TodoFile {
 		if (!task) return false
 
 		const nextStatus: Record<TaskStatus, TaskStatus> = {
-			pending: 'in-progress',
-			'in-progress': 'completed',
+			pending: 'completed',
 			completed: 'pending',
 		}
 		const newStatus = nextStatus[task.status]
@@ -361,6 +366,53 @@ export class TodoFile {
 			}
 		}
 
+		// Fix heading spacing - ensure one blank line above and below ## headers
+		for (let i = 0; i < this.lines.length; i++) {
+			const line = this.lines[i]
+
+			// Check if this is a section header (## Header)
+			if (line.match(/^##\s+/)) {
+				let needsFix = false
+
+				// Check line above (should be blank, unless it's the first line or after main header)
+				if (i > 0) {
+					const lineAbove = this.lines[i - 1]
+					// Allow no blank line if previous line is main header (# TODO)
+					const isAfterMainHeader =
+						lineAbove.match(/^#\s+/) && !lineAbove.startsWith('##')
+
+					if (!isAfterMainHeader && lineAbove.trim() !== '') {
+						// Need blank line above
+						this.lines.splice(i, 0, '')
+						issues.push({
+							line: i + 1,
+							issue: 'Missing blank line before heading',
+							fixed: true,
+						})
+						fixedCount++
+						needsFix = true
+						i++ // Adjust index since we inserted a line
+					}
+				}
+
+				// Check line below (should be blank, unless it's the last line)
+				if (i + 1 < this.lines.length) {
+					const lineBelow = this.lines[i + 1]
+					if (lineBelow.trim() !== '') {
+						// Need blank line below
+						this.lines.splice(i + 1, 0, '')
+						issues.push({
+							line: i + 2,
+							issue: 'Missing blank line after heading',
+							fixed: true,
+						})
+						fixedCount++
+						needsFix = true
+					}
+				}
+			}
+		}
+
 		// Fix consecutive blank lines (more than one in a row)
 		let consecutiveBlankStart: number | null = null
 		for (let i = 0; i < this.lines.length; i++) {
@@ -445,8 +497,20 @@ export class TodoFile {
 				}
 
 				// Fix: multiple spaces or other characters in checkbox
-				if (checkbox !== ' ' && checkbox !== 'x' && checkbox !== '/') {
-					if (checkbox.trim() === '' || checkbox.trim().toLowerCase() === 'x') {
+				if (checkbox !== ' ' && checkbox !== 'x') {
+					// Convert '/' to ' ' (in-progress status removed)
+					if (checkbox === '/') {
+						checkbox = ' '
+						fixed = true
+						issues.push({
+							line: i + 1,
+							issue: 'In-progress status [/] converted to pending [ ]',
+							fixed: true,
+						})
+					} else if (
+						checkbox.trim() === '' ||
+						checkbox.trim().toLowerCase() === 'x'
+					) {
 						checkbox = checkbox.trim() === '' ? ' ' : 'x'
 						fixed = true
 						issues.push({
@@ -482,15 +546,14 @@ export class TodoFile {
 		// Group tasks by section
 		const tasksBySection = this.getTasksGroupedBySection()
 
-		// Helper to sort tasks: pending → in-progress → completed
+		// Helper to sort tasks: pending → completed
 		const sortByStatus = (tasks: Task[]): Task[] => {
 			const pending = tasks.filter((t) => t.status === 'pending')
-			const inProgress = tasks.filter((t) => t.status === 'in-progress')
 			const completed = tasks.filter((t) => t.status === 'completed')
-			return [...pending, ...inProgress, ...completed]
+			return [...pending, ...completed]
 		}
 
-		// For each section, sort tasks: pending first, then in-progress, then completed
+		// For each section, sort tasks: pending first, then completed
 		const sortedTasks: Task[] = []
 
 		// Process tasks without section first

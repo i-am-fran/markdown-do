@@ -68,10 +68,6 @@ function formatTaskLine(
 			checkbox = pc.green('[x]')
 			text = pc.strikethrough(pc.dim(task.text))
 			break
-		case 'in-progress':
-			checkbox = pc.yellow('[/]')
-			text = pc.yellow(task.text)
-			break
 		default:
 			checkbox = pc.dim('[ ]')
 			text = task.text
@@ -185,16 +181,30 @@ export async function editTask(idStr: string, newText: string): Promise<void> {
 	const filePath = await findDefaultTodoFile()
 	const todoFile = await TodoFile.load(filePath)
 
+	const task = todoFile.getTask(id)
+	if (!task) {
+		console.error(pc.red(`Task ${id} not found`))
+		process.exit(1)
+	}
+
+	const taskStatus = task.status
+
 	if (!todoFile.updateTask(id, newText)) {
 		console.error(pc.red(`Task ${id} not found`))
 		process.exit(1)
 	}
 
 	await todoFile.save()
-	const task = todoFile.getTask(id)
-	if (task) {
-		console.log(pc.green('Updated:'), formatTaskLine(task))
-	}
+	console.log(
+		pc.green('Updated:'),
+		formatTaskLine({
+			id,
+			text: newText,
+			status: taskStatus,
+			lineNumber: 0,
+			section: null,
+		}),
+	)
 }
 
 export async function toggleTask(idStr: string): Promise<void> {
@@ -207,21 +217,37 @@ export async function toggleTask(idStr: string): Promise<void> {
 	const filePath = await findDefaultTodoFile()
 	const todoFile = await TodoFile.load(filePath)
 
+	const task = todoFile.getTask(id)
+	if (!task) {
+		console.error(pc.red(`Task ${id} not found`))
+		process.exit(1)
+	}
+
+	const taskText = task.text
+	const prevStatus = task.status
+
 	if (!todoFile.toggleTask(id)) {
 		console.error(pc.red(`Task ${id} not found`))
 		process.exit(1)
 	}
 
 	await todoFile.save()
-	const task = todoFile.getTask(id)
-	if (task) {
-		const actionMap = {
-			pending: 'Reopened',
-			'in-progress': 'Started',
-			completed: 'Completed',
-		}
-		console.log(pc.green(`${actionMap[task.status]}:`), formatTaskLine(task))
+
+	const newStatus = prevStatus === 'pending' ? 'completed' : 'pending'
+	const actionMap = {
+		pending: 'Reopened',
+		completed: 'Completed',
 	}
+	console.log(
+		pc.green(`${actionMap[newStatus]}:`),
+		formatTaskLine({
+			id,
+			text: taskText,
+			status: newStatus,
+			lineNumber: 0,
+			section: null,
+		}),
+	)
 }
 
 export async function completeTask(idStr: string): Promise<void> {
@@ -234,16 +260,30 @@ export async function completeTask(idStr: string): Promise<void> {
 	const filePath = await findDefaultTodoFile()
 	const todoFile = await TodoFile.load(filePath)
 
+	const task = todoFile.getTask(id)
+	if (!task) {
+		console.error(pc.red(`Task ${id} not found`))
+		process.exit(1)
+	}
+
+	const taskText = task.text
+
 	if (!todoFile.setTaskStatus(id, 'completed')) {
 		console.error(pc.red(`Task ${id} not found`))
 		process.exit(1)
 	}
 
 	await todoFile.save()
-	const task = todoFile.getTask(id)
-	if (task) {
-		console.log(pc.green('Completed:'), formatTaskLine(task))
-	}
+	console.log(
+		pc.green('Completed:'),
+		formatTaskLine({
+			id,
+			text: taskText,
+			status: 'completed',
+			lineNumber: 0,
+			section: null,
+		}),
+	)
 }
 
 export async function addNote(text: string): Promise<void> {
@@ -361,7 +401,6 @@ export async function lintFile(): Promise<void> {
 
 	const tasks = todoFile.getTasks()
 	const pendingCount = tasks.filter((t) => t.status === 'pending').length
-	const inProgressCount = tasks.filter((t) => t.status === 'in-progress').length
 	const completedCount = tasks.filter((t) => t.status === 'completed').length
 
 	const result = todoFile.lint()
@@ -371,7 +410,7 @@ export async function lintFile(): Promise<void> {
 		console.log()
 		console.log(
 			pc.dim(
-				`Checked ${tasks.length} task${tasks.length === 1 ? '' : 's'} (${pendingCount} pending, ${inProgressCount} in progress, ${completedCount} completed)`,
+				`Checked ${tasks.length} task${tasks.length === 1 ? '' : 's'} (${pendingCount} pending, ${completedCount} completed)`,
 			),
 		)
 		return
@@ -398,7 +437,7 @@ export async function lintFile(): Promise<void> {
 
 	console.log(
 		pc.dim(
-			`Checked ${tasks.length} task${tasks.length === 1 ? '' : 's'} (${pendingCount} pending, ${inProgressCount} in progress, ${completedCount} completed)`,
+			`Checked ${tasks.length} task${tasks.length === 1 ? '' : 's'} (${pendingCount} pending, ${completedCount} completed)`,
 		),
 	)
 }

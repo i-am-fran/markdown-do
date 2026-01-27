@@ -124,8 +124,7 @@ async function handleHotkeyAction(
 			todoFile.toggleTask(taskId)
 			await todoFile.save()
 			const messageMap = {
-				pending: 'Task started',
-				'in-progress': 'Task completed',
+				pending: 'Task completed',
 				completed: 'Task reopened',
 			}
 			p.log.success(messageMap[prevStatus])
@@ -178,10 +177,6 @@ function formatTaskOption(task: Task): string {
 			checkbox = pc.dim(pc.green('[x]'))
 			text = pc.strikethrough(pc.dim(task.text))
 			break
-		case 'in-progress':
-			checkbox = pc.dim(pc.yellow('[/]'))
-			text = pc.yellow(task.text)
-			break
 		default:
 			checkbox = pc.dim('[ ]')
 			text = task.text
@@ -201,8 +196,7 @@ export async function showTaskMenu(
 	console.log()
 
 	const toggleLabelMap = {
-		pending: 'Start progress',
-		'in-progress': 'Mark as complete',
+		pending: 'Mark as complete',
 		completed: 'Reopen task',
 	}
 
@@ -229,8 +223,7 @@ export async function showTaskMenu(
 			todoFile.toggleTask(taskId)
 			await todoFile.save()
 			const messageMap = {
-				pending: 'Task started',
-				'in-progress': 'Task completed',
+				pending: 'Task completed',
 				completed: 'Task reopened',
 			}
 			p.log.success(messageMap[prevStatus])

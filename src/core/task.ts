@@ -1,4 +1,4 @@
-export type TaskStatus = 'pending' | 'in-progress' | 'completed'
+export type TaskStatus = 'pending' | 'completed'
 
 export interface Task {
 	id: number
@@ -42,7 +42,6 @@ export function parseHeaderLine(line: string): string | null {
 export function formatTask(task: Task): string {
 	const checkboxMap: Record<TaskStatus, string> = {
 		pending: '[ ]',
-		'in-progress': '[/]',
 		completed: '[x]',
 	}
 	return `- ${checkboxMap[task.status]} ${task.text}`
@@ -61,9 +60,8 @@ export function parseTaskLine(
 	let status: TaskStatus = 'pending'
 	if (marker === 'x') {
 		status = 'completed'
-	} else if (marker === '/') {
-		status = 'in-progress'
 	}
+	// Note: '/' is now treated as 'pending' since in-progress status is removed
 	const text = match[3].trim()
 
 	return createTask(id, text, status, lineNumber, section)

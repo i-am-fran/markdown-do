@@ -5,10 +5,10 @@ A fast, minimal, opinionated CLI/TUI tool for managing TODO.md files using stand
 ## Features
 
 - **Plain markdown** - Tasks are standard `- [ ]` checkboxes, readable anywhere
-- **Three task states** - Pending `[ ]`, in progress `[/]`, and completed `[x]`
+- **Two task states** - Pending `[ ]` and completed `[x]`
 - **Sections** - Organize tasks with `## Headers`
 - **Inbox workflow** - New tasks go to the top unless you specify a section
-- **Auto-sorting** - Tasks reorder by status on save (pending → in progress → done)
+- **Auto-sorting** - Tasks reorder by status on save (pending → completed)
 - **Fast CLI** - Add, toggle, and manage tasks without leaving your terminal
 - **Interactive TUI** - Full keyboard navigation with hotkeys
 - **Recursive search** - Find tasks across all TODO files in subdirectories
@@ -47,7 +47,7 @@ mdd Buy milk
 # List tasks
 mdd -l
 
-# Toggle task #1 (pending → in progress → done)
+# Toggle task #1 (pending ⟷ completed)
 mdd -t 1
 
 # Open interactive mode
@@ -119,19 +119,17 @@ Run `mdd` without arguments to enter interactive mode.
 
 ## Task Format
 
-MarkdownDO uses standard markdown checkbox syntax with an additional "in progress" state:
+MarkdownDO uses standard markdown checkbox syntax:
 
 ```markdown
 # TODO
 
 - [ ] Pending task
-- [/] Task in progress
 - [x] Completed task
 
 ## Features
 
 - [ ] Add dark mode @Features
-- [/] Working on API integration
 - [x] Initial setup done
 ```
 
@@ -140,7 +138,7 @@ MarkdownDO uses standard markdown checkbox syntax with an additional "in progres
 Toggle (`mdd -t N` or `c` in TUI) cycles through:
 
 ```text
-pending [ ] → in progress [/] → completed [x] → pending [ ]
+pending [ ] ⟷ completed [x]
 ```
 
 Use `mdd -c N` to mark a task as complete directly.
@@ -161,8 +159,7 @@ In the TUI, use `m` to move tasks between sections.
 On save, tasks within each section are automatically reordered:
 
 1. Pending tasks
-2. In-progress tasks
-3. Completed tasks
+2. Completed tasks
 
 This keeps your active work visible at the top.
 
@@ -224,7 +221,7 @@ mdd -dc
 
 ## Backend
 
-- [/] Implement user auth
+- [ ] Implement user auth
 - [ ] Add rate limiting
 
 ## Frontend
