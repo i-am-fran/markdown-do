@@ -1,5 +1,7 @@
 # TODO
 
+- [ ] fork and user another tui, so it looks better
+- [ ] Move 'Add a note' lower on the list
 ## Features
 
 - [ ] Add command for mdd -v --version
@@ -25,5 +27,6 @@
 - [ ] Reset website to be a simple one-pager
 
 ## Notes
+- This is a test
 
 - Create another project for notes with `mdj` (MarkdownJOURNAL).
