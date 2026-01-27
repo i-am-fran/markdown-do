@@ -2,7 +2,11 @@ import * as p from '@clack/prompts'
 import pc from 'picocolors'
 import { openInEditor } from '../cli/commands.js'
 import { getSettings } from '../config/settings.js'
-import { findDefaultTodoFile, findTodoFilesInSubdirs } from '../core/finder.js'
+import {
+	findDefaultTodoFile,
+	findTodoFiles,
+	findTodoFilesInSubdirs,
+} from '../core/finder.js'
 import { TodoFile } from '../core/todo.js'
 import { LIST_FOOTER, MENU_FOOTER } from './hints.js'
 import { isCancel, selectWithFooter } from './select.js'
@@ -32,6 +36,10 @@ let lastEscTime = 0
 type MainMenuAction =
 	| 'list'
 	| 'add'
+	| 'addNote'
+	| 'find'
+	| 'deleteCompleted'
+	| 'lint'
 	| 'open'
 	| 'subfolders'
 	| 'settings'
@@ -119,6 +127,10 @@ async function showMainMenu(): Promise<MainMenuAction | symbol> {
 		options: [
 			{ value: 'list' as const, label: `List tasks${taskSummary}` },
 			{ value: 'add' as const, label: 'Add new task' },
+			{ value: 'addNote' as const, label: 'Add note' },
+			{ value: 'find' as const, label: 'Find tasks' },
+			{ value: 'deleteCompleted' as const, label: 'Delete completed tasks' },
+			{ value: 'lint' as const, label: 'Lint and fix formatting' },
 			{ value: 'open' as const, label: 'Open in editor' },
 			{ value: 'subfolders' as const, label: 'List subfolders' },
 			{ value: 'settings' as const, label: 'Settings' },
@@ -135,6 +147,18 @@ async function handleAction(action: MainMenuAction): Promise<void> {
 			break
 		case 'add':
 			await handleAddTask()
+			break
+		case 'addNote':
+			await handleAddNote()
+			break
+		case 'find':
+			await handleFindTasks()
+			break
+		case 'deleteCompleted':
+			await handleDeleteCompleted()
+			break
+		case 'lint':
+			await handleLint()
 			break
 		case 'open':
 			await openInEditor()
@@ -268,4 +292,173 @@ async function handleSubfolders(): Promise<void> {
 		await showTaskMenu(todoFile, selectedTask)
 		todoFile = await TodoFile.load(filePath)
 	}
+}
+
+async function handleAddNote(): Promise<void> {
+	const filePath = await findDefaultTodoFile()
+	let todoFile = await TodoFile.load(filePath)
+
+	if (todoFile.getTasks().length === 0 && todoFile.serialize().trim() === '') {
+		todoFile = await TodoFile.create(filePath)
+	}
+
+	const text = await p.text({
+		message: 'Enter note text:',
+		placeholder: 'Remember to review the PR',
+	})
+
+	if (p.isCancel(text)) return
+
+	const trimmed = typeof text === 'string' ? text.trim() : ''
+	if (!trimmed) {
+		p.log.info('Empty input - cancelled')
+		return
+	}
+
+	todoFile.addNote(trimmed)
+	await todoFile.save()
+
+	p.log.success(`Added note: ${trimmed}`)
+}
+
+async function handleFindTasks(): Promise<void> {
+	const keyword = await p.text({
+		message: 'Enter search keyword:',
+		placeholder: 'bug, feature, etc.',
+	})
+
+	if (p.isCancel(keyword)) return
+
+	const trimmed = typeof keyword === 'string' ? keyword.trim() : ''
+	if (!trimmed) {
+		p.log.info('Empty input - cancelled')
+		return
+	}
+
+	const recursive = await p.confirm({
+		message: 'Search in subfolders?',
+		initialValue: false,
+	})
+
+	if (p.isCancel(recursive)) return
+
+	const cwd = process.cwd()
+	const files = await findTodoFiles(cwd, recursive === true)
+
+	if (files.length === 0) {
+		p.log.warn('No TODO files found')
+		return
+	}
+
+	let found = false
+	console.log()
+	console.log(pc.bold(pc.cyan(`Search results for: "${trimmed}"`)))
+	console.log()
+
+	for (const file of files) {
+		const todoFile = await TodoFile.load(file.path)
+		const matches = todoFile.findTasks(trimmed)
+
+		if (matches.length > 0) {
+			found = true
+			if (recursive === true) {
+				console.log(pc.dim(file.relativePath))
+			}
+			for (const task of matches) {
+				const checkbox =
+					task.status === 'completed'
+						? pc.green('[x]')
+						: task.status === 'in-progress'
+							? pc.yellow('[/]')
+							: '[ ]'
+				const text =
+					task.status === 'completed'
+						? pc.strikethrough(pc.dim(task.text))
+						: task.status === 'in-progress'
+							? pc.yellow(task.text)
+							: task.text
+				console.log(`  ${pc.dim(`${task.id}.`)} ${checkbox} ${text}`)
+			}
+		}
+	}
+
+	if (!found) {
+		p.log.warn('No matching tasks found')
+	}
+}
+
+async function handleDeleteCompleted(): Promise<void> {
+	const filePath = await findDefaultTodoFile()
+	const todoFile = await TodoFile.load(filePath)
+
+	const completedTasks = todoFile.getCompletedTasks()
+
+	if (completedTasks.length === 0) {
+		p.log.warn('No completed tasks to delete')
+		return
+	}
+
+	const shouldDelete = await p.confirm({
+		message: `Delete ${completedTasks.length} completed task${completedTasks.length === 1 ? '' : 's'}?`,
+	})
+
+	if (p.isCancel(shouldDelete) || shouldDelete !== true) {
+		p.log.info('Cancelled')
+		return
+	}
+
+	const count = todoFile.deleteCompletedTasks()
+	await todoFile.save()
+
+	p.log.success(`Deleted ${count} completed task${count === 1 ? '' : 's'}`)
+}
+
+async function handleLint(): Promise<void> {
+	const filePath = await findDefaultTodoFile()
+	const todoFile = await TodoFile.load(filePath)
+
+	console.log()
+	console.log(pc.dim(`Linting ${filePath}...`))
+	console.log()
+
+	const tasks = todoFile.getTasks()
+	const pendingCount = tasks.filter((t) => t.status === 'pending').length
+	const inProgressCount = tasks.filter((t) => t.status === 'in-progress').length
+	const completedCount = tasks.filter((t) => t.status === 'completed').length
+
+	const result = todoFile.lint()
+
+	if (result.issues.length === 0) {
+		p.log.success('✓ No issues found')
+		console.log()
+		console.log(
+			pc.dim(
+				`Checked ${tasks.length} task${tasks.length === 1 ? '' : 's'} (${pendingCount} pending, ${inProgressCount} in progress, ${completedCount} completed)`,
+			),
+		)
+		return
+	}
+
+	console.log(pc.bold(pc.cyan('Lint results:')))
+	console.log()
+
+	for (const issue of result.issues) {
+		const status = issue.fixed ? pc.green('fixed') : pc.yellow('found')
+		console.log(`  Line ${issue.line}: ${issue.issue} [${status}]`)
+	}
+
+	console.log()
+
+	if (result.fixedCount > 0) {
+		await todoFile.save()
+		p.log.success(
+			`✓ Fixed ${result.fixedCount} issue${result.fixedCount === 1 ? '' : 's'}`,
+		)
+	}
+
+	console.log(
+		pc.dim(
+			`Checked ${tasks.length} task${tasks.length === 1 ? '' : 's'} (${pendingCount} pending, ${inProgressCount} in progress, ${completedCount} completed)`,
+		),
+	)
 }
