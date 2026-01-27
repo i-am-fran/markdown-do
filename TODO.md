@@ -2,7 +2,6 @@
 
 ## Features
 
-
 - [x] In TUI, make the numbered list numbers less prominent, same for the checkboxes
 - [x] Make sure every feature that's available through CLI is also available via TUI and vice-versa
 - [x] Create new shortcut @ii for ideas
@@ -18,7 +17,7 @@
 ## Maintenance
 
 ## Ideas
- 
+
 - [ ] Publish to HomeBrew
 - [ ] Create UX agent to review TUI from user perspective
 
