@@ -367,10 +367,10 @@ async function handleFindTasks(): Promise<void> {
 			for (const task of matches) {
 				const checkbox =
 					task.status === 'completed'
-						? pc.green('[x]')
+						? pc.dim(pc.green('[x]'))
 						: task.status === 'in-progress'
-							? pc.yellow('[/]')
-							: '[ ]'
+							? pc.dim(pc.yellow('[/]'))
+							: pc.dim('[ ]')
 				const text =
 					task.status === 'completed'
 						? pc.strikethrough(pc.dim(task.text))
