@@ -12,11 +12,10 @@
 
 ## Ideas
 
-- [ ] Fork and user another tui, so it looks better
+- [ ] Fork and user another tui, so it looks better. Use libs available at https://charm.land/libs/. The TUI should feel like a full screen terminal app
 - [ ] Publish to HomeBrew
 - [ ] Create UX agent to review TUI from user perspective
-- [ ] In TUI, long tasks go in a new line and break the visual flow. is it possible to fix it or is it a limitation of what we're using?
-- [ ] Improve TUI full screen mode (shouldn't see history above the current action). I'm afraid this is a limitation of bomb.sh and there's nothing we can do about it. Maybe change it?
+- [ ] The CLI command ls should include headers
 
 ## Documentation
 
