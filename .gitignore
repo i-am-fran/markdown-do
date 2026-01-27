@@ -1,6 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# IDE/Editor
 .claude
 .nova
+.vscode
+.idea
+
+# OS
 .DS_Store
+
+# Project-specific
 PLAN.md
 CLAUDE.md
 assets/
