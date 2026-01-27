@@ -195,13 +195,16 @@ export async function editTask(idStr: string, newText: string): Promise<void> {
 	}
 
 	await todoFile.save()
-	console.log(pc.green('Updated:'), formatTaskLine({
-		id,
-		text: newText,
-		status: taskStatus,
-		lineNumber: 0,
-		section: null,
-	}))
+	console.log(
+		pc.green('Updated:'),
+		formatTaskLine({
+			id,
+			text: newText,
+			status: taskStatus,
+			lineNumber: 0,
+			section: null,
+		}),
+	)
 }
 
 export async function toggleTask(idStr: string): Promise<void> {
@@ -229,19 +232,22 @@ export async function toggleTask(idStr: string): Promise<void> {
 	}
 
 	await todoFile.save()
-	
+
 	const newStatus = prevStatus === 'pending' ? 'completed' : 'pending'
 	const actionMap = {
 		pending: 'Reopened',
 		completed: 'Completed',
 	}
-	console.log(pc.green(`${actionMap[newStatus]}:`), formatTaskLine({
-		id,
-		text: taskText,
-		status: newStatus,
-		lineNumber: 0,
-		section: null,
-	}))
+	console.log(
+		pc.green(`${actionMap[newStatus]}:`),
+		formatTaskLine({
+			id,
+			text: taskText,
+			status: newStatus,
+			lineNumber: 0,
+			section: null,
+		}),
+	)
 }
 
 export async function completeTask(idStr: string): Promise<void> {
@@ -268,13 +274,16 @@ export async function completeTask(idStr: string): Promise<void> {
 	}
 
 	await todoFile.save()
-	console.log(pc.green('Completed:'), formatTaskLine({
-		id,
-		text: taskText,
-		status: 'completed',
-		lineNumber: 0,
-		section: null,
-	}))
+	console.log(
+		pc.green('Completed:'),
+		formatTaskLine({
+			id,
+			text: taskText,
+			status: 'completed',
+			lineNumber: 0,
+			section: null,
+		}),
+	)
 }
 
 export async function addNote(text: string): Promise<void> {

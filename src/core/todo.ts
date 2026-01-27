@@ -378,8 +378,9 @@ export class TodoFile {
 				if (i > 0) {
 					const lineAbove = this.lines[i - 1]
 					// Allow no blank line if previous line is main header (# TODO)
-					const isAfterMainHeader = lineAbove.match(/^#\s+/) && !lineAbove.startsWith('##')
-					
+					const isAfterMainHeader =
+						lineAbove.match(/^#\s+/) && !lineAbove.startsWith('##')
+
 					if (!isAfterMainHeader && lineAbove.trim() !== '') {
 						// Need blank line above
 						this.lines.splice(i, 0, '')
@@ -506,7 +507,10 @@ export class TodoFile {
 							issue: 'In-progress status [/] converted to pending [ ]',
 							fixed: true,
 						})
-					} else if (checkbox.trim() === '' || checkbox.trim().toLowerCase() === 'x') {
+					} else if (
+						checkbox.trim() === '' ||
+						checkbox.trim().toLowerCase() === 'x'
+					) {
 						checkbox = checkbox.trim() === '' ? ' ' : 'x'
 						fixed = true
 						issues.push({
