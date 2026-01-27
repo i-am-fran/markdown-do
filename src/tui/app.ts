@@ -132,7 +132,7 @@ async function showMainMenu(): Promise<MainMenuAction | symbol> {
 			{ value: 'deleteCompleted' as const, label: 'Delete completed tasks' },
 			{ value: 'lint' as const, label: 'Lint and fix formatting' },
 			{ value: 'open' as const, label: 'Open in editor' },
-			{ value: 'subfolders' as const, label: 'List subfolders' },
+			{ value: 'subfolders' as const, label: 'List subfolders [WIP]' },
 			{ value: 'settings' as const, label: 'Settings' },
 			{ value: 'quit' as const, label: pc.dim('Quit') },
 		],
