@@ -317,6 +317,50 @@ export class TodoFile {
 		const issues: LintIssue[] = []
 		let fixedCount = 0
 
+		// Remove empty sections (sections with no tasks)
+		// Need to check this before other fixes since we'll be removing lines
+		for (let i = 0; i < this.lines.length; i++) {
+			const line = this.lines[i]
+			
+			// Check if this is a section header (## Header)
+			if (line.match(/^##\s+/)) {
+				// Look ahead to see if there are any tasks before the next section or end of file
+				let hasTask = false
+				let j = i + 1
+				
+				while (j < this.lines.length) {
+					const nextLine = this.lines[j]
+					
+					// If we hit another section header, stop looking
+					if (nextLine.match(/^##\s+/)) {
+						break
+					}
+					
+					// If we find a task line, this section is not empty
+					if (nextLine.match(/^\s*-\s*\[/)) {
+						hasTask = true
+						break
+					}
+					
+					j++
+				}
+				
+				// If no tasks found, remove this section header
+				if (!hasTask) {
+					const sectionName = line.replace(/^##\s+/, '').trim()
+					this.lines.splice(i, 1)
+					issues.push({
+						line: i + 1,
+						issue: `Empty section "${sectionName}" removed`,
+						fixed: true,
+					})
+					fixedCount++
+					// Adjust index since we removed a line
+					i--
+				}
+			}
+		}
+
 		// Fix consecutive blank lines (more than one in a row)
 		let consecutiveBlankStart: number | null = null
 		for (let i = 0; i < this.lines.length; i++) {
