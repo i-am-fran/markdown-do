@@ -1,8 +1,6 @@
 # MarkdownDO
 
-A fast, minimal CLI/TUI tool for managing TODO.md files using standard markdown syntax.
-
-Your tasks stay in plain text files, right where your code lives.
+A fast, minimal, opinionated CLI/TUI tool for managing TODO.md files using standard markdown syntax.
 
 ## Features
 
