@@ -1,5 +1,5 @@
 {
-  "name": "todo-rocket",
+  "name": "markdown-do",
   "version": "1.0.0",
   "description": "CLI/TUI tool for managing TODO.md files",
   "type": "module",

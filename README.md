@@ -240,6 +240,47 @@ mdd -dc
 - Deploy window: 2-4am UTC
 ```
 
+## Troubleshooting
+
+### "EEXIST: file already exists" or "EADDRINUSE" errors
+
+If you see these errors during installation or when running `mdd`:
+
+```bash
+npm error EEXIST: file already exists
+# or
+Error: listen EADDRINUSE: address already in use :::5000
+```
+
+You may have an old or conflicting version of `mdd` installed. To fix:
+
+1. **Uninstall the old package:**
+
+   ```bash
+   npm uninstall -g mdd
+   npm uninstall -g markdown-do
+   ```
+
+2. **Clear npm cache (optional but recommended):**
+
+   ```bash
+   npm cache clean --force
+   ```
+
+3. **Reinstall the correct package:**
+
+   ```bash
+   npm install -g markdown-do
+   ```
+
+4. **Verify installation:**
+
+   ```bash
+   mdd --help
+   ```
+
+**Note:** The correct package name is `markdown-do`, not just `mdd`. The `mdd` command is the executable name after installation.
+
 ## Why MarkdownDO?
 
 - **No lock-in** - Your tasks are plain markdown, version-controlled with your code
