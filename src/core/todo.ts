@@ -317,15 +317,15 @@ export class TodoFile {
 		const issues: LintIssue[] = []
 		let fixedCount = 0
 
-		// Remove empty sections (sections with no tasks)
+		// Remove empty sections (sections with only blank lines)
 		// Need to check this before other fixes since we'll be removing lines
 		for (let i = 0; i < this.lines.length; i++) {
 			const line = this.lines[i]
 
 			// Check if this is a section header (## Header)
 			if (line.match(/^##\s+/)) {
-				// Look ahead to see if there are any tasks before the next section or end of file
-				let hasTask = false
+				// Look ahead to see if there is any content before the next section or end of file
+				let hasContent = false
 				let j = i + 1
 
 				while (j < this.lines.length) {
@@ -336,17 +336,17 @@ export class TodoFile {
 						break
 					}
 
-					// If we find a task line, this section is not empty
-					if (nextLine.match(/^\s*-\s*\[/)) {
-						hasTask = true
+					// If we find any non-empty line, this section has content
+					if (nextLine.trim() !== '') {
+						hasContent = true
 						break
 					}
 
 					j++
 				}
 
-				// If no tasks found, remove this section header
-				if (!hasTask) {
+				// If no content found (only blank lines), remove this section header
+				if (!hasContent) {
 					const sectionName = line.replace(/^##\s+/, '').trim()
 					this.lines.splice(i, 1)
 					issues.push({
