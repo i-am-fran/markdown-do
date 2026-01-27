@@ -34,4 +34,3 @@ mdd -t 1
 # Open interactive mode
 mdd
 ```
-

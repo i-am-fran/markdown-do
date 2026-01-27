@@ -321,30 +321,30 @@ export class TodoFile {
 		// Need to check this before other fixes since we'll be removing lines
 		for (let i = 0; i < this.lines.length; i++) {
 			const line = this.lines[i]
-			
+
 			// Check if this is a section header (## Header)
 			if (line.match(/^##\s+/)) {
 				// Look ahead to see if there are any tasks before the next section or end of file
 				let hasTask = false
 				let j = i + 1
-				
+
 				while (j < this.lines.length) {
 					const nextLine = this.lines[j]
-					
+
 					// If we hit another section header, stop looking
 					if (nextLine.match(/^##\s+/)) {
 						break
 					}
-					
+
 					// If we find a task line, this section is not empty
 					if (nextLine.match(/^\s*-\s*\[/)) {
 						hasTask = true
 						break
 					}
-					
+
 					j++
 				}
-				
+
 				// If no tasks found, remove this section header
 				if (!hasTask) {
 					const sectionName = line.replace(/^##\s+/, '').trim()
