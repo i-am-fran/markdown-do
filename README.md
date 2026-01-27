@@ -21,13 +21,13 @@ Your tasks stay in plain text files, right where your code lives.
 ### npm (recommended)
 
 ```bash
-npm install -g todo-rocket
+npm install -g markdown-do
 ```
 
 ### Run without installing
 
 ```bash
-npx todo-rocket
+npx markdown-do
 ```
 
 ### From source
