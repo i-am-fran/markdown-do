@@ -11,6 +11,7 @@ import {
 	openInEditor,
 	parseArgs,
 	showHelp,
+	showVersion,
 	toggleTask,
 } from './cli/commands.js'
 import { runTui } from './tui/app.js'
@@ -18,6 +19,12 @@ import { runTui } from './tui/app.js'
 async function main() {
 	const args = process.argv.slice(2)
 	const { text, value, flags } = parseArgs(args)
+
+	// Version flag
+	if (flags.has('v') || flags.has('version')) {
+		showVersion()
+		return
+	}
 
 	// Help flag
 	if (flags.has('h') || flags.has('help')) {

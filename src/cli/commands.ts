@@ -9,6 +9,9 @@ import {
 import type { Task } from '../core/task.js'
 import { TodoFile } from '../core/todo.js'
 
+// Version is set at build time
+const VERSION = '1.0.0'
+
 export interface ParsedArgs {
 	text: string | null
 	value: string | null
@@ -400,6 +403,10 @@ export async function lintFile(): Promise<void> {
 	)
 }
 
+export function showVersion(): void {
+	console.log(`markdown-do v${VERSION}`)
+}
+
 export function showHelp(): void {
 	console.log(`
 ${pc.bold(pc.cyan('mdd'))} - MarkdownDO: Manage TODO.md files
@@ -419,6 +426,7 @@ ${pc.bold('Usage:')}
   mdd -n <text>          Add a note to ## Notes section
   mdd -o                 Open TODO file in editor
   mdd -lint              Lint and fix TODO file formatting
+  mdd -v, --version      Show version
   mdd -h, --help         Show this help
 
 ${pc.bold('Examples:')}
