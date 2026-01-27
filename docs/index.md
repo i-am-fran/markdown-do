@@ -1,6 +1,7 @@
 ---
-layout: default
-title: Welcome to MarkdownDO
+title: MarkdownDO
+description: Lorem ipsum
+show_downloads: true
 ---
 
 ## Test
