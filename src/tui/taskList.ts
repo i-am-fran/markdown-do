@@ -175,11 +175,11 @@ function formatTaskOption(task: Task): string {
 	let text: string
 	switch (task.status) {
 		case 'completed':
-			checkbox = pc.green('[x]')
+			checkbox = pc.dim(pc.green('[x]'))
 			text = pc.strikethrough(pc.dim(task.text))
 			break
 		case 'in-progress':
-			checkbox = pc.yellow('[/]')
+			checkbox = pc.dim(pc.yellow('[/]'))
 			text = pc.yellow(task.text)
 			break
 		default:
