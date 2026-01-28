@@ -1,14 +1,13 @@
 # TODO
 
-- [ ] In TUI, allow users to open the task they just created
-- [ ] After searching a task, it should be possible to move them and do the same actions available when inspecting a task from the list in the TUI
-
 ## Bugs
 
+- [ ] In TUI, allow users to open the task they just created
 - [ ] Notes header should always be the last one
 - [ ] When a task is moved to Notes, [ ] should be removed. Notes only contain lists
 - [ ] Lint should remove empty tasks
 - [ ] Lint should make sure that ## Notes only contains list items, no tasks
+- [ ] After searching a task, it should be possible to move them and do the same actions available when inspecting a task from the list in the TUI
 
 ## Ideas
 
@@ -16,6 +15,7 @@
 - [ ] Create UX agent to review TUI from user perspective
 - [ ] The CLI command `ls` should include headers
 - [ ] Allow to create custom shortcuts
+- [ ] Add more shortcuts in TUI (i.e. ctrl + n to create new task)
 
 ## Documentation
 
