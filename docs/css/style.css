@@ -301,6 +301,13 @@ footer a:visited {
 		background: var(--flexoki-paper);
 		color: var(--flexoki-black);
 	}
+	h1,h2,h4 {
+		color: var(--flexoki-paper)
+	}
+	
+	section.hero .button svg {
+		display: none;
+	}
 }
 
 /* Slide-in-from-bottom animations */
