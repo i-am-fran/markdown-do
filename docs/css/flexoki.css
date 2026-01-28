@@ -11,7 +11,6 @@ https://github.com/kepano/flexoki
 :root {
   --flexoki-black:           #100F0F;
   --flexoki-paper:           #FFFCF0;
-
   --flexoki-50:              #F2F0E5;
   --flexoki-100:             #E6E4D9;
   --flexoki-150:             #DAD8CE;
@@ -25,7 +24,6 @@ https://github.com/kepano/flexoki
   --flexoki-850:             #343331;
   --flexoki-900:             #282726;
   --flexoki-950:             #1C1B1A;
-
   --flexoki-red-50:          #FFE1D5;
   --flexoki-red-100:         #FFCABB;
   --flexoki-red-150:         #FDB2A2;
@@ -39,7 +37,6 @@ https://github.com/kepano/flexoki
   --flexoki-red-850:         #551B18;
   --flexoki-red-900:         #3E1715;
   --flexoki-red-950:         #261312;
-
   --flexoki-orange-50:       #FFE7CE;
   --flexoki-orange-100:      #FED3AF;
   --flexoki-orange-150:      #FCC192;
@@ -53,7 +50,6 @@ https://github.com/kepano/flexoki
   --flexoki-orange-850:      #59290D;
   --flexoki-orange-900:      #40200D;
   --flexoki-orange-950:      #27180E;
-
   --flexoki-yellow-50:       #FAEEC6;
   --flexoki-yellow-100:      #F6E2A0;
   --flexoki-yellow-150:      #F1D67E;
@@ -67,7 +63,6 @@ https://github.com/kepano/flexoki
   --flexoki-yellow-850:      #503D02;
   --flexoki-yellow-900:      #3A2D04;
   --flexoki-yellow-950:      #241E08;
-
   --flexoki-green-50:        #EDEECF;
   --flexoki-green-100:       #DDE2B2;
   --flexoki-green-150:       #CDD597;
@@ -81,7 +76,6 @@ https://github.com/kepano/flexoki
   --flexoki-green-850:       #313D07;
   --flexoki-green-900:       #252D09;
   --flexoki-green-950:       #1A1E0C;
-
   --flexoki-cyan-50:         #DDF1E4;
   --flexoki-cyan-100:        #BFE8D9;
   --flexoki-cyan-150:        #A2DECE;
@@ -95,7 +89,6 @@ https://github.com/kepano/flexoki
   --flexoki-cyan-850:        #143F3C;
   --flexoki-cyan-900:        #122F2C;
   --flexoki-cyan-950:        #101F1D;
-
   --flexoki-blue-50:         #E1ECEB;
   --flexoki-blue-100:        #C6DDE8;
   --flexoki-blue-150:        #ABCFE2;
@@ -109,7 +102,6 @@ https://github.com/kepano/flexoki
   --flexoki-blue-850:        #133051;
   --flexoki-blue-900:        #12253B;
   --flexoki-blue-950:        #101A24;
-
   --flexoki-purple-50:       #F0EAEC;
   --flexoki-purple-100:      #E2D9E9;
   --flexoki-purple-150:      #D3CAE6;
@@ -123,7 +115,6 @@ https://github.com/kepano/flexoki
   --flexoki-purple-850:      #31234E;
   --flexoki-purple-900:      #261C39;
   --flexoki-purple-950:      #1A1623;
-
   --flexoki-magenta-50:      #FEE4E5;
   --flexoki-magenta-100:     #FCCFDA;
   --flexoki-magenta-150:     #F9B9CF;
