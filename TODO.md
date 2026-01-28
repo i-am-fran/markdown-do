@@ -1,21 +1,21 @@
 # TODO
 
-- [ ] Move 'Add a note' lower on the list
+- [ ] In TUI, allow users to open the task they just created
+- [ ] After searching a task, it should be possible to move them and do the same actions available when inspecting a task from the list in the TUI
 
 ## Bugs
 
-- [ ] TUI: Make commands (i.e. hotkeys and "Back") less prominent. See assets/2026-01-27-2008 (not in git)
-- [ ] Notes are added immediately below the h2, with no line space
-- [ ] Lint: Headings should always have one empty line above and one below
-- [ ] Remove in-progress status (and toggle status feature then)
-- [ ] There's an error with ordered list order. When i run the command to complete a task in CLI it completes a different, or the feedback is wrong
+- [ ] Notes header should always be the last one
+- [ ] When a task is moved to Notes, [ ] should be removed. Notes only contain lists
+- [ ] Lint should remove empty tasks
+- [ ] Lint should make sure that ## Notes only contains list items, no tasks
 
 ## Ideas
 
-- [ ] Fork and user another tui, so it looks better. Use libs available at https://charm.land/libs/. The TUI should feel like a full screen terminal app
 - [ ] Publish to HomeBrew
 - [ ] Create UX agent to review TUI from user perspective
-- [ ] The CLI command ls should include headers
+- [ ] The CLI command `ls` should include headers
+- [ ] Allow to create custom shortcuts
 
 ## Documentation
 
@@ -25,4 +25,12 @@
 
 ## Notes
 
+- [ ] Create Claude Code integration. How?
 - Create another project for notes with `mdj` (MarkdownJOURNAL).
+
+## Design
+
+- [ ] Remove back and quit from list navigation
+- [ ] Move 'Add a note' lower on the list
+- [ ] Reset git repo before publishing
+- [ ] Make it look nicer and more glam!

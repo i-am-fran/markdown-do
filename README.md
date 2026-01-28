@@ -8,7 +8,7 @@ A fast, minimal, opinionated CLI/TUI tool for managing TODO.md files using stand
 - **Two task states** - Pending `[ ]` and completed `[x]`
 - **Sections** - Organize tasks with `## Headers`
 - **Inbox workflow** - New tasks go to the top unless you specify a section
-- **Auto-sorting** - Tasks reorder by status on save (pending → completed)
+- **Auto-sorting** - Tasks reorder by status on save (pending -> completed)
 - **Fast CLI** - Add, toggle, and manage tasks without leaving your terminal
 - **Interactive TUI** - Full keyboard navigation with hotkeys
 - **Recursive search** - Find tasks across all TODO files in subdirectories
@@ -16,26 +16,26 @@ A fast, minimal, opinionated CLI/TUI tool for managing TODO.md files using stand
 
 ## Installation
 
-### npm (recommended)
+### From releases
 
-```bash
-npm install -g markdown-do
-```
-
-### Run without installing
-
-```bash
-npx markdown-do
-```
+Download the latest binary for your platform from the [releases page](https://github.com/i-am-fran/markdown-do/releases).
 
 ### From source
 
 ```bash
 git clone https://github.com/i-am-fran/markdown-do.git
 cd markdown-do
-npm install
-npm run build
-npm link
+make build
+# Binary is at ./build/mdd
+
+# Or install to GOPATH/bin:
+make install
+```
+
+### Go install
+
+```bash
+go install github.com/i-am-fran/markdowndo/cmd/mdd@latest
 ```
 
 ## Quick Start
@@ -47,7 +47,7 @@ mdd Buy milk
 # List tasks
 mdd -l
 
-# Toggle task #1 (pending ⟷ completed)
+# Toggle task #1 (pending <-> completed)
 mdd -t 1
 
 # Open interactive mode
@@ -108,7 +108,7 @@ Run `mdd` without arguments to enter interactive mode.
 
 | Key | Action |
 | --- | ------ |
-| `↑` `↓` | Navigate |
+| `up` `down` | Navigate |
 | `Enter` | Select task |
 | `c` | Toggle complete |
 | `d` | Delete task |
@@ -138,7 +138,7 @@ MarkdownDO uses standard markdown checkbox syntax:
 Toggle (`mdd -t N` or `c` in TUI) cycles through:
 
 ```text
-pending [ ] ⟷ completed [x]
+pending [ ] <-> completed [x]
 ```
 
 Use `mdd -c N` to mark a task as complete directly.
@@ -151,6 +151,8 @@ Organize tasks under `## Header` sections:
 mdd "New task @Backend"        # Adds to ## Backend (creates if needed)
 mdd "Another task"             # Adds to inbox (top of file)
 ```
+
+Section aliases for quick add: `@ff` -> Features, `@bb` -> Bugs, `@ii` -> Ideas, `@ww` -> Warnings
 
 In the TUI, use `m` to move tasks between sections.
 
@@ -172,6 +174,7 @@ Settings are stored in `~/.config/markdowndo/config.json`.
 | `fullscreen` | `false` | Use alternate screen buffer for TUI |
 | `showCompleted` | `true` | Show completed tasks in lists |
 | `editor` | `"system"` | Editor for `-o` command |
+| `theme` | `"default"` | TUI color theme |
 
 ### Editor Options
 
@@ -235,51 +238,20 @@ mdd -dc
 - Deploy window: 2-4am UTC
 ```
 
-## Troubleshooting
-
-### "EEXIST: file already exists" or "EADDRINUSE" errors
-
-If you see these errors during installation or when running `mdd`:
+## Building
 
 ```bash
-npm error EEXIST: file already exists
-# or
-Error: listen EADDRINUSE: address already in use :::5000
+make build       # Build binary to ./build/mdd
+make install     # Install to GOPATH/bin
+make test        # Run tests
+make lint        # Lint code (requires golangci-lint)
+make build-all   # Cross-compile for all platforms
 ```
-
-You may have an old or conflicting version of `mdd` installed. To fix:
-
-1. **Uninstall the old package:**
-
-   ```bash
-   npm uninstall -g mdd
-   npm uninstall -g markdown-do
-   ```
-
-2. **Clear npm cache (optional but recommended):**
-
-   ```bash
-   npm cache clean --force
-   ```
-
-3. **Reinstall the correct package:**
-
-   ```bash
-   npm install -g markdown-do
-   ```
-
-4. **Verify installation:**
-
-   ```bash
-   mdd --help
-   ```
-
-**Note:** The correct package name is `markdown-do`, not just `mdd`. The `mdd` command is the executable name after installation.
 
 ## Why MarkdownDO?
 
 - **No lock-in** - Your tasks are plain markdown, version-controlled with your code
-- **Fast** - Single binary, instant startup, no daemon
+- **Fast** - Single binary, instant startup, no daemon or runtime dependencies
 - **Keyboard-first** - CLI for quick actions, TUI for exploration
 - **Minimal** - Does one thing well: manage TODO.md files
 

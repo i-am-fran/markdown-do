@@ -1,0 +1,179 @@
+package views
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/i-am-fran/markdowndo/internal/core"
+)
+
+// LintModel is the lint view model
+type LintModel struct {
+	list       list.Model
+	filePath   string
+	issues     []core.LintIssue
+	fixedCount int
+	taskStats  struct {
+		total     int
+		pending   int
+		completed int
+	}
+	loading bool
+	width   int
+	height  int
+}
+
+// NewLintModel creates a new lint model
+func NewLintModel(width, height int) LintModel {
+	delegate := list.NewDefaultDelegate()
+	delegate.ShowDescription = false
+	delegate.SetSpacing(0)
+
+	l := list.New([]list.Item{backItem{}}, delegate, width, height-6)
+	l.SetShowStatusBar(false)
+	l.SetFilteringEnabled(false)
+	l.SetShowHelp(false)
+
+	return LintModel{
+		list:    l,
+		loading: true,
+		width:   width,
+		height:  height,
+	}
+}
+
+// Init implements tea.Model
+func (m LintModel) Init() tea.Cmd {
+	return m.runLint()
+}
+
+func (m LintModel) runLint() tea.Cmd {
+	return func() tea.Msg {
+		cwd, _ := os.Getwd()
+		path, err := core.FindDefaultTodoFile(cwd)
+		if err != nil {
+			return lintCompleteMsg{}
+		}
+
+		todoFile, err := core.Load(path)
+		if err != nil {
+			return lintCompleteMsg{}
+		}
+
+		tasks := todoFile.GetTasks()
+		pending := 0
+		completed := 0
+		for _, t := range tasks {
+			if t.Status == core.TaskPending {
+				pending++
+			} else {
+				completed++
+			}
+		}
+
+		result := todoFile.Lint()
+
+		if result.FixedCount > 0 {
+			todoFile.Save()
+		}
+
+		return lintCompleteMsg{
+			filePath:   path,
+			issues:     result.Issues,
+			fixedCount: result.FixedCount,
+			total:      len(tasks),
+			pending:    pending,
+			completed:  completed,
+		}
+	}
+}
+
+// Update implements tea.Model
+func (m LintModel) Update(msg tea.Msg) (LintModel, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		m.list.SetSize(msg.Width, msg.Height-6)
+		return m, nil
+
+	case lintCompleteMsg:
+		m.loading = false
+		m.filePath = msg.filePath
+		m.issues = msg.issues
+		m.fixedCount = msg.fixedCount
+		m.taskStats.total = msg.total
+		m.taskStats.pending = msg.pending
+		m.taskStats.completed = msg.completed
+		return m, nil
+
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter", "esc":
+			return m, func() tea.Msg { return BackMsg{} }
+		}
+	}
+
+	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	return m, cmd
+}
+
+// View implements tea.Model
+func (m LintModel) View() string {
+	if m.loading {
+		return "Linting..."
+	}
+
+	var s string
+
+	s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(fmt.Sprintf("Linting %s...", m.filePath)) + "\n\n"
+
+	if len(m.issues) == 0 {
+		s += lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render("✓ No issues found") + "\n\n"
+	} else {
+		s += lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("6")).Render("Lint results:") + "\n\n"
+
+		for _, issue := range m.issues {
+			status := lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Render("[found]")
+			if issue.Fixed {
+				status = lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render("[fixed]")
+			}
+			s += fmt.Sprintf("  Line %d: %s %s\n", issue.Line, issue.Issue, status)
+		}
+
+		if m.fixedCount > 0 {
+			suffix := "s"
+			if m.fixedCount == 1 {
+				suffix = ""
+			}
+			s += "\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render(fmt.Sprintf("✓ Fixed %d issue%s", m.fixedCount, suffix)) + "\n"
+		}
+		s += "\n"
+	}
+
+	suffix := "s"
+	if m.taskStats.total == 1 {
+		suffix = ""
+	}
+	s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(
+		fmt.Sprintf("Checked %d task%s (%d pending, %d completed)",
+			m.taskStats.total, suffix, m.taskStats.pending, m.taskStats.completed)) + "\n\n"
+
+	s += m.list.View() + "\n\n"
+	s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("esc back")
+
+	return s
+}
+
+type lintCompleteMsg struct {
+	filePath   string
+	issues     []core.LintIssue
+	fixedCount int
+	total      int
+	pending    int
+	completed  int
+}

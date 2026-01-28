@@ -1,18 +1,24 @@
-# Dependencies
-node_modules/
+# Binaries
+mdd
+mdd-*
+*.exe
+build/
 
-# Build output
-dist/
-*.tgz
+# Go
+vendor/
 
 # IDE/Editor
 .claude
 .nova
 .vscode
 .idea
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
+Thumbs.db
 
 # Project-specific
 PLAN.md
