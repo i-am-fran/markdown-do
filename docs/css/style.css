@@ -4,7 +4,7 @@ body {
 	overflow-x: hidden;
 	font-family: Inter, sans-serif;
 	background: var(--flexoki-paper);
-	color: var(--flexoki-black);
+	color: var(--flexoki-800);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -17,6 +17,7 @@ h1 {
 	font-size: 4em;
 	margin: 0;
 	text-align: center;
+	color: var(--flexoki-black)
 }
 
 h2 {
@@ -25,6 +26,7 @@ h2 {
 	font-weight: 900;
 	font-size: 2.6em;
 	text-align: center;
+	color: var(--flexoki-black)
 }
 
 h3 {
@@ -33,6 +35,15 @@ h3 {
 	font-weight: 900;
 	font-size: 2em;
 	margin: 0;
+	color: var(--flexoki-black)
+}
+
+h4 {
+	font-family: Inter, sans-serif;
+	font-weight: 700;
+	font-size: 1.2em;
+	margin: 0;
+	color: var(--flexoki-800)
 }
 
 li {
@@ -170,6 +181,22 @@ section.examples {
 	animation: slideInFromBottom 0.8s ease-out 0.4s both;
 }
 
+section.overview {
+	text-align: center;
+}
+
+p.distinct {
+	font-size: 1.1em;
+	line-height: 170%;
+	margin-bottom: 6em;
+}
+
+div.list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6em
+}
+
 section.download {
 	padding: 6em 0;
 	animation: slideInFromBottom 0.8s ease-out 0.8s both;
@@ -191,6 +218,10 @@ section.download article.cta {
 	flex-direction: column;
 	align-items: start;
 	gap: 1em;
+}
+
+section.download article.cta h3 {
+	color: var(--flexoki-paper)
 }
 
 section.download article.cta a.button {
@@ -306,6 +337,10 @@ section.examples {
 	h3 {
 		font-size: 1.5em;
 	}
+	
+	h4 {
+		font-size: 1.25em;
+	}
 
 	.subtitle {
 		font-size: 1.2em;
@@ -351,6 +386,10 @@ section.examples {
 }
 
 @media (max-width: 480px) {
+	section.hero {
+		min-height: 50vh;
+	}
+	
 	h1 {
 		font-size: 2em;
 	}
@@ -362,9 +401,13 @@ section.examples {
 	h3 {
 		font-size: 1.2em;
 	}
+	
+	h4 {
+		font-size: 1.1em
+	}
 
 	.subtitle {
-		font-size: 1em;
+		font-size: 1.1em;
 	}
 
 	pre {
