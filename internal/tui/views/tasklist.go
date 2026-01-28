@@ -108,7 +108,6 @@ func buildTaskListItems(todoFile *core.TodoFile, settings config.Settings) []lis
 	}
 
 	items = append(items, taskListItem{isAdd: true})
-	items = append(items, taskListItem{isBack: true})
 
 	return items
 }

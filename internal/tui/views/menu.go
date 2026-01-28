@@ -65,14 +65,13 @@ func NewMenuModel(todoFile *core.TodoFile, width, height int) MenuModel {
 	items := []list.Item{
 		menuItem{title: "List tasks" + taskSummary, action: ActionList},
 		menuItem{title: "Add new task", action: ActionAdd},
-		menuItem{title: "Add note", action: ActionAddNote},
 		menuItem{title: "Find tasks", action: ActionFind},
 		menuItem{title: "Delete completed tasks", action: ActionDeleteCompleted},
 		menuItem{title: "Lint and fix formatting", action: ActionLint},
+		menuItem{title: "Add note", action: ActionAddNote},
 		menuItem{title: "Open in editor", action: ActionOpen},
 		menuItem{title: "List subfolders [WIP]", action: ActionSubfolders},
 		menuItem{title: "Settings", action: ActionSettings},
-		menuItem{title: "Quit", action: ActionQuit},
 	}
 
 	delegate := list.NewDefaultDelegate()
