@@ -199,6 +199,22 @@ section.download article.cta a.button {
 	color: var(--flexoki-black);
 }
 
+footer {
+	color: var(--flexoki-black);
+}
+
+footer a {
+	text-decoration: none;
+}
+
+footer a:hover,
+footer a:visited:hover {
+	color: var(--flexoki-purple-600);
+}
+
+footer a:visited {
+	color: var(--flexoki-black)
+}
 /* Dark mode styles */
 @media (prefers-color-scheme: dark) {
 	body {
