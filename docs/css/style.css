@@ -379,6 +379,16 @@ section {
 	text-wrap: pretty;
 }
 
+p.intro a {
+	text-decoration-color: var(--flexoki-purple-200);
+	transition: all 0.4s ease-in-out;
+}
+
+p.intro a:hover {
+	text-decoration-color: var(--flexoki-black);
+	color: var(--flexoki-black)
+}
+
 .overview h2 {
 	margin-block-end: var(--space-lg);
 }
