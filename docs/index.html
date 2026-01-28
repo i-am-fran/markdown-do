@@ -1,151 +1,159 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8" />
-	<meta
-		name="viewport"
-		content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-	/>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<meta name="color-scheme" content="light dark">
 
 	<!-- Primary Meta Tags -->
-	<title>MarkdownDO</title>
-	<meta name="title" content="MarkdownDO" />
-	<meta
-		name="description"
-		content="An opinionated CLI/TUI tool for managing `TODO.md` files using standard markdown syntax."
-	/>
-	<meta
-		name="keywords"
-		content="markdown productivity terminal cli tui tasks todo markdowndo markdown-do"
-	/>
-	<meta name="author" content="Fran" />
+	<title>MarkdownDO - TODO.md Manager for Your Terminal</title>
+	<meta name="title" content="MarkdownDO - TODO.md Manager for Your Terminal">
+	<meta name="description" content="An opinionated CLI/TUI tool for managing TODO.md files using standard markdown syntax. Fast, keyboard-driven, and works anywhere.">
+	<meta name="keywords" content="markdown, productivity, terminal, cli, tui, tasks, todo, markdowndo, markdown-do, task manager">
+	<meta name="author" content="Fran">
+	<meta name="theme-color" content="#FFFCF0" media="(prefers-color-scheme: light)">
+	<meta name="theme-color" content="#100F0F" media="(prefers-color-scheme: dark)">
+
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="https://i-am-fran.github.io/markdown-do/">
+	<meta property="og:title" content="MarkdownDO - TODO.md Manager for Your Terminal">
+	<meta property="og:description" content="An opinionated CLI/TUI tool for managing TODO.md files using standard markdown syntax. Fast, keyboard-driven, and works anywhere.">
+	<meta property="og:image" content="https://i-am-fran.github.io/markdown-do/assets/mdd.png">
+	<meta property="og:image:alt" content="Screenshot of MarkdownDO TUI showing task management interface">
+
+	<!-- Twitter -->
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:url" content="https://i-am-fran.github.io/markdown-do/">
+	<meta name="twitter:title" content="MarkdownDO - TODO.md Manager for Your Terminal">
+	<meta name="twitter:description" content="An opinionated CLI/TUI tool for managing TODO.md files using standard markdown syntax. Fast, keyboard-driven, and works anywhere.">
+	<meta name="twitter:image" content="https://i-am-fran.github.io/markdown-do/assets/mdd.png">
+	<meta name="twitter:image:alt" content="Screenshot of MarkdownDO TUI showing task management interface">
 
 	<!-- Favicon -->
-	<link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
-	<link
-		rel="icon"
-		type="image/png"
-		sizes="32x32"
-		href="assets/favicon-32x32.png"
-	/>
-	<link
-		rel="icon"
-		type="image/png"
-		sizes="16x16"
-		href="assets/favicon-16x16.png"
-	/>
-	<link
-		rel="apple-touch-icon"
-		sizes="180x180"
-		href="assets/apple-touch-icon.png"
-	/>
-	<link
-		rel="icon"
-		type="image/png"
-		sizes="192x192"
-		href="assets/android-chrome-192x192.png"
-	/>
-	<link
-		rel="icon"
-		type="image/png"
-		sizes="512x512"
-		href="assets/android-chrome-512x512.png"
-	/>
+	<link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+	<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="192x192" href="assets/android-chrome-192x192.png">
+	<link rel="icon" type="image/png" sizes="512x512" href="assets/android-chrome-512x512.png">
+
+	<!-- Preload fonts for performance -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;500;600&family=Merriweather:ital,wght@1,700;1,900&display=swap">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;500;600&family=Merriweather:ital,wght@1,700;1,900&display=swap">
 
 	<!-- Stylesheet -->
-	<link rel="stylesheet" href="css/style.css" />
-	<link rel="stylesheet" href="css/flexoki.css" />
+	<link rel="stylesheet" href="css/flexoki.css">
+	<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-	<section class="hero">
-		<h1>
-			MarkdownDO
-		</h1>
-		<p class="subtitle">
-			An opinionated <code>TODO.md</code> manager for your terminal
-		</p>
-		<a href="https://github.com/i-am-fran/markdown-do" class="button">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(0 0 0)">
-		<path d="M12 2.24902C6.51613 2.24902 2 6.70064 2 12.249C2 16.6361 4.87097 20.3781 8.87097 21.7329C9.3871 21.8297 9.54839 21.5071 9.54839 21.2813C9.54839 21.0555 9.54839 20.4103 9.51613 19.5393C6.74194 20.1845 6.16129 18.1845 6.16129 18.1845C5.70968 17.0555 5.03226 16.7329 5.03226 16.7329C4.12903 16.0877 5.06452 16.0877 5.06452 16.0877C6.06452 16.12 6.6129 17.12 6.6129 17.12C7.48387 18.6684 8.96774 18.2168 9.51613 17.9264C9.6129 17.2813 9.87097 16.8297 10.1613 16.5716C7.96774 16.3458 5.6129 15.4748 5.6129 11.6684C5.6129 10.5716 6.03226 9.70064 6.64516 9.02322C6.54839 8.79741 6.19355 7.76515 6.74194 6.37806C6.74194 6.37806 7.6129 6.11999 9.51613 7.41031C10.3226 7.18451 11.1613 7.05548 12.0323 7.05548C12.9032 7.05548 13.7742 7.15225 14.5484 7.41031C16.4516 6.15225 17.2903 6.37806 17.2903 6.37806C17.8387 7.73289 17.5161 8.79741 17.3871 9.02322C18.0323 9.70064 18.4194 10.6039 18.4194 11.6684C18.4194 15.4748 16.0645 16.3458 13.871 16.5716C14.2258 16.8942 14.5484 17.5393 14.5484 18.4426C14.5484 19.7974 14.5161 20.8619 14.5161 21.1845C14.5161 21.4426 14.7097 21.7329 15.1935 21.6361C19.129 20.3135 22 16.6039 22 12.1845C21.9677 6.70064 17.4839 2.24902 12 2.24902Z" fill="#ffffff"/>
-		</svg>
-			Download
-		</a>
-	</section>
-	<section class="image">
-		<img  src="assets/mdd.png"/>
-	</section>
-	<section class="overview">
-		<article>
-		<p class="distinct">
-			I built MarkdownDO to help me complete my projects, so it's tailored to my workflow. 
-			It's optimised to work with one <code>TODO.md</code> file per project or folder.
-			You can easily add new task, organise them by categories, mark them as completed, and there's also some more fancy commands to clean up your lists.
-			Still, MarkdownDO is highly opinionated and wants to stay minimalistic in it's approach. For this reason there are not tags, no due dates, etc. 
-		</p>
-		<h2>
-			What makes it great
-		</h2>
-		<div class="list">
-		<div>
-			<h4>Fast CLI</h4>
-			<p> Add, toggle, and manage tasks without leaving your terminal</p>
-		</div>
-		<div>
-			<h4>Interactive TUI</h4>
-			<p>Full keyboard navigation with hotkeys</p>
-		</div>
-		<div>
-			<h4>Plain markdown</h4>
-			<p>Tasks are standard <code>- [ ]</code> checkboxes, readable anywhere</p>
-		</div>
-		<div>
-			<h4>Sections</h4>
-			<p>Organise your tasks with <code>## Headers</code></p>
-		</div>
-		<div>
-			<h4>Inbox workflow</h4>
-			<p>New tasks go to the top unless you specify a section</p>
-		</div>
-		<div>
-			<h4>Lint & fix</h4>
-			<p>Auto-fix common formatting issues</p>
-		</div>
-		</div>
-		</article>
-	</section>
-	<section class="examples">
-		<article>
-		<!-- <h2>
-			Examples
-		</h2> -->
-		<pre>
-			<span class="comment"># Add your first task</span>
-			<span class="code">mdd Buy milk</span>
-			<span class="comment"># List tasks</span>
-			<span class="code">mdd -l</span>
-			<span class="comment"># Complete task #1 </span>
-			<span class="code">mdd -c 1</span>
-			<span class="comment"># Delete completed tasks</span>
-			<span class="code">mdd -dc </span>
-			<span class="comment"># Open interactive mode</span>
-			<span class="code">mdd</span>
-		</pre>
-		<div class="caption">Check <a href="https://github.com/i-am-fran/markdown-do?tab=readme-ov-file#cli-reference" target="_blank">all the available commands</a>.</div>
-		</article>
-	</section>
-	<section class="download">
-		<article class="cta">
-			<h3>Download MarkdownDO and get started</h3>
-			<p>Start managing your tasks with plain markdown. No databases, no cloud sync, just your TODO.md file.</p>
-<a href="https://github.com/i-am-fran/markdown-do" class="button">
-			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(0 0 0)">
-					<path d="M12 2.24902C6.51613 2.24902 2 6.70064 2 12.249C2 16.6361 4.87097 20.3781 8.87097 21.7329C9.3871 21.8297 9.54839 21.5071 9.54839 21.2813C9.54839 21.0555 9.54839 20.4103 9.51613 19.5393C6.74194 20.1845 6.16129 18.1845 6.16129 18.1845C5.70968 17.0555 5.03226 16.7329 5.03226 16.7329C4.12903 16.0877 5.06452 16.0877 5.06452 16.0877C6.06452 16.12 6.6129 17.12 6.6129 17.12C7.48387 18.6684 8.96774 18.2168 9.51613 17.9264C9.6129 17.2813 9.87097 16.8297 10.1613 16.5716C7.96774 16.3458 5.6129 15.4748 5.6129 11.6684C5.6129 10.5716 6.03226 9.70064 6.64516 9.02322C6.54839 8.79741 6.19355 7.76515 6.74194 6.37806C6.74194 6.37806 7.6129 6.11999 9.51613 7.41031C10.3226 7.18451 11.1613 7.05548 12.0323 7.05548C12.9032 7.05548 13.7742 7.15225 14.5484 7.41031C16.4516 6.15225 17.2903 6.37806 17.2903 6.37806C17.8387 7.73289 17.5161 8.79741 17.3871 9.02322C18.0323 9.70064 18.4194 10.6039 18.4194 11.6684C18.4194 15.4748 16.0645 16.3458 13.871 16.5716C14.2258 16.8942 14.5484 17.5393 14.5484 18.4426C14.5484 19.7974 14.5161 20.8619 14.5161 21.1845C14.5161 21.4426 14.7097 21.7329 15.1935 21.6361C19.129 20.3135 22 16.6039 22 12.1845C21.9677 6.70064 17.4839 2.24902 12 2.24902Z" fill="#100F0F"/>
+	<!-- Skip link for accessibility -->
+	<a href="#main-content" class="skip-link">Skip to main content</a>
+
+	<main id="main-content">
+		<section class="hero" aria-labelledby="hero-title">
+			<h1 id="hero-title">MarkdownDO</h1>
+			<p class="subtitle">
+				A simple, opinionated <code>TODO.md</code> manager for your terminal
+			</p>
+			<a href="https://github.com/i-am-fran/markdown-do" class="button button--primary" aria-label="Download MarkdownDO from GitHub">
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+					<path d="M12 2.24902C6.51613 2.24902 2 6.70064 2 12.249C2 16.6361 4.87097 20.3781 8.87097 21.7329C9.3871 21.8297 9.54839 21.5071 9.54839 21.2813C9.54839 21.0555 9.54839 20.4103 9.51613 19.5393C6.74194 20.1845 6.16129 18.1845 6.16129 18.1845C5.70968 17.0555 5.03226 16.7329 5.03226 16.7329C4.12903 16.0877 5.06452 16.0877 5.06452 16.0877C6.06452 16.12 6.6129 17.12 6.6129 17.12C7.48387 18.6684 8.96774 18.2168 9.51613 17.9264C9.6129 17.2813 9.87097 16.8297 10.1613 16.5716C7.96774 16.3458 5.6129 15.4748 5.6129 11.6684C5.6129 10.5716 6.03226 9.70064 6.64516 9.02322C6.54839 8.79741 6.19355 7.76515 6.74194 6.37806C6.74194 6.37806 7.6129 6.11999 9.51613 7.41031C10.3226 7.18451 11.1613 7.05548 12.0323 7.05548C12.9032 7.05548 13.7742 7.15225 14.5484 7.41031C16.4516 6.15225 17.2903 6.37806 17.2903 6.37806C17.8387 7.73289 17.5161 8.79741 17.3871 9.02322C18.0323 9.70064 18.4194 10.6039 18.4194 11.6684C18.4194 15.4748 16.0645 16.3458 13.871 16.5716C14.2258 16.8942 14.5484 17.5393 14.5484 18.4426C14.5484 19.7974 14.5161 20.8619 14.5161 21.1845C14.5161 21.4426 14.7097 21.7329 15.1935 21.6361C19.129 20.3135 22 16.6039 22 12.1845C21.9677 6.70064 17.4839 2.24902 12 2.24902Z" fill="currentColor"/>
+				</svg>
+				Download
+			</a>
+		</section>
+
+		<section class="showcase" aria-label="Product screenshot">
+			<img
+				src="assets/mdd.png"
+				alt="MarkdownDO terminal interface showing a task list with sections for Features, Bugs, and Ideas"
+				width="1860"
+				height="1194"
+				loading="eager"
+				decoding="async"
+			>
+		</section>
+
+		<section class="overview" aria-labelledby="overview-intro">
+			<article class="container">
+				<p class="intro" id="overview-intro">
+					I built MarkdownDO to help me complete my projects, so it's tailored to my workflow.
+					It's optimised to work with one <code>TODO.md</code> file per project or folder.
+					You can easily add new tasks, organise them by categories, mark them as completed, and there's also some more fancy commands to clean up your lists.
+					Still, MarkdownDO is highly opinionated and wants to stay minimalistic in its approach. For this reason there are no tags, no due dates, etc.
+				</p>
+				<h2>What makes it great</h2>
+				<ul class="features" role="list">
+					<li class="feature">
+						<h3>Fast CLI</h3>
+						<p>Add, toggle, and manage tasks without leaving your terminal</p>
+					</li>
+					<li class="feature">
+						<h3>Interactive TUI</h3>
+						<p>Full keyboard navigation with hotkeys</p>
+					</li>
+					<li class="feature">
+						<h3>Plain markdown</h3>
+						<p>Tasks are standard checkboxes, readable anywhere</p>
+					</li>
+					<li class="feature">
+						<h3>Sections</h3>
+						<p>Organise your tasks with sections</p>
+					</li>
+					<li class="feature">
+						<h3>Inbox workflow</h3>
+						<p>New tasks go to the top unless you specify a section</p>
+					</li>
+					<li class="feature">
+						<h3>Lint &amp; fix</h3>
+						<p>Auto-fix common formatting issues</p>
+					</li>
+				</ul>
+			</article>
+		</section>
+
+		<section class="examples" aria-labelledby="examples-heading">
+			<article class="container">
+				<h2 id="examples-heading" class="visually-hidden">Usage Examples</h2>
+				<pre aria-label="CLI usage examples"><code><span class="comment"># Add your first task</span>
+<span class="command">mdd Buy milk</span>
+
+<span class="comment"># List tasks</span>
+<span class="command">mdd -l</span>
+
+<span class="comment"># Complete task #1</span>
+<span class="command">mdd -c 1</span>
+
+<span class="comment"># Delete completed tasks</span>
+<span class="command">mdd -dc</span>
+
+<span class="comment"># Open interactive mode</span>
+<span class="command">mdd</span></code></pre>
+				<p class="caption">
+					Check <a href="https://github.com/i-am-fran/markdown-do?tab=readme-ov-file#cli-reference" target="_blank" rel="noopener noreferrer">all the available commands<span class="visually-hidden"> (opens in new tab)</span></a>.
+				</p>
+			</article>
+		</section>
+
+		<section class="cta" aria-labelledby="cta-heading">
+			<article class="cta-card">
+				<h2 id="cta-heading">Download MarkdownDO and get started</h2>
+				<p>Start managing your tasks with plain markdown. No databases, no cloud sync, just your TODO.md file.</p>
+				<a href="https://github.com/i-am-fran/markdown-do" class="button button--inverted" aria-label="Download MarkdownDO from GitHub">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+						<path d="M12 2.24902C6.51613 2.24902 2 6.70064 2 12.249C2 16.6361 4.87097 20.3781 8.87097 21.7329C9.3871 21.8297 9.54839 21.5071 9.54839 21.2813C9.54839 21.0555 9.54839 20.4103 9.51613 19.5393C6.74194 20.1845 6.16129 18.1845 6.16129 18.1845C5.70968 17.0555 5.03226 16.7329 5.03226 16.7329C4.12903 16.0877 5.06452 16.0877 5.06452 16.0877C6.06452 16.12 6.6129 17.12 6.6129 17.12C7.48387 18.6684 8.96774 18.2168 9.51613 17.9264C9.6129 17.2813 9.87097 16.8297 10.1613 16.5716C7.96774 16.3458 5.6129 15.4748 5.6129 11.6684C5.6129 10.5716 6.03226 9.70064 6.64516 9.02322C6.54839 8.79741 6.19355 7.76515 6.74194 6.37806C6.74194 6.37806 7.6129 6.11999 9.51613 7.41031C10.3226 7.18451 11.1613 7.05548 12.0323 7.05548C12.9032 7.05548 13.7742 7.15225 14.5484 7.41031C16.4516 6.15225 17.2903 6.37806 17.2903 6.37806C17.8387 7.73289 17.5161 8.79741 17.3871 9.02322C18.0323 9.70064 18.4194 10.6039 18.4194 11.6684C18.4194 15.4748 16.0645 16.3458 13.871 16.5716C14.2258 16.8942 14.5484 17.5393 14.5484 18.4426C14.5484 19.7974 14.5161 20.8619 14.5161 21.1845C14.5161 21.4426 14.7097 21.7329 15.1935 21.6361C19.129 20.3135 22 16.6039 22 12.1845C21.9677 6.70064 17.4839 2.24902 12 2.24902Z" fill="currentColor"/>
 					</svg>
-						Download
-					</a>
-		</article>
-	</section>
-<footer>
-	<p>Built with ❤️ by <a href="https://iamfran.com" target="_blank">Fran</a></p>
-</footer>
+					Download
+				</a>
+			</article>
+		</section>
+	</main>
+
+	<footer>
+		<p>Built with ❤ by <a href="https://iamfran.com" target="_blank" rel="noopener noreferrer">Fran<span class="visually-hidden"> (opens in new tab)</span></a></p>
+	</footer>
 </body>
 </html>
