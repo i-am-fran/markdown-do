@@ -360,6 +360,75 @@ func CompleteTask(idStr string) error {
 	return nil
 }
 
+// CompleteTasks completes multiple tasks at once
+func CompleteTasks(idsStr []string) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	filePath, err := core.FindDefaultTodoFile(cwd)
+	if err != nil {
+		return err
+	}
+
+	todoFile, err := core.Load(filePath)
+	if err != nil {
+		return err
+	}
+
+	var completedTasks []core.Task
+	var failedIDs []string
+
+	for _, idStr := range idsStr {
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			failedIDs = append(failedIDs, idStr)
+			continue
+		}
+
+		task := todoFile.GetTask(id)
+		if task == nil {
+			failedIDs = append(failedIDs, idStr)
+			continue
+		}
+
+		taskText := task.Text
+		if todoFile.SetTaskStatus(id, core.TaskCompleted) {
+			completedTasks = append(completedTasks, core.Task{
+				ID:     id,
+				Text:   taskText,
+				Status: core.TaskCompleted,
+			})
+		} else {
+			failedIDs = append(failedIDs, idStr)
+		}
+	}
+
+	if len(completedTasks) == 0 {
+		fmt.Fprintln(os.Stderr, red("No tasks were completed"))
+		if len(failedIDs) > 0 {
+			fmt.Fprintf(os.Stderr, red("Failed to complete tasks: %v\n"), failedIDs)
+		}
+		os.Exit(1)
+	}
+
+	if err := todoFile.Save(); err != nil {
+		return err
+	}
+
+	fmt.Println(green(fmt.Sprintf("Completed %d task(s):", len(completedTasks))))
+	for _, task := range completedTasks {
+		fmt.Println(formatTaskLine(&task, "", 0))
+	}
+
+	if len(failedIDs) > 0 {
+		fmt.Fprintf(os.Stderr, yellow("\nWarning: Failed to complete some tasks: %v\n"), failedIDs)
+	}
+
+	return nil
+}
+
 // AddNote adds a note to the Notes section
 func AddNote(text string) error {
 	cwd, err := os.Getwd()
@@ -618,6 +687,7 @@ func ShowHelp() {
   mdd -ls                List tasks recursively
   mdd -t <id>            Toggle task status
   mdd -c <id>            Complete task by ID
+  mdd -cm <id1> <id2>... Complete multiple tasks by IDs
   mdd -e <id> <text>     Edit task text
   mdd -d <id>            Delete task by ID
   mdd -dc                Delete all completed tasks
@@ -634,6 +704,7 @@ func ShowHelp() {
   mdd -l                 Show all tasks
   mdd -t 2               Toggle task #2
   mdd -c 1               Complete task #1
+  mdd -cm 1 2 3          Complete tasks #1, #2, and #3
   mdd -e 1 Fix the bug   Edit task #1
   mdd -d 3               Delete task #3
   mdd -f bug             Find tasks containing "bug"

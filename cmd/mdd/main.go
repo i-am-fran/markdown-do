@@ -73,6 +73,15 @@ func handleCLI(args cli.ParsedArgs) error {
 		return cli.CompleteTask(args.Value)
 	}
 
+	// Complete multiple tasks
+	if args.HasFlag("cm") {
+		if len(args.Values) == 0 {
+			fmt.Fprintln(os.Stderr, "Error: -cm requires at least one task ID")
+			os.Exit(1)
+		}
+		return cli.CompleteTasks(args.Values)
+	}
+
 	// Edit task
 	if args.HasFlag("e") {
 		return cli.EditTask(args.Value, args.Text)

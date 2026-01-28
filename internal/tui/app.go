@@ -259,6 +259,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
 		}
+		// Global shortcut for adding new task with ctrl+n
+		if msg.String() == "ctrl+n" {
+			m.view = ViewAddTask
+			m.addTaskModel = views.NewAddTaskModel(true, "", "", m.width, m.height)
+			return m, m.addTaskModel.Init()
+		}
 	}
 
 	// Update the current view's model
