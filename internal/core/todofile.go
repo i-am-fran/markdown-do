@@ -268,14 +268,45 @@ func (tf *TodoFile) findOrCreateSection(sectionTag string) int {
 		return insertLine + 1 // After the blank line
 	}
 
-	// Section doesn't exist, create it at the end
+	// Section doesn't exist, create it
 	sectionHeader := "## " + sectionTag
-
-	// Find insert position for new section (after all existing content)
-	insertPos := len(tf.lines)
-	// Skip trailing empty lines
-	for insertPos > 0 && strings.TrimSpace(tf.lines[insertPos-1]) == "" {
-		insertPos--
+	
+	// Special handling for Notes section - it should always be last
+	isNotesSection := strings.EqualFold(sectionTag, "Notes")
+	
+	var insertPos int
+	if isNotesSection {
+		// Notes goes at the very end
+		insertPos = len(tf.lines)
+		// Skip trailing empty lines
+		for insertPos > 0 && strings.TrimSpace(tf.lines[insertPos-1]) == "" {
+			insertPos--
+		}
+	} else {
+		// For non-Notes sections, insert before Notes if it exists, otherwise at end
+		notesLineNum := -1
+		for i := range tf.sections {
+			if strings.EqualFold(tf.sections[i].Name, "Notes") {
+				notesLineNum = tf.sections[i].LineNumber
+				break
+			}
+		}
+		
+		if notesLineNum >= 0 {
+			// Insert before Notes section (before the blank line preceding it)
+			insertPos = notesLineNum
+			// Look for blank line before Notes
+			if insertPos > 0 && strings.TrimSpace(tf.lines[insertPos-1]) == "" {
+				insertPos--
+			}
+		} else {
+			// No Notes section, insert at end
+			insertPos = len(tf.lines)
+			// Skip trailing empty lines
+			for insertPos > 0 && strings.TrimSpace(tf.lines[insertPos-1]) == "" {
+				insertPos--
+			}
+		}
 	}
 
 	// Add blank line before section if there's content
@@ -408,7 +439,13 @@ func (tf *TodoFile) MoveTask(taskID int, targetSection *string) bool {
 	}
 
 	// Insert at new location
-	formattedTask := FormatTask(task)
+	var formattedTask string
+	// If moving to Notes section, convert to plain list item (remove checkbox)
+	if targetSection != nil && strings.EqualFold(*targetSection, "Notes") {
+		formattedTask = "- " + task.Text
+	} else {
+		formattedTask = FormatTask(task)
+	}
 	tf.lines = append(tf.lines[:insertLine], append([]string{formattedTask}, tf.lines[insertLine:]...)...)
 	tf.parse(strings.Join(tf.lines, "\n"))
 	return true
@@ -593,11 +630,23 @@ func (tf *TodoFile) Lint() LintResult {
 		}
 	}
 
-	// Fix malformed task lines
+	// Fix malformed task lines and remove empty tasks
 	taskPattern := regexp.MustCompile(`^(\s*)-\s*\[([^\]]*)\]\s*(.*)$`)
+	
+	// Track current section to detect Notes
+	currentSection := ""
+	mainHeaderRegex2 := regexp.MustCompile(`^#\s+`)
+	sectionHeaderRegex2 := regexp.MustCompile(`^##\s+(.+)$`)
 
 	for i := 0; i < len(tf.lines); i++ {
 		line := tf.lines[i]
+		
+		// Track which section we're in
+		if mainHeaderRegex2.MatchString(line) && !strings.HasPrefix(line, "##") {
+			currentSection = ""
+		} else if match := sectionHeaderRegex2.FindStringSubmatch(line); match != nil {
+			currentSection = strings.TrimSpace(match[1])
+		}
 
 		// Skip empty lines and headers
 		if strings.TrimSpace(line) == "" || strings.HasPrefix(line, "#") {
@@ -611,8 +660,34 @@ func (tf *TodoFile) Lint() LintResult {
 
 		indent := match[1]
 		checkbox := match[2]
-		text := match[3]
+		text := strings.TrimSpace(match[3])
 		fixed := false
+		shouldRemove := false
+
+		// Fix: Remove tasks with empty text
+		if text == "" {
+			tf.lines = append(tf.lines[:i], tf.lines[i+1:]...)
+			issues = append(issues, LintIssue{
+				Line:  i + 1,
+				Issue: "Empty task removed",
+				Fixed: true,
+			})
+			fixedCount++
+			i-- // Adjust index since we removed a line
+			continue
+		}
+
+		// Fix: Convert tasks in Notes section to plain list items
+		if strings.EqualFold(currentSection, "Notes") {
+			tf.lines[i] = indent + "- " + text
+			issues = append(issues, LintIssue{
+				Line:  i + 1,
+				Issue: "Task in Notes section converted to list item",
+				Fixed: true,
+			})
+			fixedCount++
+			continue
+		}
 
 		// Fix: empty checkbox [] -> [ ]
 		if checkbox == "" {
@@ -663,7 +738,7 @@ func (tf *TodoFile) Lint() LintResult {
 		}
 
 		if fixed {
-			tf.lines[i] = indent + "- [" + checkbox + "] " + strings.TrimSpace(text)
+			tf.lines[i] = indent + "- [" + checkbox + "] " + text
 			fixedCount++
 		}
 	}

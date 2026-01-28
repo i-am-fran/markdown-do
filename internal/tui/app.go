@@ -213,6 +213,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.view = ViewMenu
 		m.menuModel = views.NewMenuModel(m.todoFile, m.width, m.height)
 		return m, nil
+	
+	case views.OpenTaskMsg:
+		// Open the task that was just created
+		m.selectedTaskID = &msg.TaskID
+		m.view = ViewTaskActions
+		if m.todoFile != nil {
+			if task := m.todoFile.GetTask(msg.TaskID); task != nil {
+				m.taskActionsModel = views.NewTaskActionsModel(task, m.width, m.height)
+			}
+		}
+		return m, nil
 
 	case views.TextPromptSubmitMsg:
 		return m.handleTextPromptSubmit(msg.Text)
@@ -433,7 +444,7 @@ func (m Model) handleAddTaskSubmit(text string) (tea.Model, tea.Cmd) {
 	}
 	m.todoFile.Save()
 	m.lastAddedTask = task.Text
-	m.addTaskModel.SetLastAdded(task.Text)
+	m.addTaskModel.SetLastAddedWithID(task.Text, task.ID)
 
 	return m, nil
 }
