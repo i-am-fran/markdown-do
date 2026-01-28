@@ -2,7 +2,7 @@
 
 body {
 	overflow-x: hidden;
-	font-family: "Inter", sans-serif;
+	font-family: Inter, sans-serif;
 	background: var(--flexoki-paper);
 	color: var(--flexoki-black);
 	display: flex;
@@ -11,7 +11,7 @@ body {
 }
 
 h1 {
-	font-family: "Merriweather", serif;
+	font-family: Merriweather, serif;
 	font-style: italic;
 	font-weight: 900;
 	font-size: 4em;
@@ -20,7 +20,7 @@ h1 {
 }
 
 h2 {
-	font-family: "Merriweather", serif;
+	font-family: Merriweather, serif;
 	font-style: italic;
 	font-weight: 900;
 	font-size: 2.6em;
@@ -28,7 +28,7 @@ h2 {
 }
 
 h3 {
-	font-family: "Merriweather", serif;
+	font-family: Merriweather, serif;
 	font-style: italic;
 	font-weight: 900;
 	font-size: 2em;
@@ -37,14 +37,13 @@ h3 {
 
 li {
 	line-height: 200%;
-	color: var(--flexoki-800)
+	color: var(--flexoki-800);
 }
 
 section {
 	display: flex;
 	flex-direction: column;
-	justify-items: center;
-	align-items: center;
+	place-items: center center;
 	width: 100%;
 }
 
@@ -59,15 +58,17 @@ section.hero {
 	align-items: center;
 	gap: 2em;
 	max-width: 800px;
+	animation: slideInFromBottom 0.8s ease-out;
 }
 
 .subtitle {
 	font-size: 1.8em;
+
 	/* font-family: "Yeseva One", serif; */
 	margin: 0;
 	margin-bottom: 1em;
 	line-height: 180%;
-	color: var(--flexoki-800)
+	color: var(--flexoki-800);
 }
 
 .subtitle code {
@@ -80,7 +81,7 @@ code {
 	padding: 0.2em 0.3em;
 	border-radius: 0.3em;
 	color: var(--flexoki-purple-700);
-	font-family: "Fira Code";
+	font-family: "Fira Code", monospace;
 }
 
 pre {
@@ -88,12 +89,11 @@ pre {
 	padding: 1em;
 	border-radius: 0.6em;
 	color: var(--flexoki-purple-700);
-	font-family: "Fira Code";
+	font-family: "Fira Code", monospace;
 	display: flex;
 	flex-direction: column;
 	align-content: start;
 	text-align: left;
-	width: 70vw;
 }
 
 pre .code {
@@ -101,21 +101,25 @@ pre .code {
 }
 
 pre .comment {
-	color: var(--flexoki-purple-500)
+	color: var(--flexoki-purple-500);
 }
 
 div.caption {
 	text-align: center;
-	color: var(--flexoki-600);
+	color: var(--flexoki-500);
 	font-size: 0.8em;
 }
 
 div.caption a {
+	color: var(--flexoki-700);
+}
+
+div.caption a:hover {
 	color: var(--flexoki-800);
 }
 
+
 a.button {
-	display: flex;
 	flex-direction: row;
 	align-items: center;
 	position: relative;
@@ -135,7 +139,7 @@ a.button {
 
 a.button:hover {
 	background-color: var(--flexoki-900);
-	transform: scale(1)
+	transform: scale(1);
 }
 
 a.button::before {
@@ -161,16 +165,19 @@ section.image img {
 }
 
 section.overview,
-section.example {
-	padding: 6em 0em;
+section.examples {
+	padding: 6em 0;
+	animation: slideInFromBottom 0.8s ease-out 0.4s both;
 }
 
 section.download {
-	padding: 6em 0em;
+	padding: 6em 0;
+	animation: slideInFromBottom 0.8s ease-out 0.8s both;
 }
 
 article {
 	max-width: 800px;
+	width: 100%
 }
 
 section.download article.cta {
@@ -189,5 +196,167 @@ section.download article.cta {
 section.download article.cta a.button {
 	transform: scale(1);
 	background: var(--flexoki-paper);
-	color: var(--flexoki-black)
+	color: var(--flexoki-black);
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+	body {
+		background: var(--flexoki-black);
+		color: var(--flexoki-paper);
+	}
+
+	li {
+		color: var(--flexoki-200);
+	}
+
+	.subtitle {
+		color: var(--flexoki-200);
+	}
+
+	code {
+		background: var(--flexoki-900);
+		color: var(--flexoki-purple-200);
+	}
+
+	pre {
+		background: var(--flexoki-900);
+		color: var(--flexoki-purple-200);
+	}
+
+	pre .comment {
+		color: var(--flexoki-purple-300);
+	}
+
+	div.caption {
+		color: var(--flexoki-400);
+	}
+
+	div.caption a {
+		color: var(--flexoki-200);
+	}
+
+	a.button {
+		background-color: var(--flexoki-paper);
+		color: var(--flexoki-black);
+	}
+
+	a.button:hover {
+		background-color: var(--flexoki-100);
+	}
+
+	section.download article.cta {
+		background: var(--flexoki-950);
+		color: var(--flexoki-paper);
+	}
+
+	section.download article.cta a.button {
+		background: var(--flexoki-paper);
+		color: var(--flexoki-black);
+	}
+}
+
+/* Slide-in-from-bottom animations */
+@keyframes slideInFromBottom {
+	from {
+		opacity: 0;
+		transform: translateY(50px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+section.image {
+	animation: slideInFromBottom 0.8s ease-out 0.2s both;
+}
+
+section.examples {
+	animation: slideInFromBottom 0.8s ease-out 0.6s both;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+	h1 {
+		font-size: 2.5em;
+	}
+
+	h2 {
+		font-size: 1.8em;
+	}
+
+	h3 {
+		font-size: 1.5em;
+	}
+
+	.subtitle {
+		font-size: 1.2em;
+		padding: 0 1em;
+	}
+
+	section.hero {
+		height: auto;
+		min-height: 70vh;
+		padding: 2em 1em;
+	}
+
+	section.image img {
+		width: 90vw;
+	}
+
+	pre {
+		width: 100%;
+		padding: 0.8em;
+		font-size: 0.9em;
+	}
+
+	article {
+		padding: 0 1em;
+	}
+
+	section.overview,
+	section.examples {
+		padding: 3em 0;
+	}
+
+	section.download {
+		padding: 3em 0;
+	}
+
+	section.download article.cta {
+		padding: 2em 1.5em;
+	}
+
+	a.button {
+		font-size: 0.9em;
+	}
+}
+
+@media (max-width: 480px) {
+	h1 {
+		font-size: 2em;
+	}
+
+	h2 {
+		font-size: 1.5em;
+	}
+
+	h3 {
+		font-size: 1.2em;
+	}
+
+	.subtitle {
+		font-size: 1em;
+	}
+
+	pre {
+		width: 90vw;
+		font-size: 0.8em;
+	}
+
+	section.download article.cta {
+		padding: 1.5em 1em;
+	}
 }
