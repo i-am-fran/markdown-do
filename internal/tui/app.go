@@ -527,7 +527,7 @@ func (m Model) View() string {
 	// Message toast
 	if m.message != nil {
 		var icon string
-		var color lipgloss.AdaptiveColor
+		var color lipgloss.TerminalColor
 		switch m.message.Type {
 		case "success":
 			icon = "✓"
