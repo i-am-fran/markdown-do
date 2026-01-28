@@ -159,7 +159,7 @@ func AddTask(text string) error {
 	}
 
 	fmt.Print(green("Added: "))
-	fmt.Println(formatTaskLine(task, "", 0))
+	fmt.Println(task.Text)
 	return nil
 }
 
