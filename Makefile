@@ -15,7 +15,7 @@ GOMOD=$(GOCMD) mod
 GOFMT=$(GOCMD) fmt
 
 # Version
-VERSION=1.0.0
+VERSION=1.1.0
 LDFLAGS=-ldflags "-s -w"
 
 # Main package
