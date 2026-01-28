@@ -809,8 +809,81 @@ func (tf *TodoFile) reorderTasks() {
 	tf.parse(strings.Join(tf.lines, "\n"))
 }
 
+// ensureNotesLast ensures the Notes section is always at the end
+func (tf *TodoFile) ensureNotesLast() {
+	// Find the Notes section
+	notesLineStart := -1
+	notesLineEnd := -1
+	sectionHeaderRegex := regexp.MustCompile(`^##\s+`)
+	
+	for i, line := range tf.lines {
+		if match := ParseHeaderLine(line); match != nil && strings.EqualFold(*match, "Notes") {
+			notesLineStart = i
+			// Find where this section ends (next section or end of file)
+			for j := i + 1; j < len(tf.lines); j++ {
+				if sectionHeaderRegex.MatchString(tf.lines[j]) {
+					notesLineEnd = j
+					break
+				}
+			}
+			if notesLineEnd == -1 {
+				notesLineEnd = len(tf.lines)
+			}
+			break
+		}
+	}
+	
+	// If Notes section doesn't exist or is already at the end, nothing to do
+	if notesLineStart == -1 {
+		return
+	}
+	
+	// Check if there's content after Notes (excluding trailing blank lines)
+	hasContentAfter := false
+	for i := notesLineEnd; i < len(tf.lines); i++ {
+		if strings.TrimSpace(tf.lines[i]) != "" {
+			hasContentAfter = true
+			break
+		}
+	}
+	
+	if !hasContentAfter {
+		return // Notes is already at the end
+	}
+	
+	// Extract the Notes section (including preceding blank line if any)
+	startExtract := notesLineStart
+	if startExtract > 0 && strings.TrimSpace(tf.lines[startExtract-1]) == "" {
+		startExtract--
+	}
+	
+	notesSection := make([]string, notesLineEnd-startExtract)
+	copy(notesSection, tf.lines[startExtract:notesLineEnd])
+	
+	// Remove Notes section from current position
+	tf.lines = append(tf.lines[:startExtract], tf.lines[notesLineEnd:]...)
+	
+	// Find insertion point at the end (skip trailing blank lines)
+	insertPos := len(tf.lines)
+	for insertPos > 0 && strings.TrimSpace(tf.lines[insertPos-1]) == "" {
+		insertPos--
+	}
+	
+	// Add blank line before Notes if there's content
+	if insertPos > 0 && strings.TrimSpace(tf.lines[insertPos-1]) != "" {
+		notesSection = append([]string{""}, notesSection...)
+	}
+	
+	// Insert Notes section at the end
+	tf.lines = append(tf.lines[:insertPos], append(notesSection, tf.lines[insertPos:]...)...)
+	
+	// Re-parse to update line numbers
+	tf.parse(strings.Join(tf.lines, "\n"))
+}
+
 // Save saves the file to disk
 func (tf *TodoFile) Save() error {
+	tf.ensureNotesLast()
 	tf.reorderTasks()
 	content := tf.Serialize()
 	// Ensure file ends with newline
