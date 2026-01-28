@@ -5,10 +5,6 @@
 
 ## Bugs
 
-- [ ] Notes header should always be the last one
-- [ ] When a task is moved to Notes, [ ] should be removed. Notes only contain lists
-- [ ] Lint should remove empty tasks
-- [ ] Lint should make sure that ## Notes only contains list items, no tasks
 
 ## Ideas
 
@@ -34,3 +30,7 @@
 - [ ] Move 'Add a note' lower on the list
 - [ ] Reset git repo before publishing
 - [ ] Make it look nicer and more glam!
+
+## Features
+
+- [ ] Allow to complete multiple tasks at once from cli
