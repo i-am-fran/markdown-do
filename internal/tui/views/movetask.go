@@ -143,13 +143,13 @@ func (m MoveTaskModel) Update(msg tea.Msg) (MoveTaskModel, tea.Cmd) {
 func (m MoveTaskModel) View() string {
 	if m.viewMode == "new" {
 		s := lipgloss.NewStyle().Bold(true).Render("Enter section name:") + "\n\n"
-		s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("> ") + m.textInput.View() + "\n\n"
-		s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("enter create • esc back")
+		s += lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("> ") + m.textInput.View() + "\n\n"
+		s += lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("enter create • esc back")
 		return s
 	}
 
 	hint := "↑↓ navigate • enter select • esc back"
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
 }
 
 // MoveTaskSelectMsg is sent when a section is selected

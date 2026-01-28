@@ -480,8 +480,8 @@ func (m SearchModel) View() string {
 	switch m.viewMode {
 	case "input":
 		s := lipgloss.NewStyle().Bold(true).Render("Enter search keyword:") + "\n\n"
-		s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("> ") + m.textInput.View() + "\n\n"
-		s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("enter search • esc cancel")
+		s += lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("> ") + m.textInput.View() + "\n\n"
+		s += lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("enter search • esc cancel")
 		return s
 
 	case "recursive":
@@ -494,18 +494,18 @@ func (m SearchModel) View() string {
 
 	case "results":
 		if m.message != "" {
-			msg := lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render("✓ "+m.message) + "\n\n"
+			msg := lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#00A000", Dark: "#00FF00"}).Render("✓ "+m.message) + "\n\n"
 			m.message = ""
-			return msg + m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("↑↓ navigate • enter select • esc back")
+			return msg + m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("↑↓ navigate • enter select • esc back")
 		}
 
 		if len(m.results) == 0 {
-			return lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Render("No matching tasks found") + "\n\n" +
-				lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("esc back")
+			return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#B8860B", Dark: "#FFD700"}).Render("No matching tasks found") + "\n\n" +
+				lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("esc back")
 		}
 
 		hint := "↑↓ navigate • enter select • esc back"
-		return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+		return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
 
 	case "taskActions":
 		if m.selectedResult == nil {
@@ -514,10 +514,10 @@ func (m SearchModel) View() string {
 
 		var s string
 		if m.recursive {
-			s = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("File: "+m.selectedResult.RelativePath) + "\n\n"
+			s = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("File: "+m.selectedResult.RelativePath) + "\n\n"
 		}
 		hint := "↑↓ navigate • enter select • esc back"
-		return s + m.actionList.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+		return s + m.actionList.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
 
 	case "confirmDelete":
 		if m.selectedResult == nil {
@@ -532,8 +532,8 @@ func (m SearchModel) View() string {
 			return "No task selected"
 		}
 		s := lipgloss.NewStyle().Bold(true).Render("Edit task:") + "\n\n"
-		s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("> ") + m.editInput.View() + "\n\n"
-		s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("enter save • esc cancel")
+		s += lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("> ") + m.editInput.View() + "\n\n"
+		s += lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("enter save • esc cancel")
 		return s
 		
 	case "move":
@@ -541,7 +541,7 @@ func (m SearchModel) View() string {
 			return "No task selected"
 		}
 		hint := "↑↓ navigate • enter select • esc back"
-		return m.moveList.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+		return m.moveList.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
 	}
 
 	return ""

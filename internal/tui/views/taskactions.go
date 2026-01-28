@@ -106,7 +106,7 @@ func (m TaskActionsModel) Update(msg tea.Msg) (TaskActionsModel, tea.Cmd) {
 // View implements tea.Model
 func (m TaskActionsModel) View() string {
 	hint := fmt.Sprintf("mdd -t %d • mdd -e %d • mdd -d %d", m.task.ID, m.task.ID, m.task.ID)
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
 }
 
 // TaskActionSelectMsg is sent when a task action is selected

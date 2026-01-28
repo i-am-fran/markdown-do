@@ -130,9 +130,9 @@ func (m DeleteCompletedModel) View() string {
 	}
 
 	if m.completedCount == 0 {
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Render("No completed tasks to delete") + "\n\n" +
+		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#B8860B", Dark: "#FFD700"}).Render("No completed tasks to delete") + "\n\n" +
 			m.list.View() + "\n\n" +
-			lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("esc back")
+			lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("esc back")
 	}
 
 	if m.viewMode == "result" {
@@ -140,10 +140,10 @@ func (m DeleteCompletedModel) View() string {
 		if m.deletedCount == 1 {
 			suffix = ""
 		}
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render(
+		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#00A000", Dark: "#00FF00"}).Render(
 			fmt.Sprintf("✓ Deleted %d completed task%s", m.deletedCount, suffix)) + "\n\n" +
 			m.list.View() + "\n\n" +
-			lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("esc back")
+			lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("esc back")
 	}
 
 	suffix := "s"

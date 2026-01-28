@@ -211,11 +211,11 @@ func (m SettingsModel) View() string {
 
 	if m.viewMode == "editor" {
 		hint := "↑↓ navigate • enter select • esc back"
-		return m.editorList.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+		return m.editorList.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
 	}
 
 	hint := "↑↓ navigate • enter select • esc back"
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
 }
 
 // SettingsChangedMsg is sent when settings change

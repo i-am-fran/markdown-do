@@ -160,12 +160,12 @@ func (m SubfoldersModel) View() string {
 	}
 
 	if len(m.folders) == 0 {
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Render("No TODO files found in subfolders") + "\n\n" +
-			lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("esc back")
+		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#B8860B", Dark: "#FFD700"}).Render("No TODO files found in subfolders") + "\n\n" +
+			lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("esc back")
 	}
 
 	hint := "↑↓ navigate • enter select • esc back"
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
 }
 
 type subfoldersLoadedMsg struct {

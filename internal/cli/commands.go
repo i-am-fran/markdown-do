@@ -14,14 +14,13 @@ import (
 const Version = "1.0.0"
 
 var (
-	green     = color.New(color.FgGreen).SprintFunc()
-	yellow    = color.New(color.FgYellow).SprintFunc()
-	red       = color.New(color.FgRed).SprintFunc()
-	cyan      = color.New(color.FgCyan).SprintFunc()
-	magenta   = color.New(color.FgMagenta).SprintFunc()
-	bold      = color.New(color.Bold).SprintFunc()
-	dim       = color.New(color.Faint).SprintFunc()
-	strikethrough = color.New(color.CrossedOut, color.Faint).SprintFunc()
+	green         = color.New(color.FgGreen).SprintFunc()
+	yellow        = color.New(color.FgYellow).SprintFunc()
+	red           = color.New(color.FgRed).SprintFunc()
+	cyan          = color.New(color.FgCyan).SprintFunc()
+	magenta       = color.New(color.FgMagenta).SprintFunc()
+	bold          = color.New(color.Bold).SprintFunc()
+	strikethrough = color.New(color.CrossedOut).SprintFunc()
 )
 
 func formatTaskLine(task *core.Task, showFile string, displayID int) string {
@@ -37,14 +36,14 @@ func formatTaskLine(task *core.Task, showFile string, displayID int) string {
 		checkbox = green("[x]")
 		text = strikethrough(task.Text)
 	default:
-		checkbox = dim("[ ]")
+		checkbox = "[ ]"
 		text = task.Text
 	}
 
-	idStr := dim(fmt.Sprintf("%d.", id))
+	idStr := fmt.Sprintf("%d.", id)
 	file := ""
 	if showFile != "" {
-		file = dim(fmt.Sprintf(" (%s)", showFile))
+		file = fmt.Sprintf(" (%s)", showFile)
 	}
 
 	return fmt.Sprintf("  %s %s %s%s", idStr, checkbox, text, file)
@@ -64,7 +63,7 @@ func ListTasks(recursive bool) error {
 		}
 
 		if len(filesByDir) == 0 {
-			fmt.Println(dim("No TODO files found"))
+			fmt.Println("No TODO files found")
 			return nil
 		}
 
@@ -81,7 +80,7 @@ func ListTasks(recursive bool) error {
 
 				tasks := todoFile.GetTasks()
 				if len(tasks) == 0 {
-					fmt.Println(dim("  (no tasks)"))
+					fmt.Println("  (no tasks)")
 				} else {
 					for _, task := range tasks {
 						fmt.Println(formatTaskLine(&task, "", globalTaskID))
@@ -104,7 +103,7 @@ func ListTasks(recursive bool) error {
 
 		groups := todoFile.GetTasksGroupedBySectionOrdered()
 		if len(groups) == 0 {
-			fmt.Println(dim("No tasks found"))
+			fmt.Println("No tasks found")
 			return nil
 		}
 
@@ -409,7 +408,7 @@ func FindTasks(keyword string, recursive bool) error {
 	}
 
 	if len(files) == 0 {
-		fmt.Println(dim("No TODO files found"))
+		fmt.Println("No TODO files found")
 		return nil
 	}
 
@@ -427,7 +426,7 @@ func FindTasks(keyword string, recursive bool) error {
 		if len(matches) > 0 {
 			found = true
 			if recursive {
-				fmt.Println(dim(file.RelativePath))
+				fmt.Println(file.RelativePath)
 			}
 			for _, task := range matches {
 				fmt.Println(formatTaskLine(&task, "", 0))
@@ -436,7 +435,7 @@ func FindTasks(keyword string, recursive bool) error {
 	}
 
 	if !found {
-		fmt.Println(dim("No matching tasks found"))
+		fmt.Println("No matching tasks found")
 	}
 
 	return nil
@@ -481,7 +480,7 @@ func OpenInEditor() error {
 		args = []string{filePath}
 	}
 
-	fmt.Println(dim(fmt.Sprintf("Opening %s...", filePath)))
+	fmt.Println(fmt.Sprintf("Opening %s...", filePath))
 
 	cmd := exec.Command(command, args...)
 	cmd.Stdin = os.Stdin
@@ -510,7 +509,7 @@ func DeleteCompletedTasks() error {
 
 	count := todoFile.DeleteCompletedTasks()
 	if count == 0 {
-		fmt.Println(dim("No completed tasks to delete"))
+		fmt.Println("No completed tasks to delete")
 		return nil
 	}
 
@@ -543,7 +542,7 @@ func LintFile() error {
 		return err
 	}
 
-	fmt.Println(dim(fmt.Sprintf("Linting %s...", filePath)))
+	fmt.Println(fmt.Sprintf("Linting %s...", filePath))
 	fmt.Println()
 
 	tasks := todoFile.GetTasks()
@@ -566,7 +565,7 @@ func LintFile() error {
 		if len(tasks) == 1 {
 			suffix = ""
 		}
-		fmt.Println(dim(fmt.Sprintf("Checked %d task%s (%d pending, %d completed)", len(tasks), suffix, pendingCount, completedCount)))
+		fmt.Println(fmt.Sprintf("Checked %d task%s (%d pending, %d completed)", len(tasks), suffix, pendingCount, completedCount))
 		return nil
 	}
 
@@ -598,7 +597,7 @@ func LintFile() error {
 	if len(tasks) == 1 {
 		suffix = ""
 	}
-	fmt.Println(dim(fmt.Sprintf("Checked %d task%s (%d pending, %d completed)", len(tasks), suffix, pendingCount, completedCount)))
+	fmt.Println(fmt.Sprintf("Checked %d task%s (%d pending, %d completed)", len(tasks), suffix, pendingCount, completedCount))
 	return nil
 }
 

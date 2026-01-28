@@ -91,11 +91,11 @@ func (m AddTaskModel) View() string {
 	var s string
 
 	if m.lastAdded != "" {
-		s += lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render("✓ Added: "+m.lastAdded) + "\n\n"
+		s += lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#00A000", Dark: "#00FF00"}).Render("✓ Added: "+m.lastAdded) + "\n\n"
 	}
 
 	s += lipgloss.NewStyle().Bold(true).Render(m.message) + "\n\n"
-	s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("> ") + m.textInput.View() + "\n\n"
+	s += lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("> ") + m.textInput.View() + "\n\n"
 
 	hint := "enter submit • esc "
 	if m.loop {
@@ -107,7 +107,7 @@ func (m AddTaskModel) View() string {
 	if m.lastAddedID != nil {
 		hint += " • o open last task"
 	}
-	s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+	s += lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
 
 	return s
 }

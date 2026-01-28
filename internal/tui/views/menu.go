@@ -130,7 +130,7 @@ func (m MenuModel) Update(msg tea.Msg) (MenuModel, tea.Cmd) {
 // View implements tea.Model
 func (m MenuModel) View() string {
 	hint := "↑↓ navigate • enter select • esc esc quit"
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
 }
 
 // SetEscHint sets the escape hint visibility

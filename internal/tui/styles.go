@@ -25,35 +25,33 @@ type Styles struct {
 func DefaultStyles() Styles {
 	return Styles{
 		Header: lipgloss.NewStyle().
-			Background(lipgloss.Color("6")).
-			Foreground(lipgloss.Color("0")).
+			Background(lipgloss.AdaptiveColor{Light: "#7D56F4", Dark: "#7D56F4"}).
+			Foreground(lipgloss.AdaptiveColor{Light: "#FFFFFF", Dark: "#FFFFFF"}).
 			Padding(0, 1),
 		Title: lipgloss.NewStyle().
 			Bold(true),
 		Hint: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241")),
+			Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}),
 		Selected: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("6")).
+			Foreground(lipgloss.AdaptiveColor{Light: "#7D56F4", Dark: "#7D56F4"}).
 			Bold(true),
 		Section: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("5")).
+			Foreground(lipgloss.AdaptiveColor{Light: "#FF00FF", Dark: "#FF00FF"}).
 			Bold(true),
-		TaskPending: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("7")),
+		TaskPending: lipgloss.NewStyle(),
 		TaskDone: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241")).
+			Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).
 			Strikethrough(true),
 		Message: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("4")),
+			Foreground(lipgloss.AdaptiveColor{Light: "#0000FF", Dark: "#00BFFF"}),
 		Error: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("1")),
+			Foreground(lipgloss.AdaptiveColor{Light: "#FF0000", Dark: "#FF0000"}),
 		Success: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("2")),
-		Input: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("7")),
+			Foreground(lipgloss.AdaptiveColor{Light: "#00A000", Dark: "#00FF00"}),
+		Input: lipgloss.NewStyle(),
 		Bold: lipgloss.NewStyle().
 			Bold(true),
 		Dim: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241")),
+			Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}),
 	}
 }
