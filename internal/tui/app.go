@@ -333,8 +333,6 @@ func (m Model) handleMenuSelect(action views.MenuAction) (tea.Model, tea.Cmd) {
 	case views.ActionSettings:
 		m.view = ViewSettings
 		m.settingsModel = views.NewSettingsModel(m.width, m.height)
-	case views.ActionQuit:
-		return m, tea.Quit
 	}
 
 	return m, nil

@@ -18,7 +18,6 @@ type taskListItem struct {
 	section   string
 	isSection bool
 	isAdd     bool
-	isBack    bool
 }
 
 func (i taskListItem) Title() string {
@@ -27,9 +26,6 @@ func (i taskListItem) Title() string {
 	}
 	if i.isAdd {
 		return "+ Add new task"
-	}
-	if i.isBack {
-		return "Back"
 	}
 
 	checkbox := "[ ]"
@@ -133,9 +129,6 @@ func (m TaskListModel) Update(msg tea.Msg) (TaskListModel, tea.Cmd) {
 		switch {
 		case key.Matches(msg, key.NewBinding(key.WithKeys("enter"))):
 			if ok {
-				if item.isBack {
-					return m, func() tea.Msg { return BackMsg{} }
-				}
 				if item.isAdd {
 					return m, func() tea.Msg { return AddTaskMsg{} }
 				}

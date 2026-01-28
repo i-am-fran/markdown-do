@@ -23,7 +23,6 @@ const (
 	ActionOpen            MenuAction = "open"
 	ActionSubfolders      MenuAction = "subfolders"
 	ActionSettings        MenuAction = "settings"
-	ActionQuit            MenuAction = "quit"
 )
 
 type menuItem struct {
