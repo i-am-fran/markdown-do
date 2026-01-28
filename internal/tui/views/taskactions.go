@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 // TaskAction represents a task action
@@ -106,7 +107,7 @@ func (m TaskActionsModel) Update(msg tea.Msg) (TaskActionsModel, tea.Cmd) {
 // View implements tea.Model
 func (m TaskActionsModel) View() string {
 	hint := fmt.Sprintf("mdd -t %d • mdd -e %d • mdd -d %d", m.task.ID, m.task.ID, m.task.ID)
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
+	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 
 // TaskActionSelectMsg is sent when a task action is selected

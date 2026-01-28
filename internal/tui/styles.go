@@ -2,6 +2,7 @@ package tui
 
 import (
 	"github.com/charmbracelet/lipgloss"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 // Styles contains all the lipgloss styles for the TUI
@@ -25,33 +26,33 @@ type Styles struct {
 func DefaultStyles() Styles {
 	return Styles{
 		Header: lipgloss.NewStyle().
-			Background(lipgloss.AdaptiveColor{Light: "#7D56F4", Dark: "#7D56F4"}).
-			Foreground(lipgloss.AdaptiveColor{Light: "#FFFFFF", Dark: "#FFFFFF"}).
+			Background(colors.HeaderBG).
+			Foreground(colors.HeaderFG).
 			Padding(0, 1),
 		Title: lipgloss.NewStyle().
 			Bold(true),
 		Hint: lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}),
+			Foreground(colors.Hint),
 		Selected: lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#7D56F4", Dark: "#7D56F4"}).
+			Foreground(colors.Selected).
 			Bold(true),
 		Section: lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#FF00FF", Dark: "#FF00FF"}).
+			Foreground(colors.Section).
 			Bold(true),
 		TaskPending: lipgloss.NewStyle(),
 		TaskDone: lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).
+			Foreground(colors.Hint).
 			Strikethrough(true),
 		Message: lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#0000FF", Dark: "#00BFFF"}),
+			Foreground(colors.Info),
 		Error: lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#FF0000", Dark: "#FF0000"}),
+			Foreground(colors.Error),
 		Success: lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#00A000", Dark: "#00FF00"}),
+			Foreground(colors.Success),
 		Input: lipgloss.NewStyle(),
 		Bold: lipgloss.NewStyle().
 			Bold(true),
 		Dim: lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}),
+			Foreground(colors.Hint),
 	}
 }

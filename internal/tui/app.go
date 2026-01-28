@@ -10,6 +10,7 @@ import (
 	"github.com/i-am-fran/markdowndo/internal/cli"
 	"github.com/i-am-fran/markdowndo/internal/config"
 	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 	"github.com/i-am-fran/markdowndo/internal/tui/views"
 )
 
@@ -517,8 +518,8 @@ func (m Model) View() string {
 
 	// Header
 	header := lipgloss.NewStyle().
-		Background(lipgloss.AdaptiveColor{Light: "#7D56F4", Dark: "#7D56F4"}).
-		Foreground(lipgloss.AdaptiveColor{Light: "#FFFFFF", Dark: "#FFFFFF"}).
+		Background(colors.HeaderBG).
+		Foreground(colors.HeaderFG).
 		Padding(0, 1).
 		Render(" MarkdownDO ")
 	s += header + "\n\n"
@@ -530,20 +531,20 @@ func (m Model) View() string {
 		switch m.message.Type {
 		case "success":
 			icon = "✓"
-			color = lipgloss.AdaptiveColor{Light: "#00A000", Dark: "#00FF00"}
+			color = colors.Success
 		case "error":
 			icon = "✗"
-			color = lipgloss.AdaptiveColor{Light: "#FF0000", Dark: "#FF0000"}
+			color = colors.Error
 		default:
 			icon = "ℹ"
-			color = lipgloss.AdaptiveColor{Light: "#0000FF", Dark: "#00BFFF"}
+			color = colors.Info
 		}
 		s += lipgloss.NewStyle().Foreground(color).Render(icon+" "+m.message.Text) + "\n\n"
 	}
 
 	// Escape hint
 	if m.escHintShown && m.view == ViewMenu {
-		s += lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("Press ESC again to quit") + "\n\n"
+		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("Press ESC again to quit") + "\n\n"
 	}
 
 	// Current view

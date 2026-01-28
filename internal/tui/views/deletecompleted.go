@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 // DeleteCompletedModel is the delete completed tasks view model
@@ -130,9 +131,9 @@ func (m DeleteCompletedModel) View() string {
 	}
 
 	if m.completedCount == 0 {
-		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#B8860B", Dark: "#FFD700"}).Render("No completed tasks to delete") + "\n\n" +
+		return lipgloss.NewStyle().Foreground(colors.Warning).Render("No completed tasks to delete") + "\n\n" +
 			m.list.View() + "\n\n" +
-			lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("esc back")
+			lipgloss.NewStyle().Foreground(colors.Hint).Render("esc back")
 	}
 
 	if m.viewMode == "result" {
@@ -140,10 +141,10 @@ func (m DeleteCompletedModel) View() string {
 		if m.deletedCount == 1 {
 			suffix = ""
 		}
-		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#00A000", Dark: "#00FF00"}).Render(
+		return lipgloss.NewStyle().Foreground(colors.Success).Render(
 			fmt.Sprintf("✓ Deleted %d completed task%s", m.deletedCount, suffix)) + "\n\n" +
 			m.list.View() + "\n\n" +
-			lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("esc back")
+			lipgloss.NewStyle().Foreground(colors.Hint).Render("esc back")
 	}
 
 	suffix := "s"

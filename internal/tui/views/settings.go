@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/config"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 type settingsItem struct {
@@ -211,11 +212,11 @@ func (m SettingsModel) View() string {
 
 	if m.viewMode == "editor" {
 		hint := "↑↓ navigate • enter select • esc back"
-		return m.editorList.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
+		return m.editorList.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 	}
 
 	hint := "↑↓ navigate • enter select • esc back"
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
+	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 
 // SettingsChangedMsg is sent when settings change

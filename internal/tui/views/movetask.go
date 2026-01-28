@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 type moveSectionItem struct {
@@ -143,13 +144,13 @@ func (m MoveTaskModel) Update(msg tea.Msg) (MoveTaskModel, tea.Cmd) {
 func (m MoveTaskModel) View() string {
 	if m.viewMode == "new" {
 		s := lipgloss.NewStyle().Bold(true).Render("Enter section name:") + "\n\n"
-		s += lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("> ") + m.textInput.View() + "\n\n"
-		s += lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("enter create • esc back")
+		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("> ") + m.textInput.View() + "\n\n"
+		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("enter create • esc back")
 		return s
 	}
 
 	hint := "↑↓ navigate • enter select • esc back"
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
+	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 
 // MoveTaskSelectMsg is sent when a section is selected

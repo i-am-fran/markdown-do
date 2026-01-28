@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 type folderItem struct {
@@ -160,12 +161,12 @@ func (m SubfoldersModel) View() string {
 	}
 
 	if len(m.folders) == 0 {
-		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#B8860B", Dark: "#FFD700"}).Render("No TODO files found in subfolders") + "\n\n" +
-			lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render("esc back")
+		return lipgloss.NewStyle().Foreground(colors.Warning).Render("No TODO files found in subfolders") + "\n\n" +
+			lipgloss.NewStyle().Foreground(colors.Hint).Render("esc back")
 	}
 
 	hint := "↑↓ navigate • enter select • esc back"
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9B9B9B", Dark: "#5C5C5C"}).Render(hint)
+	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 
 type subfoldersLoadedMsg struct {
