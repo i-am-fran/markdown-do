@@ -112,4 +112,3 @@ func handleCLI(args cli.ParsedArgs) error {
 	cli.ShowHelp()
 	return nil
 }
-
