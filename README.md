@@ -2,7 +2,7 @@
 
 A fast, minimal, opinionated CLI/TUI tool for managing TODO.md files using standard markdown syntax.
 
-**Current Version: 1.1.0** | [Changelog](CHANGELOG.md) | [Upgrade Guide](UPGRADE.md)
+![tui preview](docs/assets/mdd.png)
 
 ## Features
 
