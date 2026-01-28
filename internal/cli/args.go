@@ -6,9 +6,10 @@ import (
 
 // ParsedArgs represents parsed command line arguments
 type ParsedArgs struct {
-	Text  string
-	Value string
-	Flags map[string]bool
+	Text   string
+	Value  string
+	Values []string
+	Flags  map[string]bool
 }
 
 // ParseArgs parses command line arguments
@@ -16,6 +17,7 @@ func ParseArgs(args []string) ParsedArgs {
 	flags := make(map[string]bool)
 	var positional []string
 	var value string
+	var values []string
 
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
@@ -30,6 +32,12 @@ func ParseArgs(args []string) ParsedArgs {
 				case "c", "d", "e", "f", "fs", "n", "t":
 					value = args[i+1]
 					i++
+				case "cm":
+					// For -cm flag, collect all following non-flag arguments as values
+					for i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+						values = append(values, args[i+1])
+						i++
+					}
 				}
 			}
 		} else {
@@ -41,9 +49,10 @@ func ParseArgs(args []string) ParsedArgs {
 	text := strings.Join(positional, " ")
 
 	return ParsedArgs{
-		Text:  text,
-		Value: value,
-		Flags: flags,
+		Text:   text,
+		Value:  value,
+		Values: values,
+		Flags:  flags,
 	}
 }
 
