@@ -77,6 +77,7 @@ func (m AddTaskModel) Update(msg tea.Msg) (AddTaskModel, tea.Cmd) {
 				m.lastAdded = ""
 				return m, func() tea.Msg { return OpenTaskMsg{TaskID: id} }
 			}
+			// If no last added task, let the character be typed normally
 		}
 	}
 
