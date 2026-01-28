@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 // MenuAction represents a main menu action
@@ -130,7 +131,7 @@ func (m MenuModel) Update(msg tea.Msg) (MenuModel, tea.Cmd) {
 // View implements tea.Model
 func (m MenuModel) View() string {
 	hint := "↑↓ navigate • enter select • esc esc quit"
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 
 // SetEscHint sets the escape hint visibility

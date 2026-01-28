@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 // LintModel is the lint view model
@@ -130,17 +131,17 @@ func (m LintModel) View() string {
 
 	var s string
 
-	s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(fmt.Sprintf("Linting %s...", m.filePath)) + "\n\n"
+	s += lipgloss.NewStyle().Foreground(colors.Hint).Render(fmt.Sprintf("Linting %s...", m.filePath)) + "\n\n"
 
 	if len(m.issues) == 0 {
-		s += lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render("✓ No issues found") + "\n\n"
+		s += lipgloss.NewStyle().Foreground(colors.Success).Render("✓ No issues found") + "\n\n"
 	} else {
-		s += lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("6")).Render("Lint results:") + "\n\n"
+		s += lipgloss.NewStyle().Bold(true).Foreground(colors.Selected).Render("Lint results:") + "\n\n"
 
 		for _, issue := range m.issues {
-			status := lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Render("[found]")
+			status := lipgloss.NewStyle().Foreground(colors.Warning).Render("[found]")
 			if issue.Fixed {
-				status = lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render("[fixed]")
+				status = lipgloss.NewStyle().Foreground(colors.Success).Render("[fixed]")
 			}
 			s += fmt.Sprintf("  Line %d: %s %s\n", issue.Line, issue.Issue, status)
 		}
@@ -150,7 +151,7 @@ func (m LintModel) View() string {
 			if m.fixedCount == 1 {
 				suffix = ""
 			}
-			s += "\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render(fmt.Sprintf("✓ Fixed %d issue%s", m.fixedCount, suffix)) + "\n"
+			s += "\n" + lipgloss.NewStyle().Foreground(colors.Success).Render(fmt.Sprintf("✓ Fixed %d issue%s", m.fixedCount, suffix)) + "\n"
 		}
 		s += "\n"
 	}
@@ -159,12 +160,12 @@ func (m LintModel) View() string {
 	if m.taskStats.total == 1 {
 		suffix = ""
 	}
-	s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(
+	s += lipgloss.NewStyle().Foreground(colors.Hint).Render(
 		fmt.Sprintf("Checked %d task%s (%d pending, %d completed)",
 			m.taskStats.total, suffix, m.taskStats.pending, m.taskStats.completed)) + "\n\n"
 
 	s += m.list.View() + "\n\n"
-	s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("esc back")
+	s += lipgloss.NewStyle().Foreground(colors.Hint).Render("esc back")
 
 	return s
 }

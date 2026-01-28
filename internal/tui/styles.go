@@ -2,6 +2,7 @@ package tui
 
 import (
 	"github.com/charmbracelet/lipgloss"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 // Styles contains all the lipgloss styles for the TUI
@@ -25,35 +26,33 @@ type Styles struct {
 func DefaultStyles() Styles {
 	return Styles{
 		Header: lipgloss.NewStyle().
-			Background(lipgloss.Color("6")).
-			Foreground(lipgloss.Color("0")).
+			Background(colors.HeaderBG).
+			Foreground(colors.HeaderFG).
 			Padding(0, 1),
 		Title: lipgloss.NewStyle().
 			Bold(true),
 		Hint: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241")),
+			Foreground(colors.Hint),
 		Selected: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("6")).
+			Foreground(colors.Selected).
 			Bold(true),
 		Section: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("5")).
+			Foreground(colors.Section).
 			Bold(true),
-		TaskPending: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("7")),
+		TaskPending: lipgloss.NewStyle(),
 		TaskDone: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241")).
+			Foreground(colors.Hint).
 			Strikethrough(true),
 		Message: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("4")),
+			Foreground(colors.Info),
 		Error: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("1")),
+			Foreground(colors.Error),
 		Success: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("2")),
-		Input: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("7")),
+			Foreground(colors.Success),
+		Input: lipgloss.NewStyle(),
 		Bold: lipgloss.NewStyle().
 			Bold(true),
 		Dim: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241")),
+			Foreground(colors.Hint),
 	}
 }
