@@ -1,9 +1,0 @@
-title: MarkdownDO
-description: An opinionated CLI/TUI to manage TODO.md files
-theme: just-the-docs
-
-url: https://i-am-fran.github.io/markdown-do
-
-  
-plugins:
-  - jekyll-default-layout
