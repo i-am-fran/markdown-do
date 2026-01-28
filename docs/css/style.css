@@ -94,7 +94,6 @@ pre {
 	flex-direction: column;
 	align-content: start;
 	text-align: left;
-	width: 70vw;
 }
 
 pre .code {
@@ -107,13 +106,18 @@ pre .comment {
 
 div.caption {
 	text-align: center;
-	color: var(--flexoki-600);
+	color: var(--flexoki-500);
 	font-size: 0.8em;
 }
 
 div.caption a {
+	color: var(--flexoki-700);
+}
+
+div.caption a:hover {
 	color: var(--flexoki-800);
 }
+
 
 a.button {
 	flex-direction: row;
@@ -173,6 +177,7 @@ section.download {
 
 article {
 	max-width: 800px;
+	width: 100%
 }
 
 section.download article.cta {
@@ -302,7 +307,7 @@ section.examples {
 	}
 
 	pre {
-		width: 85vw;
+		width: 100%;
 		padding: 0.8em;
 		font-size: 0.9em;
 	}
