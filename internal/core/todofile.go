@@ -543,7 +543,7 @@ func (tf *TodoFile) Lint() LintResult {
 		}
 	}
 
-	// Fix heading spacing - ensure one blank line above and below ## headers
+	// Fix heading spacing - ensure exactly one blank line above and below ## headers
 	mainHeaderRegex := regexp.MustCompile(`^#\s+`)
 	sectionHeaderRegex := regexp.MustCompile(`^##\s+`)
 
@@ -552,30 +552,59 @@ func (tf *TodoFile) Lint() LintResult {
 
 		// Check if this is a section header (## Header)
 		if sectionHeaderRegex.MatchString(line) {
-			// Check line above (should be blank, unless it's the first line or after main header)
+			// Check line(s) above - ensure exactly one blank line
 			if i > 0 {
 				lineAbove := tf.lines[i-1]
 				// Allow no blank line if previous line is main header (# TODO)
 				isAfterMainHeader := mainHeaderRegex.MatchString(lineAbove) && !strings.HasPrefix(lineAbove, "##")
 
-				if !isAfterMainHeader && strings.TrimSpace(lineAbove) != "" {
-					// Need blank line above
-					tf.lines = append(tf.lines[:i], append([]string{""}, tf.lines[i:]...)...)
-					issues = append(issues, LintIssue{
-						Line:  i + 1,
-						Issue: "Missing blank line before heading",
-						Fixed: true,
-					})
-					fixedCount++
-					i++ // Adjust index since we inserted a line
+				if !isAfterMainHeader {
+					// Count blank lines above
+					blankLinesAbove := 0
+					checkIdx := i - 1
+					for checkIdx >= 0 && strings.TrimSpace(tf.lines[checkIdx]) == "" {
+						blankLinesAbove++
+						checkIdx--
+					}
+
+					if blankLinesAbove == 0 {
+						// No blank line above - add one
+						tf.lines = append(tf.lines[:i], append([]string{""}, tf.lines[i:]...)...)
+						issues = append(issues, LintIssue{
+							Line:  i + 1,
+							Issue: "Missing blank line before heading",
+							Fixed: true,
+						})
+						fixedCount++
+						i++ // Adjust index since we inserted a line
+					} else if blankLinesAbove > 1 {
+						// Multiple blank lines above - remove extras, keep only one
+						extraLines := blankLinesAbove - 1
+						// Remove the extra blank lines
+						tf.lines = append(tf.lines[:i-blankLinesAbove], tf.lines[i-1:]...)
+						issues = append(issues, LintIssue{
+							Line:  i - blankLinesAbove + 1,
+							Issue: pluralize(extraLines, "extra blank line") + " before heading",
+							Fixed: true,
+						})
+						fixedCount++
+						i -= extraLines // Adjust index since we removed lines
+					}
 				}
 			}
 
-			// Check line below (should be blank, unless it's the last line)
+			// Check line(s) below - ensure exactly one blank line
 			if i+1 < len(tf.lines) {
-				lineBelow := tf.lines[i+1]
-				if strings.TrimSpace(lineBelow) != "" {
-					// Need blank line below
+				// Count blank lines below
+				blankLinesBelow := 0
+				checkIdx := i + 1
+				for checkIdx < len(tf.lines) && strings.TrimSpace(tf.lines[checkIdx]) == "" {
+					blankLinesBelow++
+					checkIdx++
+				}
+
+				if blankLinesBelow == 0 {
+					// No blank line below - add one
 					tf.lines = append(tf.lines[:i+1], append([]string{""}, tf.lines[i+1:]...)...)
 					issues = append(issues, LintIssue{
 						Line:  i + 2,
@@ -583,6 +612,19 @@ func (tf *TodoFile) Lint() LintResult {
 						Fixed: true,
 					})
 					fixedCount++
+					// No need to adjust i, as next iteration will skip the blank line
+				} else if blankLinesBelow > 1 {
+					// Multiple blank lines below - remove extras, keep only one
+					extraLines := blankLinesBelow - 1
+					// Remove the extra blank lines (keep the first one)
+					tf.lines = append(tf.lines[:i+2], tf.lines[i+1+blankLinesBelow:]...)
+					issues = append(issues, LintIssue{
+						Line:  i + 3,
+						Issue: pluralize(extraLines, "extra blank line") + " after heading",
+						Fixed: true,
+					})
+					fixedCount++
+					// No need to adjust i, we removed lines after current position
 				}
 			}
 		}
