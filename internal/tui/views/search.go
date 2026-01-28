@@ -39,16 +39,6 @@ func (i backItem) Title() string       { return "Back" }
 func (i backItem) Description() string { return "" }
 func (i backItem) FilterValue() string { return "back" }
 
-type moveSectionItem struct {
-	title   string
-	section *string // nil means inbox
-	isBack  bool
-}
-
-func (i moveSectionItem) Title() string       { return i.title }
-func (i moveSectionItem) Description() string { return "" }
-func (i moveSectionItem) FilterValue() string { return i.title }
-
 // SearchModel is the search view model
 type SearchModel struct {
 	textInput      textinput.Model

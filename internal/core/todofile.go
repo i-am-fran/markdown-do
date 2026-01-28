@@ -662,7 +662,6 @@ func (tf *TodoFile) Lint() LintResult {
 		checkbox := match[2]
 		text := strings.TrimSpace(match[3])
 		fixed := false
-		shouldRemove := false
 
 		// Fix: Remove tasks with empty text
 		if text == "" {
