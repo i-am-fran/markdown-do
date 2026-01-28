@@ -4,6 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 // TextPromptModel is a generic text input prompt
@@ -71,8 +72,8 @@ func (m TextPromptModel) View() string {
 	var s string
 
 	s += lipgloss.NewStyle().Bold(true).Render(m.message) + "\n\n"
-	s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("> ") + m.textInput.View() + "\n\n"
-	s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("enter submit • esc cancel")
+	s += lipgloss.NewStyle().Foreground(colors.Hint).Render("> ") + m.textInput.View() + "\n\n"
+	s += lipgloss.NewStyle().Foreground(colors.Hint).Render("enter submit • esc cancel")
 
 	return s
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/config"
 	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 type taskListItem struct {
@@ -59,8 +60,8 @@ func NewTaskListModel(todoFile *core.TodoFile, width, height int) TaskListModel 
 	delegate := list.NewDefaultDelegate()
 	delegate.ShowDescription = false
 	delegate.SetSpacing(0)
-	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.Foreground(lipgloss.Color("6"))
-	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.Foreground(lipgloss.Color("7"))
+	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.Foreground(colors.Selected)
+	// Use default color for normal titles (no explicit foreground)
 
 	l := list.New(items, delegate, width, height-6)
 	l.Title = "Select a task:"
@@ -197,11 +198,11 @@ func (m TaskListModel) View() string {
 		} else {
 			msg = "No pending tasks (completed tasks hidden)"
 		}
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(msg) + "\n\n" + m.list.View()
+		return lipgloss.NewStyle().Foreground(colors.Hint).Render(msg) + "\n\n" + m.list.View()
 	}
 
 	hint := "↑↓ • enter • c complete • d delete • e edit • m move • esc back"
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 
 // Refresh refreshes the task list

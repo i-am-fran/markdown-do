@@ -10,6 +10,7 @@ import (
 	"github.com/i-am-fran/markdowndo/internal/cli"
 	"github.com/i-am-fran/markdowndo/internal/config"
 	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 	"github.com/i-am-fran/markdowndo/internal/tui/views"
 )
 
@@ -212,6 +213,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.lastAddedTask = ""
 		m.view = ViewMenu
 		m.menuModel = views.NewMenuModel(m.todoFile, m.width, m.height)
+		return m, nil
+	
+	case views.OpenTaskMsg:
+		// Open the task that was just created
+		m.selectedTaskID = &msg.TaskID
+		m.view = ViewTaskActions
+		if m.todoFile != nil {
+			if task := m.todoFile.GetTask(msg.TaskID); task != nil {
+				m.taskActionsModel = views.NewTaskActionsModel(task, m.width, m.height)
+			}
+		}
 		return m, nil
 
 	case views.TextPromptSubmitMsg:
@@ -433,7 +445,7 @@ func (m Model) handleAddTaskSubmit(text string) (tea.Model, tea.Cmd) {
 	}
 	m.todoFile.Save()
 	m.lastAddedTask = task.Text
-	m.addTaskModel.SetLastAdded(task.Text)
+	m.addTaskModel.SetLastAddedWithID(task.Text, task.ID)
 
 	return m, nil
 }
@@ -506,8 +518,8 @@ func (m Model) View() string {
 
 	// Header
 	header := lipgloss.NewStyle().
-		Background(lipgloss.Color("6")).
-		Foreground(lipgloss.Color("0")).
+		Background(colors.HeaderBG).
+		Foreground(colors.HeaderFG).
 		Padding(0, 1).
 		Render(" MarkdownDO ")
 	s += header + "\n\n"
@@ -515,24 +527,24 @@ func (m Model) View() string {
 	// Message toast
 	if m.message != nil {
 		var icon string
-		var color lipgloss.Color
+		var color lipgloss.TerminalColor
 		switch m.message.Type {
 		case "success":
 			icon = "✓"
-			color = lipgloss.Color("2")
+			color = colors.Success
 		case "error":
 			icon = "✗"
-			color = lipgloss.Color("1")
+			color = colors.Error
 		default:
 			icon = "ℹ"
-			color = lipgloss.Color("4")
+			color = colors.Info
 		}
 		s += lipgloss.NewStyle().Foreground(color).Render(icon+" "+m.message.Text) + "\n\n"
 	}
 
 	// Escape hint
 	if m.escHintShown && m.view == ViewMenu {
-		s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("Press ESC again to quit") + "\n\n"
+		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("Press ESC again to quit") + "\n\n"
 	}
 
 	// Current view

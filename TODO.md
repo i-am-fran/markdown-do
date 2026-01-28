@@ -34,3 +34,7 @@
 - [ ] Move 'Add a note' lower on the list
 - [ ] Reset git repo before publishing
 - [ ] Make it look nicer and more glam!
+
+## Features
+
+- [ ] Allow to complete multiple tasks at once from cli

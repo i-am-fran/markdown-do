@@ -4,6 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 // AddTaskModel is the add task view model
@@ -11,6 +12,7 @@ type AddTaskModel struct {
 	textInput   textinput.Model
 	loop        bool
 	lastAdded   string
+	lastAddedID *int
 	message     string
 	placeholder string
 	width       int
@@ -67,6 +69,16 @@ func (m AddTaskModel) Update(msg tea.Msg) (AddTaskModel, tea.Cmd) {
 
 		case "esc":
 			return m, func() tea.Msg { return AddTaskCancelMsg{} }
+			
+		case "o", "O":
+			// Open the last added task if available
+			if m.lastAddedID != nil {
+				id := *m.lastAddedID
+				m.lastAddedID = nil
+				m.lastAdded = ""
+				return m, func() tea.Msg { return OpenTaskMsg{TaskID: id} }
+			}
+			// If no last added task, let the character be typed normally
 		}
 	}
 
@@ -80,11 +92,11 @@ func (m AddTaskModel) View() string {
 	var s string
 
 	if m.lastAdded != "" {
-		s += lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render("✓ Added: "+m.lastAdded) + "\n\n"
+		s += lipgloss.NewStyle().Foreground(colors.Success).Render("✓ Added: "+m.lastAdded) + "\n\n"
 	}
 
 	s += lipgloss.NewStyle().Bold(true).Render(m.message) + "\n\n"
-	s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("> ") + m.textInput.View() + "\n\n"
+	s += lipgloss.NewStyle().Foreground(colors.Hint).Render("> ") + m.textInput.View() + "\n\n"
 
 	hint := "enter submit • esc "
 	if m.loop {
@@ -92,7 +104,11 @@ func (m AddTaskModel) View() string {
 	} else {
 		hint += "cancel"
 	}
-	s += lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render(hint)
+	// Add shortcut to open last task if available
+	if m.lastAddedID != nil {
+		hint += " • o open last task"
+	}
+	s += lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 
 	return s
 }
@@ -103,10 +119,18 @@ func (m *AddTaskModel) SetLastAdded(text string) {
 	m.textInput.SetValue("")
 }
 
+// SetLastAddedWithID sets the last added task text and ID
+func (m *AddTaskModel) SetLastAddedWithID(text string, id int) {
+	m.lastAdded = text
+	m.lastAddedID = &id
+	m.textInput.SetValue("")
+}
+
 // Reset resets the input
 func (m *AddTaskModel) Reset() {
 	m.textInput.SetValue("")
 	m.lastAdded = ""
+	m.lastAddedID = nil
 }
 
 // AddTaskSubmitMsg is sent when a task is submitted
@@ -116,3 +140,8 @@ type AddTaskSubmitMsg struct {
 
 // AddTaskCancelMsg is sent when adding is cancelled
 type AddTaskCancelMsg struct{}
+
+// OpenTaskMsg is sent when user wants to open a task
+type OpenTaskMsg struct {
+	TaskID int
+}
