@@ -153,7 +153,7 @@ func (m SubfoldersModel) Update(msg tea.Msg) (SubfoldersModel, tea.Cmd) {
 // View implements tea.Model
 func (m SubfoldersModel) View() string {
 	if m.loading {
-		return "Loading subfolders..."
+		return lipgloss.NewStyle().Foreground(colors.Hint).Render("Loading subfolders...")
 	}
 
 	if m.viewMode == "tasks" && m.todoFile != nil {
@@ -165,7 +165,7 @@ func (m SubfoldersModel) View() string {
 			lipgloss.NewStyle().Foreground(colors.Hint).Render("esc back")
 	}
 
-	hint := "↑↓ navigate • enter select • esc back"
+	hint := "enter select  esc back"
 	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 

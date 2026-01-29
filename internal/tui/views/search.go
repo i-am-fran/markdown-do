@@ -29,7 +29,7 @@ func (i searchResultItem) Title() string {
 	if i.result.Task.Status == core.TaskCompleted {
 		checkbox = "[x]"
 	}
-	return fmt.Sprintf("%d. %s %s", i.result.Task.ID, checkbox, i.result.Task.Text)
+	return fmt.Sprintf("%s %s", checkbox, i.result.Task.Text)
 }
 func (i searchResultItem) Description() string { return "" }
 func (i searchResultItem) FilterValue() string { return i.Title() }
@@ -65,7 +65,7 @@ func NewSearchModel(width, height int) SearchModel {
 	ti.Focus()
 	ti.CharLimit = 128
 	ti.Width = width - 10
-	
+
 	// Edit input for editing task text
 	ei := textinput.New()
 	ei.CharLimit = 256
@@ -95,7 +95,7 @@ func NewSearchModel(width, height int) SearchModel {
 	al.SetFilteringEnabled(false)
 	al.SetShowHelp(false)
 	al.Styles.Title = lipgloss.NewStyle().Bold(true).MarginBottom(1)
-	
+
 	// Move list (will be populated when needed)
 	ml := list.New([]list.Item{}, delegate, width, height-6)
 	ml.Title = "Move to section:"
@@ -247,7 +247,7 @@ func (m SearchModel) Update(msg tea.Msg) (SearchModel, tea.Cmd) {
 				return m, nil
 			}
 			return m, nil
-			
+
 		case "edit":
 			switch msg.String() {
 			case "enter":
@@ -261,11 +261,11 @@ func (m SearchModel) Update(msg tea.Msg) (SearchModel, tea.Cmd) {
 				m.viewMode = "taskActions"
 				return m, nil
 			}
-			
+
 			var cmd tea.Cmd
 			m.editInput, cmd = m.editInput.Update(msg)
 			return m, cmd
-			
+
 		case "move":
 			switch msg.String() {
 			case "enter":
@@ -280,7 +280,7 @@ func (m SearchModel) Update(msg tea.Msg) (SearchModel, tea.Cmd) {
 				m.viewMode = "taskActions"
 				return m, nil
 			}
-			
+
 			var cmd tea.Cmd
 			m.moveList, cmd = m.moveList.Update(msg)
 			return m, cmd
@@ -480,32 +480,32 @@ func (m *SearchModel) setupMoveMode() {
 func (m SearchModel) View() string {
 	switch m.viewMode {
 	case "input":
-		s := lipgloss.NewStyle().Bold(true).Render("Enter search keyword:") + "\n\n"
+		s := lipgloss.NewStyle().Bold(true).Render("Search for tasks:") + "\n\n"
 		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("> ") + m.textInput.View() + "\n\n"
-		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("enter search • esc cancel")
+		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("enter search  esc cancel")
 		return s
 
 	case "recursive":
-		s := lipgloss.NewStyle().Bold(true).Render("Search in subfolders?") + "\n\n"
-		s += "Press " + lipgloss.NewStyle().Bold(true).Render("y") + " for yes, " + lipgloss.NewStyle().Bold(true).Render("n") + " for no"
+		s := lipgloss.NewStyle().Bold(true).Render("Include subfolders?") + "\n\n"
+		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("y yes (search all TODO.md files)  n no (current folder only)")
 		return s
 
 	case "searching":
-		return "Searching..."
+		return lipgloss.NewStyle().Foreground(colors.Hint).Render("Searching...")
 
 	case "results":
 		if m.message != "" {
 			msg := lipgloss.NewStyle().Foreground(colors.Success).Render("✓ "+m.message) + "\n\n"
 			m.message = ""
-			return msg + m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render("↑↓ navigate • enter select • esc back")
+			return msg + m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render("enter select  esc new search")
 		}
 
 		if len(m.results) == 0 {
 			return lipgloss.NewStyle().Foreground(colors.Warning).Render("No matching tasks found") + "\n\n" +
-				lipgloss.NewStyle().Foreground(colors.Hint).Render("esc back")
+				lipgloss.NewStyle().Foreground(colors.Hint).Render("esc new search")
 		}
 
-		hint := "↑↓ navigate • enter select • esc back"
+		hint := "enter select  esc new search"
 		return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 
 	case "taskActions":
@@ -517,7 +517,7 @@ func (m SearchModel) View() string {
 		if m.recursive {
 			s = lipgloss.NewStyle().Foreground(colors.Hint).Render("File: "+m.selectedResult.RelativePath) + "\n\n"
 		}
-		hint := "↑↓ navigate • enter select • esc back"
+		hint := "enter select  esc back"
 		return s + m.actionList.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 
 	case "confirmDelete":
@@ -525,23 +525,23 @@ func (m SearchModel) View() string {
 			return "No task selected"
 		}
 		s := lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("Delete \"%s\"?", m.selectedResult.Task.Text)) + "\n\n"
-		s += "Press " + lipgloss.NewStyle().Bold(true).Render("y") + " for yes, " + lipgloss.NewStyle().Bold(true).Render("n") + " for no"
+		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("y yes  n no")
 		return s
-		
+
 	case "edit":
 		if m.selectedResult == nil {
 			return "No task selected"
 		}
 		s := lipgloss.NewStyle().Bold(true).Render("Edit task:") + "\n\n"
 		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("> ") + m.editInput.View() + "\n\n"
-		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("enter save • esc cancel")
+		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("enter save  esc cancel")
 		return s
-		
+
 	case "move":
 		if m.selectedResult == nil {
 			return "No task selected"
 		}
-		hint := "↑↓ navigate • enter select • esc back"
+		hint := "enter select  esc back"
 		return m.moveList.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 	}
 

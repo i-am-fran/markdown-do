@@ -152,6 +152,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case views.EscPressedMsg:
 		return m.handleDoubleEsc()
 
+	case views.QuitMsg:
+		return m, tea.Quit
+
 	case views.TaskSelectedMsg:
 		m.selectedTaskID = &msg.TaskID
 		m.view = ViewTaskActions
@@ -214,7 +217,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.view = ViewMenu
 		m.menuModel = views.NewMenuModel(m.todoFile, m.width, m.height)
 		return m, nil
-	
+
 	case views.OpenTaskMsg:
 		// Open the task that was just created
 		m.selectedTaskID = &msg.TaskID
@@ -253,6 +256,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case views.SearchTaskActionCompleteMsg:
 		m.searchModel.SetMessage(msg.Message)
 		return m, m.searchModel.RerunSearch()
+
+	case views.ToggleShowCompletedMsg:
+		settings := config.GetSettings()
+		config.UpdateSettings(map[string]interface{}{
+			"showCompleted": !settings.ShowCompleted,
+		})
+		config.ClearCache()
+		m.taskListModel.Refresh(m.todoFile)
+		return m, nil
 
 	case tea.KeyMsg:
 		// Global quit with ctrl+c
@@ -515,7 +527,7 @@ func (m Model) handleConfirm(confirmed bool) (tea.Model, tea.Cmd) {
 // View implements tea.Model
 func (m Model) View() string {
 	if m.todoFile == nil {
-		return "Loading..."
+		return lipgloss.NewStyle().Foreground(colors.Hint).Render("Loading...")
 	}
 
 	var s string

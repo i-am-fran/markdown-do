@@ -126,7 +126,7 @@ func (m LintModel) Update(msg tea.Msg) (LintModel, tea.Cmd) {
 // View implements tea.Model
 func (m LintModel) View() string {
 	if m.loading {
-		return "Linting..."
+		return lipgloss.NewStyle().Foreground(colors.Hint).Render("Linting...")
 	}
 
 	var s string

@@ -3,6 +3,7 @@ package views
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
 // ConfirmModel is a confirmation dialog model
@@ -49,7 +50,7 @@ func (m ConfirmModel) Update(msg tea.Msg) (ConfirmModel, tea.Cmd) {
 // View implements tea.Model
 func (m ConfirmModel) View() string {
 	s := lipgloss.NewStyle().Bold(true).Render(m.message) + "\n\n"
-	s += "Press " + lipgloss.NewStyle().Bold(true).Render("y") + " for yes, " + lipgloss.NewStyle().Bold(true).Render("n") + " for no"
+	s += lipgloss.NewStyle().Foreground(colors.Hint).Render("y yes  n no")
 	return s
 }
 

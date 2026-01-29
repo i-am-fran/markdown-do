@@ -10,10 +10,10 @@ import (
 )
 
 type moveSectionItem struct {
-	title     string
-	section   *string // nil means inbox
-	isNew     bool
-	isBack    bool
+	title   string
+	section *string // nil means inbox
+	isNew   bool
+	isBack  bool
 }
 
 func (i moveSectionItem) Title() string       { return i.title }
@@ -22,13 +22,13 @@ func (i moveSectionItem) FilterValue() string { return i.title }
 
 // MoveTaskModel is the move task view model
 type MoveTaskModel struct {
-	list        list.Model
-	textInput   textinput.Model
-	todoFile    *core.TodoFile
-	task        *core.Task
-	viewMode    string // "select" or "new"
-	width       int
-	height      int
+	list      list.Model
+	textInput textinput.Model
+	todoFile  *core.TodoFile
+	task      *core.Task
+	viewMode  string // "select" or "new"
+	width     int
+	height    int
 }
 
 // NewMoveTaskModel creates a new move task model
@@ -143,13 +143,13 @@ func (m MoveTaskModel) Update(msg tea.Msg) (MoveTaskModel, tea.Cmd) {
 // View implements tea.Model
 func (m MoveTaskModel) View() string {
 	if m.viewMode == "new" {
-		s := lipgloss.NewStyle().Bold(true).Render("Enter section name:") + "\n\n"
+		s := lipgloss.NewStyle().Bold(true).Render("New section name:") + "\n\n"
 		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("> ") + m.textInput.View() + "\n\n"
-		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("enter create • esc back")
+		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("enter create  esc back")
 		return s
 	}
 
-	hint := "↑↓ navigate • enter select • esc back"
+	hint := "enter select  esc back"
 	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 

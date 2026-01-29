@@ -73,7 +73,7 @@ func (m TextPromptModel) View() string {
 
 	s += lipgloss.NewStyle().Bold(true).Render(m.message) + "\n\n"
 	s += lipgloss.NewStyle().Foreground(colors.Hint).Render("> ") + m.textInput.View() + "\n\n"
-	s += lipgloss.NewStyle().Foreground(colors.Hint).Render("enter submit • esc cancel")
+	s += lipgloss.NewStyle().Foreground(colors.Hint).Render("enter save  esc cancel")
 
 	return s
 }

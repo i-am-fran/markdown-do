@@ -11,7 +11,7 @@ import (
 	"github.com/i-am-fran/markdowndo/internal/core"
 )
 
-const Version = "1.1.0"
+const Version = "1.2.0"
 
 var (
 	green         = color.New(color.FgGreen).SprintFunc()

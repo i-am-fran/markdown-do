@@ -127,7 +127,7 @@ func (m DeleteCompletedModel) performDelete() tea.Cmd {
 // View implements tea.Model
 func (m DeleteCompletedModel) View() string {
 	if m.loading {
-		return "Loading..."
+		return lipgloss.NewStyle().Foreground(colors.Hint).Render("Loading...")
 	}
 
 	if m.completedCount == 0 {
@@ -153,7 +153,7 @@ func (m DeleteCompletedModel) View() string {
 	}
 	s := lipgloss.NewStyle().Bold(true).Render(
 		fmt.Sprintf("Delete %d completed task%s?", m.completedCount, suffix)) + "\n\n"
-	s += "Press " + lipgloss.NewStyle().Bold(true).Render("y") + " for yes, " + lipgloss.NewStyle().Bold(true).Render("n") + " for no"
+	s += lipgloss.NewStyle().Foreground(colors.Hint).Render("y yes  n no")
 
 	return s
 }

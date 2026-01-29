@@ -87,8 +87,7 @@ func buildSettingsItems(settings config.Settings) []list.Item {
 	return []list.Item{
 		settingsItem{title: fmt.Sprintf("Editor: %s", editorLabel), action: "editor"},
 		settingsItem{title: fmt.Sprintf("Fullscreen mode: %s", fullscreenLabel), action: "fullscreen"},
-		settingsItem{title: fmt.Sprintf("Show completed: %s", showCompletedLabel), action: "showCompleted"},
-		settingsItem{title: "Theme (coming soon)", action: "theme"},
+		settingsItem{title: fmt.Sprintf("Show completed tasks: %s", showCompletedLabel), action: "showCompleted"},
 		settingsItem{title: "Reset to defaults", action: "reset"},
 		settingsItem{title: "Back", action: "back"},
 	}
@@ -182,9 +181,6 @@ func (m SettingsModel) Update(msg tea.Msg) (SettingsModel, tea.Cmd) {
 					m.settings = config.GetSettings()
 					m.list.SetItems(buildSettingsItems(m.settings))
 					return m, func() tea.Msg { return SettingsChangedMsg{} }
-				case "theme":
-					// Coming soon
-					return m, nil
 				case "reset":
 					m.viewMode = "confirmReset"
 					return m, nil
@@ -206,16 +202,16 @@ func (m SettingsModel) Update(msg tea.Msg) (SettingsModel, tea.Cmd) {
 func (m SettingsModel) View() string {
 	if m.viewMode == "confirmReset" {
 		s := lipgloss.NewStyle().Bold(true).Render("Reset all settings to defaults?") + "\n\n"
-		s += "Press " + lipgloss.NewStyle().Bold(true).Render("y") + " for yes, " + lipgloss.NewStyle().Bold(true).Render("n") + " for no"
+		s += lipgloss.NewStyle().Foreground(colors.Hint).Render("y yes  n no")
 		return s
 	}
 
 	if m.viewMode == "editor" {
-		hint := "↑↓ navigate • enter select • esc back"
+		hint := "enter select  esc back"
 		return m.editorList.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 	}
 
-	hint := "↑↓ navigate • enter select • esc back"
+	hint := "enter toggle/select  esc back"
 	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 

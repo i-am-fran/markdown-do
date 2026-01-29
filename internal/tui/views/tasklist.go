@@ -2,7 +2,6 @@ package views
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -32,7 +31,7 @@ func (i taskListItem) Title() string {
 	if i.task.Status == core.TaskCompleted {
 		checkbox = "[x]"
 	}
-	return fmt.Sprintf("%d. %s %s", i.task.ID, checkbox, i.task.Text)
+	return fmt.Sprintf("%s %s", checkbox, i.task.Text)
 }
 
 func (i taskListItem) Description() string { return "" }
@@ -159,6 +158,9 @@ func (m TaskListModel) Update(msg tea.Msg) (TaskListModel, tea.Cmd) {
 			if ok && item.task != nil {
 				return m, func() tea.Msg { return MoveTaskMsg{TaskID: item.task.ID} }
 			}
+
+		case key.Matches(msg, key.NewBinding(key.WithKeys("v"))):
+			return m, func() tea.Msg { return ToggleShowCompletedMsg{} }
 		}
 	}
 
@@ -188,12 +190,17 @@ func (m TaskListModel) View() string {
 		if m.settings.ShowCompleted {
 			msg = "No tasks found"
 		} else {
-			msg = "No pending tasks (completed tasks hidden)"
+			msg = "No pending tasks (press v to show completed)"
 		}
 		return lipgloss.NewStyle().Foreground(colors.Hint).Render(msg) + "\n\n" + m.list.View()
 	}
 
-	hint := "↑↓ • enter • c complete • d delete • e edit • m move • esc back"
+	// Build hint with toggle state indicator
+	toggleHint := "v show done"
+	if m.settings.ShowCompleted {
+		toggleHint = "v hide done"
+	}
+	hint := fmt.Sprintf("c complete  d delete  e edit  m move  %s  esc back", toggleHint)
 	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 
@@ -244,15 +251,14 @@ type MoveTaskMsg struct {
 	TaskID int
 }
 
+// ToggleShowCompletedMsg is sent to toggle showing completed tasks
+type ToggleShowCompletedMsg struct{}
+
 // FormatTaskListHints returns the keyboard hints
-func FormatTaskListHints() string {
-	var hints []string
-	hints = append(hints, "↑↓")
-	hints = append(hints, "enter")
-	hints = append(hints, "c complete")
-	hints = append(hints, "d delete")
-	hints = append(hints, "e edit")
-	hints = append(hints, "m move")
-	hints = append(hints, "esc back")
-	return strings.Join(hints, " • ")
+func FormatTaskListHints(showCompleted bool) string {
+	toggleHint := "v show done"
+	if showCompleted {
+		toggleHint = "v hide done"
+	}
+	return fmt.Sprintf("c complete  d delete  e edit  m move  %s  esc back", toggleHint)
 }

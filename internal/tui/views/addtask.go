@@ -22,10 +22,10 @@ type AddTaskModel struct {
 // NewAddTaskModel creates a new add task model
 func NewAddTaskModel(loop bool, message, placeholder string, width, height int) AddTaskModel {
 	if message == "" {
-		message = "Enter task description (empty to finish):"
+		message = "Enter task description:"
 	}
 	if placeholder == "" {
-		placeholder = "Buy groceries or \"Fix bug @Features\" to add to section"
+		placeholder = "Task text or \"Fix bug @Features\" to add to section"
 	}
 
 	ti := textinput.New()
@@ -69,7 +69,7 @@ func (m AddTaskModel) Update(msg tea.Msg) (AddTaskModel, tea.Cmd) {
 
 		case "esc":
 			return m, func() tea.Msg { return AddTaskCancelMsg{} }
-			
+
 		case "o", "O":
 			// Open the last added task if available
 			if m.lastAddedID != nil {
@@ -98,17 +98,22 @@ func (m AddTaskModel) View() string {
 	s += lipgloss.NewStyle().Bold(true).Render(m.message) + "\n\n"
 	s += lipgloss.NewStyle().Foreground(colors.Hint).Render("> ") + m.textInput.View() + "\n\n"
 
-	hint := "enter submit • esc "
+	escAction := "cancel"
 	if m.loop {
-		hint += "finish"
-	} else {
-		hint += "cancel"
+		escAction = "done"
 	}
+
+	hint := "enter add  esc " + escAction
 	// Add shortcut to open last task if available
 	if m.lastAddedID != nil {
-		hint += " • o open last task"
+		hint += "  o open task"
 	}
 	s += lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
+
+	// Show section shortcuts tip for task input (not notes)
+	if m.loop && m.lastAdded == "" {
+		s += "\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render("Tip: Use @Section to add to a section (e.g., \"Fix bug @Features\")")
+	}
 
 	return s
 }

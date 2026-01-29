@@ -106,7 +106,7 @@ func (m TaskActionsModel) Update(msg tea.Msg) (TaskActionsModel, tea.Cmd) {
 
 // View implements tea.Model
 func (m TaskActionsModel) View() string {
-	hint := fmt.Sprintf("mdd -t %d • mdd -e %d • mdd -d %d", m.task.ID, m.task.ID, m.task.ID)
+	hint := "enter select  esc back"
 	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 

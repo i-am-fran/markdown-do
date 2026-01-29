@@ -114,6 +114,10 @@ func (m MenuModel) Update(msg tea.Msg) (MenuModel, tea.Cmd) {
 					return MenuSelectMsg{Action: item.action}
 				}
 			}
+		case "q":
+			return m, func() tea.Msg {
+				return QuitMsg{}
+			}
 		case "esc":
 			return m, func() tea.Msg {
 				return EscPressedMsg{}
@@ -128,7 +132,7 @@ func (m MenuModel) Update(msg tea.Msg) (MenuModel, tea.Cmd) {
 
 // View implements tea.Model
 func (m MenuModel) View() string {
-	hint := "↑↓ navigate • enter select • esc esc quit"
+	hint := "enter select  ctrl+n new task  q quit"
 	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 
@@ -144,3 +148,6 @@ type MenuSelectMsg struct {
 
 // EscPressedMsg is sent when escape is pressed
 type EscPressedMsg struct{}
+
+// QuitMsg is sent when user wants to quit
+type QuitMsg struct{}

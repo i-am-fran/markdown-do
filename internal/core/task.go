@@ -56,9 +56,9 @@ var sectionAliases = map[string]string{
 }
 
 var (
-	headerRegex   = regexp.MustCompile(`^##\s+(.+)$`)
-	taskRegex     = regexp.MustCompile(`^(\s*)-\s*\[([ xX/])\]\s*(.*)$`)
-	sectionRegex  = regexp.MustCompile(`(?:^|\s)@(\w+)\s*$`)
+	headerRegex  = regexp.MustCompile(`^##\s+(.+)$`)
+	taskRegex    = regexp.MustCompile(`^(\s*)-\s*\[([ xX/])\]\s*(.*)$`)
+	sectionRegex = regexp.MustCompile(`(?:^|\s)@(\w+)\s*$`)
 )
 
 // ParseHeaderLine extracts section name from a header line
