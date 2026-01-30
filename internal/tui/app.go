@@ -71,6 +71,7 @@ type Model struct {
 	deleteCompletedModel views.DeleteCompletedModel
 	confirmModel         views.ConfirmModel
 	helpModel            help.Model
+	statusBarModel       views.StatusBarModel
 }
 
 // New creates a new TUI model
@@ -126,6 +127,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		m.statusBarModel.SetWidth(msg.Width)
 		return m, nil
 
 	case todoFileLoadedMsg:
@@ -136,6 +138,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.todoFile = msg.todoFile
 		m.filePath = msg.filePath
 		m.menuModel = views.NewMenuModel(m.todoFile, m.width, m.height)
+		m.statusBarModel = views.NewStatusBarModel(m.todoFile, m.filePath, m.width)
 		return m, nil
 
 	case reloadTodoFileMsg:
@@ -144,6 +147,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err == nil {
 				m.todoFile = todoFile
 				m.taskListModel.Refresh(todoFile)
+				m.statusBarModel.Update(todoFile, m.filePath)
 			}
 		}
 		return m, nil
@@ -414,6 +418,7 @@ func (m Model) handleToggleTask(taskID int) (tea.Model, tea.Cmd) {
 	m.message = &Message{Type: "success", Text: msg}
 
 	m.taskListModel.Refresh(m.todoFile)
+	m.statusBarModel.Update(m.todoFile, m.filePath)
 
 	return m, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
 		return clearMessageMsg{}
@@ -460,6 +465,7 @@ func (m Model) handleAddTaskSubmit(text string) (tea.Model, tea.Cmd) {
 		m.message = &Message{Type: "success", Text: "Added note: " + text}
 		m.view = ViewMenu
 		m.menuModel = views.NewMenuModel(m.todoFile, m.width, m.height)
+		m.statusBarModel.Update(m.todoFile, m.filePath)
 		return m, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
 			return clearMessageMsg{}
 		})
@@ -473,6 +479,7 @@ func (m Model) handleAddTaskSubmit(text string) (tea.Model, tea.Cmd) {
 	m.todoFile.Save()
 	m.lastAddedTask = task.Text
 	m.addTaskModel.SetLastAddedWithID(task.Text, task.ID)
+	m.statusBarModel.Update(m.todoFile, m.filePath)
 
 	return m, nil
 }
@@ -485,6 +492,7 @@ func (m Model) handleTextPromptSubmit(text string) (tea.Model, tea.Cmd) {
 		m.view = ViewTaskList
 		m.selectedTaskID = nil
 		m.taskListModel.Refresh(m.todoFile)
+		m.statusBarModel.Update(m.todoFile, m.filePath)
 		return m, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
 			return clearMessageMsg{}
 		})
@@ -508,6 +516,7 @@ func (m Model) handleMoveTask(section *string, taskID int) (tea.Model, tea.Cmd) 
 	m.view = ViewTaskList
 	m.selectedTaskID = nil
 	m.taskListModel.Refresh(m.todoFile)
+	m.statusBarModel.Update(m.todoFile, m.filePath)
 
 	return m, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
 		return clearMessageMsg{}
@@ -527,6 +536,7 @@ func (m Model) handleConfirm(confirmed bool) (tea.Model, tea.Cmd) {
 		m.view = ViewTaskList
 		m.selectedTaskID = nil
 		m.taskListModel.Refresh(m.todoFile)
+		m.statusBarModel.Update(m.todoFile, m.filePath)
 		return m, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
 			return clearMessageMsg{}
 		})
@@ -603,6 +613,9 @@ func (m Model) View() string {
 	default:
 		s += "Unknown view"
 	}
+
+	// Status bar at the bottom
+	s += "\n" + m.statusBarModel.View()
 
 	// Help overlay
 	if m.showHelp {
