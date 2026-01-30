@@ -72,8 +72,14 @@ func NewTaskListModel(todoFile *core.TodoFile, width, height int) TaskListModel 
 	p.Type = paginator.Dots
 	p.ActiveDot = lipgloss.NewStyle().Foreground(colors.Selected).Render("●")
 	p.InactiveDot = lipgloss.NewStyle().Foreground(colors.Hint).Render("○")
-	p.PerPage = height - 10 // Account for header, title, etc.
-	p.SetTotalPages(len(items))
+	p.PerPage = height - 10 // Account for header, title, hints, status bar, etc.
+	// Calculate number of pages (ceiling division)
+	totalPages := (len(items) + p.PerPage - 1) / p.PerPage
+	if p.PerPage <= 0 {
+		p.PerPage = 1
+		totalPages = len(items)
+	}
+	p.SetTotalPages(totalPages)
 
 	return TaskListModel{
 		list:      l,
@@ -175,26 +181,29 @@ func (m TaskListModel) Update(msg tea.Msg) (TaskListModel, tea.Cmd) {
 
 		case key.Matches(msg, key.NewBinding(key.WithKeys("pgup"))):
 			// Page up - jump to previous page
-			if m.paginator.Page > 0 {
+			if m.paginator.PerPage > 0 && m.paginator.Page > 0 {
 				newIndex := (m.paginator.Page - 1) * m.paginator.PerPage
-				if newIndex < 0 {
-					newIndex = 0
-				}
-				for i := 0; i < m.list.Index()-newIndex; i++ {
-					m.list.CursorUp()
+				if newIndex >= 0 && newIndex < m.list.Index() {
+					steps := m.list.Index() - newIndex
+					for i := 0; i < steps; i++ {
+						m.list.CursorUp()
+					}
 				}
 			}
 
 		case key.Matches(msg, key.NewBinding(key.WithKeys("pgdown"))):
 			// Page down - jump to next page
-			if m.paginator.Page < m.paginator.TotalPages-1 {
+			if m.paginator.PerPage > 0 && m.paginator.Page < m.paginator.TotalPages-1 {
 				newIndex := (m.paginator.Page + 1) * m.paginator.PerPage
 				totalItems := len(m.list.Items())
 				if newIndex >= totalItems {
 					newIndex = totalItems - 1
 				}
-				for i := 0; i < newIndex-m.list.Index(); i++ {
-					m.list.CursorDown()
+				if newIndex > m.list.Index() {
+					steps := newIndex - m.list.Index()
+					for i := 0; i < steps; i++ {
+						m.list.CursorDown()
+					}
 				}
 			}
 		}
@@ -266,7 +275,13 @@ func (m *TaskListModel) Refresh(todoFile *core.TodoFile) {
 	m.settings = config.GetSettings()
 	items := buildTaskListItems(todoFile, m.settings)
 	m.list.SetItems(items)
-	m.paginator.SetTotalPages(len(items))
+	// Calculate number of pages (ceiling division)
+	totalPages := (len(items) + m.paginator.PerPage - 1) / m.paginator.PerPage
+	if m.paginator.PerPage <= 0 {
+		m.paginator.PerPage = 1
+		totalPages = len(items)
+	}
+	m.paginator.SetTotalPages(totalPages)
 }
 
 // SelectedTask returns the currently selected task ID, if any
