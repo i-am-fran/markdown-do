@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/paginator"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/config"
@@ -39,11 +40,12 @@ func (i taskListItem) FilterValue() string { return i.Title() }
 
 // TaskListModel is the task list view model
 type TaskListModel struct {
-	list     list.Model
-	todoFile *core.TodoFile
-	settings config.Settings
-	width    int
-	height   int
+	list      list.Model
+	paginator paginator.Model
+	todoFile  *core.TodoFile
+	settings  config.Settings
+	width     int
+	height    int
 }
 
 // NewTaskListModel creates a new task list model
@@ -65,12 +67,21 @@ func NewTaskListModel(todoFile *core.TodoFile, width, height int) TaskListModel 
 	l.SetShowHelp(false)
 	l.Styles.Title = lipgloss.NewStyle().Bold(true).MarginBottom(1)
 
+	// Initialize paginator
+	p := paginator.New()
+	p.Type = paginator.Dots
+	p.ActiveDot = lipgloss.NewStyle().Foreground(colors.Selected).Render("●")
+	p.InactiveDot = lipgloss.NewStyle().Foreground(colors.Hint).Render("○")
+	p.PerPage = height - 10 // Account for header, title, etc.
+	p.SetTotalPages(len(items))
+
 	return TaskListModel{
-		list:     l,
-		todoFile: todoFile,
-		settings: settings,
-		width:    width,
-		height:   height,
+		list:      l,
+		paginator: p,
+		todoFile:  todoFile,
+		settings:  settings,
+		width:     width,
+		height:    height,
 	}
 }
 
@@ -161,11 +172,43 @@ func (m TaskListModel) Update(msg tea.Msg) (TaskListModel, tea.Cmd) {
 
 		case key.Matches(msg, key.NewBinding(key.WithKeys("v"))):
 			return m, func() tea.Msg { return ToggleShowCompletedMsg{} }
+
+		case key.Matches(msg, key.NewBinding(key.WithKeys("pgup"))):
+			// Page up - jump to previous page
+			if m.paginator.Page > 0 {
+				newIndex := (m.paginator.Page - 1) * m.paginator.PerPage
+				if newIndex < 0 {
+					newIndex = 0
+				}
+				for i := 0; i < m.list.Index()-newIndex; i++ {
+					m.list.CursorUp()
+				}
+			}
+
+		case key.Matches(msg, key.NewBinding(key.WithKeys("pgdown"))):
+			// Page down - jump to next page
+			if m.paginator.Page < m.paginator.TotalPages-1 {
+				newIndex := (m.paginator.Page + 1) * m.paginator.PerPage
+				totalItems := len(m.list.Items())
+				if newIndex >= totalItems {
+					newIndex = totalItems - 1
+				}
+				for i := 0; i < newIndex-m.list.Index(); i++ {
+					m.list.CursorDown()
+				}
+			}
 		}
 	}
 
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
+	
+	// Update paginator based on list cursor
+	if m.paginator.PerPage > 0 {
+		currentPage := m.list.Index() / m.paginator.PerPage
+		m.paginator.Page = currentPage
+	}
+	
 	return m, cmd
 }
 
@@ -201,7 +244,20 @@ func (m TaskListModel) View() string {
 		toggleHint = "v hide done"
 	}
 	hint := fmt.Sprintf("c complete  d delete  e edit  m move  %s  esc back", toggleHint)
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
+	
+	view := m.list.View()
+	
+	// Show paginator if there are multiple pages
+	if m.paginator.TotalPages > 1 {
+		paginatorView := "\n" + lipgloss.NewStyle().
+			Foreground(colors.Hint).
+			Align(lipgloss.Center).
+			Width(m.width).
+			Render(m.paginator.View())
+		view += paginatorView
+	}
+	
+	return view + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 
 // Refresh refreshes the task list
@@ -210,6 +266,7 @@ func (m *TaskListModel) Refresh(todoFile *core.TodoFile) {
 	m.settings = config.GetSettings()
 	items := buildTaskListItems(todoFile, m.settings)
 	m.list.SetItems(items)
+	m.paginator.SetTotalPages(len(items))
 }
 
 // SelectedTask returns the currently selected task ID, if any
