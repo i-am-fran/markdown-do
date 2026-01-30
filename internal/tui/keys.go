@@ -17,6 +17,7 @@ type KeyMap struct {
 	Quit     key.Binding
 	Yes      key.Binding
 	No       key.Binding
+	Help     key.Binding
 }
 
 // DefaultKeyMap returns the default key bindings
@@ -66,5 +67,23 @@ func DefaultKeyMap() KeyMap {
 			key.WithKeys("n", "N"),
 			key.WithHelp("n", "no"),
 		),
+		Help: key.NewBinding(
+			key.WithKeys("?"),
+			key.WithHelp("?", "help"),
+		),
+	}
+}
+
+// ShortHelp returns a short help description
+func (k KeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Help, k.Quit}
+}
+
+// FullHelp returns a full help description
+func (k KeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.Up, k.Down, k.Enter, k.Escape},
+		{k.Complete, k.Delete, k.Edit, k.Move},
+		{k.Help, k.Quit},
 	}
 }

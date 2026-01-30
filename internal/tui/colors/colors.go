@@ -67,4 +67,11 @@ var (
 		ANSI256:   "93", // purple
 		ANSI:      "5",  // magenta
 	}
+
+	// Border - Cyan for borders (ANSI 6 = cyan)
+	Border = lipgloss.CompleteColor{
+		TrueColor: "#00CED1",
+		ANSI256:   "51", // cyan
+		ANSI:      "6",  // cyan
+	}
 )

@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/charmbracelet/bubbles/help"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/cli"
@@ -53,6 +54,8 @@ type Model struct {
 	lastAddedTask  string
 	width          int
 	height         int
+	showHelp       bool
+	keys           KeyMap
 
 	// Sub-models for each view
 	menuModel            views.MenuModel
@@ -67,14 +70,17 @@ type Model struct {
 	lintModel            views.LintModel
 	deleteCompletedModel views.DeleteCompletedModel
 	confirmModel         views.ConfirmModel
+	helpModel            help.Model
 }
 
 // New creates a new TUI model
 func New() Model {
 	return Model{
-		view:   ViewMenu,
-		width:  80,
-		height: 24,
+		view:      ViewMenu,
+		width:     80,
+		height:    24,
+		keys:      DefaultKeyMap(),
+		helpModel: help.New(),
 	}
 }
 
@@ -270,6 +276,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Global quit with ctrl+c
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
+		}
+		// Global help toggle with ?
+		if msg.String() == "?" {
+			m.showHelp = !m.showHelp
+			return m, nil
 		}
 		// Global shortcut for adding new task with ctrl+n
 		if msg.String() == "ctrl+n" {
@@ -591,6 +602,32 @@ func (m Model) View() string {
 		s += m.deleteCompletedModel.View()
 	default:
 		s += "Unknown view"
+	}
+
+	// Help overlay
+	if m.showHelp {
+		helpView := m.helpModel.View(m.keys)
+		helpStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(colors.Border).
+			Padding(1, 2).
+			MaxWidth(m.width - 4)
+		overlay := helpStyle.Render(helpView)
+		
+		// Center the help overlay
+		lines := lipgloss.Height(s)
+		helpHeight := lipgloss.Height(overlay)
+		padding := (lines - helpHeight) / 2
+		if padding < 0 {
+			padding = 0
+		}
+		
+		s = lipgloss.PlaceVertical(lines, lipgloss.Center,
+			lipgloss.JoinVertical(lipgloss.Left,
+				lipgloss.NewStyle().Height(padding).Render(""),
+				lipgloss.PlaceHorizontal(m.width, lipgloss.Center, overlay),
+			),
+		)
 	}
 
 	return s
