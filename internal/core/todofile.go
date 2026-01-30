@@ -939,3 +939,22 @@ func (tf *TodoFile) Save() error {
 	}
 	return os.WriteFile(tf.FilePath, []byte(content), 0644)
 }
+
+// Snapshot creates a snapshot of the current file state
+func (tf *TodoFile) Snapshot() []string {
+	// Return a deep copy of lines
+	snapshot := make([]string, len(tf.lines))
+	copy(snapshot, tf.lines)
+	return snapshot
+}
+
+// Restore restores the file from a snapshot
+func (tf *TodoFile) Restore(snapshot []string) {
+	// Restore lines from snapshot
+	tf.lines = make([]string, len(snapshot))
+	copy(tf.lines, snapshot)
+	
+	// Re-parse the content
+	tf.parse(strings.Join(tf.lines, "\n"))
+}
+
