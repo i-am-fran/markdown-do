@@ -299,6 +299,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.toastModel, cmd = m.toastModel.Update(msg)
 		return m, cmd
 
+	case views.AnimationTickMsg:
+		// Update animations in task list
+		if m.view == ViewTaskList {
+			var cmd tea.Cmd
+			m.taskListModel, cmd = m.taskListModel.Update(msg)
+			return m, cmd
+		}
+		return m, nil
+
 	case tea.KeyMsg:
 		// Handle palette first if it's open
 		if m.showPalette {
@@ -469,10 +478,14 @@ func (m Model) handleToggleTask(taskID int) (tea.Model, tea.Cmd) {
 	m.taskListModel.Refresh(m.todoFile)
 	m.statusBarModel.Update(m.todoFile, m.filePath)
 
+	// Start flash animation
+	animCmd := m.taskListModel.StartFlashAnimation(taskID)
+
 	// Show toast notification
-	cmd := m.toastModel.Show(msg, 5*time.Second)
+	toastCmd := m.toastModel.Show(msg, 5*time.Second)
 	
-	return m, cmd
+	// Return both commands
+	return m, tea.Batch(toastCmd, animCmd)
 }
 
 func (m Model) handleTaskAction(action views.TaskAction, taskID int) (tea.Model, tea.Cmd) {
@@ -601,10 +614,12 @@ func (m Model) handleConfirm(confirmed bool) (tea.Model, tea.Cmd) {
 	}
 
 	if m.selectedTaskID != nil && m.todoFile != nil {
+		taskID := *m.selectedTaskID
+		
 		// Create snapshot before delete
 		snapshot := m.todoFile.Snapshot()
 		
-		m.todoFile.DeleteTask(*m.selectedTaskID)
+		m.todoFile.DeleteTask(taskID)
 		m.todoFile.Save()
 		
 		// Add to undo stack
@@ -620,8 +635,14 @@ func (m Model) handleConfirm(confirmed bool) (tea.Model, tea.Cmd) {
 		m.taskListModel.Refresh(m.todoFile)
 		m.statusBarModel.Update(m.todoFile, m.filePath)
 		
+		// Start collapse animation
+		animCmd := m.taskListModel.StartCollapseAnimation(taskID)
+		
 		// Show toast notification
-		return m, m.toastModel.Show("Task deleted", 5*time.Second)
+		toastCmd := m.toastModel.Show("Task deleted", 5*time.Second)
+		
+		// Return both commands
+		return m, tea.Batch(toastCmd, animCmd)
 	}
 
 	return m, nil

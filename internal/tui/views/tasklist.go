@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -10,6 +11,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/config"
 	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdowndo/internal/tui/animation"
 	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
@@ -40,12 +42,13 @@ func (i taskListItem) FilterValue() string { return i.Title() }
 
 // TaskListModel is the task list view model
 type TaskListModel struct {
-	list      list.Model
-	paginator paginator.Model
-	todoFile  *core.TodoFile
-	settings  config.Settings
-	width     int
-	height    int
+	list       list.Model
+	paginator  paginator.Model
+	todoFile   *core.TodoFile
+	settings   config.Settings
+	width      int
+	height     int
+	animations map[int]*animation.State // Task ID -> animation state
 }
 
 // NewTaskListModel creates a new task list model
@@ -82,12 +85,13 @@ func NewTaskListModel(todoFile *core.TodoFile, width, height int) TaskListModel 
 	p.SetTotalPages(totalPages)
 
 	return TaskListModel{
-		list:      l,
-		paginator: p,
-		todoFile:  todoFile,
-		settings:  settings,
-		width:     width,
-		height:    height,
+		list:       l,
+		paginator:  p,
+		todoFile:   todoFile,
+		settings:   settings,
+		width:      width,
+		height:     height,
+		animations: make(map[int]*animation.State),
 	}
 }
 
@@ -136,6 +140,23 @@ func (m TaskListModel) Update(msg tea.Msg) (TaskListModel, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		m.list.SetSize(msg.Width, msg.Height-6)
+		return m, nil
+
+	case AnimationTickMsg:
+		// Update all active animations
+		anyActive := false
+		for taskID, state := range m.animations {
+			if state.Update() {
+				anyActive = true
+			} else {
+				delete(m.animations, taskID)
+			}
+		}
+		
+		// Continue ticking if any animations are active
+		if anyActive && m.settings.EnableAnimations {
+			return m, m.animationTick()
+		}
 		return m, nil
 
 	case tea.KeyMsg:
@@ -325,6 +346,38 @@ type MoveTaskMsg struct {
 
 // ToggleShowCompletedMsg is sent to toggle showing completed tasks
 type ToggleShowCompletedMsg struct{}
+
+// AnimationTickMsg is sent to update animations
+type AnimationTickMsg struct {
+	Time time.Time
+}
+
+// animationTick returns a tick command for animations
+func (m TaskListModel) animationTick() tea.Cmd {
+	return tea.Tick(16*time.Millisecond, func(t time.Time) tea.Msg {
+		return AnimationTickMsg{Time: t}
+	})
+}
+
+// StartFlashAnimation starts a flash animation for a task
+func (m *TaskListModel) StartFlashAnimation(taskID int) tea.Cmd {
+	if !m.settings.EnableAnimations {
+		return nil
+	}
+	
+	m.animations[taskID] = animation.NewFlashAnimation()
+	return m.animationTick()
+}
+
+// StartCollapseAnimation starts a collapse animation for a task
+func (m *TaskListModel) StartCollapseAnimation(taskID int) tea.Cmd {
+	if !m.settings.EnableAnimations {
+		return nil
+	}
+	
+	m.animations[taskID] = animation.NewCollapseAnimation()
+	return m.animationTick()
+}
 
 // FormatTaskListHints returns the keyboard hints
 func FormatTaskListHints(showCompleted bool) string {
