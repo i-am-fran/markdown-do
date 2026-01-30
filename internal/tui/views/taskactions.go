@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/core"
 	"github.com/i-am-fran/markdowndo/internal/tui/colors"
+	"github.com/i-am-fran/markdowndo/internal/tui/markdown"
 )
 
 // TaskAction represents a task action
@@ -106,8 +107,16 @@ func (m TaskActionsModel) Update(msg tea.Msg) (TaskActionsModel, tea.Cmd) {
 
 // View implements tea.Model
 func (m TaskActionsModel) View() string {
+	// Render task text with markdown styling
+	taskPreview := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(colors.Border).
+		Padding(1, 2).
+		Width(m.width - 4).
+		Render(markdown.Render(m.task.Text))
+	
 	hint := "enter select  esc back"
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
+	return taskPreview + "\n\n" + m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 
 // TaskActionSelectMsg is sent when a task action is selected

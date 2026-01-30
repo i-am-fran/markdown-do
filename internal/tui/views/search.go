@@ -3,6 +3,7 @@ package views
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -10,6 +11,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/core"
 	"github.com/i-am-fran/markdowndo/internal/tui/colors"
+	"github.com/i-am-fran/markdowndo/internal/tui/markdown"
+	"github.com/sahilm/fuzzy"
 )
 
 // SearchResult represents a search result
@@ -32,7 +35,40 @@ func (i searchResultItem) Title() string {
 	return fmt.Sprintf("%s %s", checkbox, i.result.Task.Text)
 }
 func (i searchResultItem) Description() string { return "" }
-func (i searchResultItem) FilterValue() string { return i.Title() }
+func (i searchResultItem) FilterValue() string { return i.result.Task.Text }
+
+// HighlightMatches highlights the matched characters in the text
+func (i searchResultItem) HighlightedTitle(query string) string {
+	checkbox := "[ ]"
+	if i.result.Task.Status == core.TaskCompleted {
+		checkbox = "[x]"
+	}
+	
+	if query == "" {
+		return fmt.Sprintf("%s %s", checkbox, i.result.Task.Text)
+	}
+	
+	// Find fuzzy matches
+	matches := fuzzy.Find(query, []string{i.result.Task.Text})
+	if len(matches) == 0 {
+		return fmt.Sprintf("%s %s", checkbox, i.result.Task.Text)
+	}
+	
+	// Highlight matched characters
+	match := matches[0]
+	highlighted := ""
+	lastIdx := 0
+	for _, idx := range match.MatchedIndexes {
+		if idx < len(i.result.Task.Text) {
+			highlighted += i.result.Task.Text[lastIdx:idx]
+			highlighted += lipgloss.NewStyle().Foreground(colors.Selected).Bold(true).Render(string(i.result.Task.Text[idx]))
+			lastIdx = idx + 1
+		}
+	}
+	highlighted += i.result.Task.Text[lastIdx:]
+	
+	return fmt.Sprintf("%s %s", checkbox, highlighted)
+}
 
 type backItem struct{}
 
@@ -78,7 +114,7 @@ func NewSearchModel(width, height int) SearchModel {
 	l := list.New([]list.Item{}, delegate, width, height-6)
 	l.Title = "Search results:"
 	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
+	l.SetFilteringEnabled(true) // Enable fuzzy filtering
 	l.SetShowHelp(false)
 	l.Styles.Title = lipgloss.NewStyle().Bold(true).MarginBottom(1)
 
@@ -476,6 +512,88 @@ func (m *SearchModel) setupMoveMode() {
 	m.moveList.SetItems(items)
 }
 
+// renderResultsWithPreview renders the search results with a preview panel
+func (m SearchModel) renderResultsWithPreview() string {
+	// Get selected item for preview
+	selectedItem := m.list.SelectedItem()
+	
+	// Calculate split widths (60% list, 40% preview)
+	listWidth := int(float64(m.width) * 0.6)
+	previewWidth := m.width - listWidth - 2
+	
+	// Adjust list size for split view
+	listView := m.list.View()
+	
+	// Generate preview
+	preview := ""
+	if item, ok := selectedItem.(searchResultItem); ok {
+		preview = m.renderTaskPreview(item.result, previewWidth)
+	}
+	
+	if preview == "" {
+		return listView
+	}
+	
+	// Join list and preview side by side
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		listView,
+		lipgloss.NewStyle().
+			Width(previewWidth).
+			Height(m.height - 6).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(colors.Border).
+			Padding(1).
+			Render(preview),
+	)
+}
+
+// renderTaskPreview renders a preview of the task
+func (m SearchModel) renderTaskPreview(result SearchResult, width int) string {
+	var lines []string
+	
+	// File path
+	if m.recursive {
+		lines = append(lines, lipgloss.NewStyle().
+			Foreground(colors.Section).
+			Bold(true).
+			Render("File: "+result.RelativePath))
+		lines = append(lines, "")
+	}
+	
+	// Section
+	if result.Task.Section != nil {
+		lines = append(lines, lipgloss.NewStyle().
+			Foreground(colors.Section).
+			Render("Section: "+*result.Task.Section))
+		lines = append(lines, "")
+	}
+	
+	// Task text with markdown rendering
+	lines = append(lines, lipgloss.NewStyle().
+		Bold(true).
+		Render("Task:"))
+	lines = append(lines, "")
+	
+	// Render markdown
+	rendered := markdown.Render(result.Task.Text)
+	lines = append(lines, rendered)
+	
+	// Status
+	lines = append(lines, "")
+	status := "Pending"
+	statusColor := colors.Warning
+	if result.Task.Status == core.TaskCompleted {
+		status = "Completed"
+		statusColor = colors.Success
+	}
+	lines = append(lines, lipgloss.NewStyle().
+		Foreground(statusColor).
+		Render("Status: "+status))
+	
+	return strings.Join(lines, "\n")
+}
+
 // View implements tea.Model
 func (m SearchModel) View() string {
 	switch m.viewMode {
@@ -497,7 +615,7 @@ func (m SearchModel) View() string {
 		if m.message != "" {
 			msg := lipgloss.NewStyle().Foreground(colors.Success).Render("✓ "+m.message) + "\n\n"
 			m.message = ""
-			return msg + m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render("enter select  esc new search")
+			return msg + m.renderResultsWithPreview() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render("enter select  / filter  esc new search")
 		}
 
 		if len(m.results) == 0 {
@@ -505,8 +623,8 @@ func (m SearchModel) View() string {
 				lipgloss.NewStyle().Foreground(colors.Hint).Render("esc new search")
 		}
 
-		hint := "enter select  esc new search"
-		return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
+		hint := "enter select  / filter  esc new search"
+		return m.renderResultsWithPreview() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 
 	case "taskActions":
 		if m.selectedResult == nil {

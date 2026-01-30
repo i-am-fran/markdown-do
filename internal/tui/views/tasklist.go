@@ -2,13 +2,16 @@ package views
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/paginator"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/i-am-fran/markdowndo/internal/config"
 	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdowndo/internal/tui/animation"
 	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
@@ -39,11 +42,13 @@ func (i taskListItem) FilterValue() string { return i.Title() }
 
 // TaskListModel is the task list view model
 type TaskListModel struct {
-	list     list.Model
-	todoFile *core.TodoFile
-	settings config.Settings
-	width    int
-	height   int
+	list       list.Model
+	paginator  paginator.Model
+	todoFile   *core.TodoFile
+	settings   config.Settings
+	width      int
+	height     int
+	animations map[int]*animation.State // Task ID -> animation state
 }
 
 // NewTaskListModel creates a new task list model
@@ -65,12 +70,28 @@ func NewTaskListModel(todoFile *core.TodoFile, width, height int) TaskListModel 
 	l.SetShowHelp(false)
 	l.Styles.Title = lipgloss.NewStyle().Bold(true).MarginBottom(1)
 
+	// Initialize paginator
+	p := paginator.New()
+	p.Type = paginator.Dots
+	p.ActiveDot = lipgloss.NewStyle().Foreground(colors.Selected).Render("●")
+	p.InactiveDot = lipgloss.NewStyle().Foreground(colors.Hint).Render("○")
+	p.PerPage = height - 10 // Account for header, title, hints, status bar, etc.
+	// Calculate number of pages (ceiling division)
+	totalPages := (len(items) + p.PerPage - 1) / p.PerPage
+	if p.PerPage <= 0 {
+		p.PerPage = 1
+		totalPages = len(items)
+	}
+	p.SetTotalPages(totalPages)
+
 	return TaskListModel{
-		list:     l,
-		todoFile: todoFile,
-		settings: settings,
-		width:    width,
-		height:   height,
+		list:       l,
+		paginator:  p,
+		todoFile:   todoFile,
+		settings:   settings,
+		width:      width,
+		height:     height,
+		animations: make(map[int]*animation.State),
 	}
 }
 
@@ -121,6 +142,23 @@ func (m TaskListModel) Update(msg tea.Msg) (TaskListModel, tea.Cmd) {
 		m.list.SetSize(msg.Width, msg.Height-6)
 		return m, nil
 
+	case AnimationTickMsg:
+		// Update all active animations
+		anyActive := false
+		for taskID, state := range m.animations {
+			if state.Update() {
+				anyActive = true
+			} else {
+				delete(m.animations, taskID)
+			}
+		}
+		
+		// Continue ticking if any animations are active
+		if anyActive && m.settings.EnableAnimations {
+			return m, m.animationTick()
+		}
+		return m, nil
+
 	case tea.KeyMsg:
 		// Get current item for hotkey actions
 		item, ok := m.list.SelectedItem().(taskListItem)
@@ -161,11 +199,46 @@ func (m TaskListModel) Update(msg tea.Msg) (TaskListModel, tea.Cmd) {
 
 		case key.Matches(msg, key.NewBinding(key.WithKeys("v"))):
 			return m, func() tea.Msg { return ToggleShowCompletedMsg{} }
+
+		case key.Matches(msg, key.NewBinding(key.WithKeys("pgup"))):
+			// Page up - jump to previous page
+			if m.paginator.PerPage > 0 && m.paginator.Page > 0 {
+				newIndex := (m.paginator.Page - 1) * m.paginator.PerPage
+				if newIndex >= 0 && newIndex < m.list.Index() {
+					steps := m.list.Index() - newIndex
+					for i := 0; i < steps; i++ {
+						m.list.CursorUp()
+					}
+				}
+			}
+
+		case key.Matches(msg, key.NewBinding(key.WithKeys("pgdown"))):
+			// Page down - jump to next page
+			if m.paginator.PerPage > 0 && m.paginator.Page < m.paginator.TotalPages-1 {
+				newIndex := (m.paginator.Page + 1) * m.paginator.PerPage
+				totalItems := len(m.list.Items())
+				if newIndex >= totalItems {
+					newIndex = totalItems - 1
+				}
+				if newIndex > m.list.Index() {
+					steps := newIndex - m.list.Index()
+					for i := 0; i < steps; i++ {
+						m.list.CursorDown()
+					}
+				}
+			}
 		}
 	}
 
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
+	
+	// Update paginator based on list cursor
+	if m.paginator.PerPage > 0 {
+		currentPage := m.list.Index() / m.paginator.PerPage
+		m.paginator.Page = currentPage
+	}
+	
 	return m, cmd
 }
 
@@ -201,7 +274,20 @@ func (m TaskListModel) View() string {
 		toggleHint = "v hide done"
 	}
 	hint := fmt.Sprintf("c complete  d delete  e edit  m move  %s  esc back", toggleHint)
-	return m.list.View() + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
+	
+	view := m.list.View()
+	
+	// Show paginator if there are multiple pages
+	if m.paginator.TotalPages > 1 {
+		paginatorView := "\n" + lipgloss.NewStyle().
+			Foreground(colors.Hint).
+			Align(lipgloss.Center).
+			Width(m.width).
+			Render(m.paginator.View())
+		view += paginatorView
+	}
+	
+	return view + "\n\n" + lipgloss.NewStyle().Foreground(colors.Hint).Render(hint)
 }
 
 // Refresh refreshes the task list
@@ -210,6 +296,13 @@ func (m *TaskListModel) Refresh(todoFile *core.TodoFile) {
 	m.settings = config.GetSettings()
 	items := buildTaskListItems(todoFile, m.settings)
 	m.list.SetItems(items)
+	// Calculate number of pages (ceiling division)
+	totalPages := (len(items) + m.paginator.PerPage - 1) / m.paginator.PerPage
+	if m.paginator.PerPage <= 0 {
+		m.paginator.PerPage = 1
+		totalPages = len(items)
+	}
+	m.paginator.SetTotalPages(totalPages)
 }
 
 // SelectedTask returns the currently selected task ID, if any
@@ -253,6 +346,38 @@ type MoveTaskMsg struct {
 
 // ToggleShowCompletedMsg is sent to toggle showing completed tasks
 type ToggleShowCompletedMsg struct{}
+
+// AnimationTickMsg is sent to update animations
+type AnimationTickMsg struct {
+	Time time.Time
+}
+
+// animationTick returns a tick command for animations
+func (m TaskListModel) animationTick() tea.Cmd {
+	return tea.Tick(16*time.Millisecond, func(t time.Time) tea.Msg {
+		return AnimationTickMsg{Time: t}
+	})
+}
+
+// StartFlashAnimation starts a flash animation for a task
+func (m *TaskListModel) StartFlashAnimation(taskID int) tea.Cmd {
+	if !m.settings.EnableAnimations {
+		return nil
+	}
+	
+	m.animations[taskID] = animation.NewFlashAnimation()
+	return m.animationTick()
+}
+
+// StartCollapseAnimation starts a collapse animation for a task
+func (m *TaskListModel) StartCollapseAnimation(taskID int) tea.Cmd {
+	if !m.settings.EnableAnimations {
+		return nil
+	}
+	
+	m.animations[taskID] = animation.NewCollapseAnimation()
+	return m.animationTick()
+}
 
 // FormatTaskListHints returns the keyboard hints
 func FormatTaskListHints(showCompleted bool) string {
