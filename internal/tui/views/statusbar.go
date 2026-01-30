@@ -51,10 +51,14 @@ func (m StatusBarModel) View() string {
 		}
 	}
 
-	// Format file path (use full path if short enough, otherwise just filename)
+	// Format file path (show folder + filename for better context)
 	displayPath := m.filePath
 	if len(m.filePath) >= 40 {
-		displayPath = filepath.Base(m.filePath)
+		// Show parent folder + filename instead of just filename
+		dir := filepath.Dir(m.filePath)
+		filename := filepath.Base(m.filePath)
+		parentDir := filepath.Base(dir)
+		displayPath = filepath.Join(parentDir, filename)
 	}
 
 	// Left side: task count

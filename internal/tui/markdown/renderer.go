@@ -18,13 +18,21 @@ var (
 func initRenderer() {
 	rendererOnce.Do(func() {
 		var err error
+		// Use a simpler style that's more compatible
 		renderer, err = glamour.NewTermRenderer(
 			glamour.WithAutoStyle(),
 			glamour.WithWordWrap(80),
+			glamour.WithPreservedNewLines(),
 		)
 		if err != nil {
-			// Fallback to no styling if renderer fails
-			renderer = nil
+			// Try with default style as fallback
+			renderer, err = glamour.NewTermRenderer(
+				glamour.WithStandardStyle("auto"),
+			)
+			if err != nil {
+				// Fallback to no styling if renderer fails
+				renderer = nil
+			}
 		}
 	})
 }
