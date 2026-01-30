@@ -614,8 +614,11 @@ func (m Model) View() string {
 		s += "Unknown view"
 	}
 
-	// Status bar at the bottom
-	s += "\n" + m.statusBarModel.View()
+	// Status bar at the bottom (if enabled in settings)
+	settings := config.GetSettings()
+	if settings.ShowStatusBar {
+		s += "\n" + m.statusBarModel.View()
+	}
 
 	// Help overlay
 	if m.showHelp {

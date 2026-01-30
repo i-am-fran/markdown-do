@@ -88,6 +88,12 @@ func UpdateSettings(updates map[string]interface{}) error {
 	if v, ok := updates["theme"].(string); ok {
 		current.Theme = v
 	}
+	if v, ok := updates["showStatusBar"].(bool); ok {
+		current.ShowStatusBar = v
+	}
+	if v, ok := updates["enableAnimations"].(bool); ok {
+		current.EnableAnimations = v
+	}
 
 	return SaveSettings(current)
 }
