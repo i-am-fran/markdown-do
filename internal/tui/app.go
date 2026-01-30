@@ -72,16 +72,19 @@ type Model struct {
 	confirmModel         views.ConfirmModel
 	helpModel            help.Model
 	statusBarModel       views.StatusBarModel
+	paletteModel         views.PaletteModel
+	showPalette          bool
 }
 
 // New creates a new TUI model
 func New() Model {
 	return Model{
-		view:      ViewMenu,
-		width:     80,
-		height:    24,
-		keys:      DefaultKeyMap(),
-		helpModel: help.New(),
+		view:         ViewMenu,
+		width:        80,
+		height:       24,
+		keys:         DefaultKeyMap(),
+		helpModel:    help.New(),
+		paletteModel: views.NewPaletteModel(80, 24),
 	}
 }
 
@@ -128,6 +131,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		m.statusBarModel.SetWidth(msg.Width)
+		m.paletteModel, _ = m.paletteModel.Update(msg)
 		return m, nil
 
 	case todoFileLoadedMsg:
@@ -276,7 +280,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.taskListModel.Refresh(m.todoFile)
 		return m, nil
 
+	case views.PaletteSelectMsg:
+		m.showPalette = false
+		return m.handlePaletteAction(msg.Action)
+
+	case views.ClosePaletteMsg:
+		m.showPalette = false
+		return m, nil
+
 	case tea.KeyMsg:
+		// Handle palette first if it's open
+		if m.showPalette {
+			var cmd tea.Cmd
+			m.paletteModel, cmd = m.paletteModel.Update(msg)
+			return m, cmd
+		}
+		
 		// Global quit with ctrl+c
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
@@ -284,6 +303,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Global help toggle with ?
 		if msg.String() == "?" {
 			m.showHelp = !m.showHelp
+			return m, nil
+		}
+		// Global command palette toggle with ctrl+k
+		if msg.String() == "ctrl+k" {
+			m.showPalette = !m.showPalette
 			return m, nil
 		}
 		// Global shortcut for adding new task with ctrl+n
@@ -545,6 +569,38 @@ func (m Model) handleConfirm(confirmed bool) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m Model) handlePaletteAction(action views.PaletteAction) (tea.Model, tea.Cmd) {
+	switch action {
+	case views.PaletteActionAddTask:
+		m.view = ViewAddTask
+		m.addTaskModel = views.NewAddTaskModel(true, "", "", m.width, m.height)
+		return m, m.addTaskModel.Init()
+	case views.PaletteActionListTasks:
+		m.view = ViewTaskList
+		m.taskListModel = views.NewTaskListModel(m.todoFile, m.width, m.height)
+		return m, nil
+	case views.PaletteActionSearch:
+		m.view = ViewSearch
+		m.searchModel = views.NewSearchModel(m.width, m.height)
+		return m, m.searchModel.Init()
+	case views.PaletteActionSubfolders:
+		m.view = ViewSubfolders
+		m.subfoldersModel = views.NewSubfoldersModel(m.width, m.height)
+		return m, m.subfoldersModel.Init()
+	case views.PaletteActionSettings:
+		m.view = ViewSettings
+		m.settingsModel = views.NewSettingsModel(m.width, m.height)
+		return m, nil
+	case views.PaletteActionLint:
+		m.view = ViewLint
+		m.lintModel = views.NewLintModel(m.width, m.height)
+		return m, m.lintModel.Init()
+	case views.PaletteActionQuit:
+		return m, tea.Quit
+	}
+	return m, nil
+}
+
 // View implements tea.Model
 func (m Model) View() string {
 	if m.todoFile == nil {
@@ -644,6 +700,11 @@ func (m Model) View() string {
 				lipgloss.PlaceHorizontal(m.width, lipgloss.Center, overlay),
 			),
 		)
+	}
+
+	// Command palette overlay (higher priority than help)
+	if m.showPalette {
+		s = m.paletteModel.View()
 	}
 
 	return s
