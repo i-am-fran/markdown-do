@@ -49,6 +49,58 @@ func formatTaskLine(task *core.Task, showFile string, displayID int) string {
 	return fmt.Sprintf("  %s %s %s%s", idStr, checkbox, text, file)
 }
 
+// loadTaskFile loads the task and file for a given ID, checking cache if needed
+func loadTaskFile(id int) (*core.TodoFile, *core.Task, int, string, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, nil, 0, "", err
+	}
+
+	filePath, err := core.FindDefaultTodoFile(cwd)
+	if err != nil {
+		return nil, nil, 0, "", err
+	}
+
+	todoFile, err := core.Load(filePath)
+	if err != nil {
+		return nil, nil, 0, "", err
+	}
+
+	task := todoFile.GetTask(id)
+	localID := id
+	
+	if task == nil {
+		// Task not found in local file, try to use cache
+		cache, err := core.LoadCache()
+		if err == nil && cache != nil {
+			if cachedTask, exists := cache.Tasks[id]; exists {
+				// Load the file from cache
+				todoFile, err = core.Load(cachedTask.FilePath)
+				if err != nil {
+					return nil, nil, 0, "", fmt.Errorf("error loading cached file %s: %v", cachedTask.FilePath, err)
+				}
+				
+				// Get the task using the local ID
+				task = todoFile.GetTask(cachedTask.LocalID)
+				if task == nil {
+					return nil, nil, 0, "", fmt.Errorf("task %d not found in cached file", id)
+				}
+				
+				// Use the cached file path and local ID
+				filePath = cachedTask.FilePath
+				localID = cachedTask.LocalID
+			} else {
+				return nil, nil, 0, "", fmt.Errorf("task %d not found", id)
+			}
+		} else {
+			return nil, nil, 0, "", fmt.Errorf("task %d not found", id)
+		}
+	}
+	
+	return todoFile, task, localID, filePath, nil
+}
+
+
 // ListTasks lists all tasks
 func ListTasks(recursive bool) error {
 	cwd, err := os.Getwd()
@@ -68,6 +120,9 @@ func ListTasks(recursive bool) error {
 		}
 
 		globalTaskID := 1
+		cache := &core.Cache{
+			Tasks: make(map[int]core.TaskCache),
+		}
 
 		for dir, files := range filesByDir {
 			fmt.Println(bold(cyan(dir)))
@@ -84,13 +139,30 @@ func ListTasks(recursive bool) error {
 				} else {
 					for _, task := range tasks {
 						fmt.Println(formatTaskLine(&task, "", globalTaskID))
+						
+						// Store task in cache
+						cache.Tasks[globalTaskID] = core.TaskCache{
+							GlobalID: globalTaskID,
+							FilePath: file.Path,
+							LocalID:  task.ID,
+							TaskText: task.Text,
+						}
+						
 						globalTaskID++
 					}
 				}
 			}
 			fmt.Println()
 		}
+		
+		// Save cache to disk
+		if err := core.SaveCache(cache); err != nil {
+			// Don't fail if cache can't be saved, just log a warning
+			fmt.Fprintf(os.Stderr, yellow("Warning: Could not save task cache: %v\n"), err)
+		}
 	} else {
+		// Clear cache when listing non-recursively
+		_ = core.ClearCache()
 		filePath, err := core.FindDefaultTodoFile(cwd)
 		if err != nil {
 			return err
@@ -157,6 +229,9 @@ func AddTask(text string) error {
 	if err := todoFile.Save(); err != nil {
 		return err
 	}
+	
+	// Clear cache after modification
+	_ = core.ClearCache()
 
 	fmt.Print(green("Added: "))
 	fmt.Println(task.Text)
@@ -171,31 +246,19 @@ func DeleteTask(idStr string) error {
 		os.Exit(1)
 	}
 
-	cwd, err := os.Getwd()
+	todoFile, task, localID, _, err := loadTaskFile(id)
 	if err != nil {
-		return err
-	}
-
-	filePath, err := core.FindDefaultTodoFile(cwd)
-	if err != nil {
-		return err
-	}
-
-	todoFile, err := core.Load(filePath)
-	if err != nil {
-		return err
-	}
-
-	task := todoFile.GetTask(id)
-	if task == nil {
-		fmt.Fprintf(os.Stderr, red("Task %d not found\n"), id)
+		fmt.Fprintln(os.Stderr, red(err.Error()))
 		os.Exit(1)
 	}
 
-	todoFile.DeleteTask(id)
+	todoFile.DeleteTask(localID)
 	if err := todoFile.Save(); err != nil {
 		return err
 	}
+	
+	// Clear cache after modification
+	_ = core.ClearCache()
 
 	fmt.Print(yellow("Deleted: "))
 	fmt.Println(task.Text)
@@ -210,30 +273,15 @@ func EditTask(idStr, newText string) error {
 		os.Exit(1)
 	}
 
-	cwd, err := os.Getwd()
+	todoFile, task, localID, _, err := loadTaskFile(id)
 	if err != nil {
-		return err
-	}
-
-	filePath, err := core.FindDefaultTodoFile(cwd)
-	if err != nil {
-		return err
-	}
-
-	todoFile, err := core.Load(filePath)
-	if err != nil {
-		return err
-	}
-
-	task := todoFile.GetTask(id)
-	if task == nil {
-		fmt.Fprintf(os.Stderr, red("Task %d not found\n"), id)
+		fmt.Fprintln(os.Stderr, red(err.Error()))
 		os.Exit(1)
 	}
 
 	taskStatus := task.Status
 
-	if !todoFile.UpdateTask(id, newText) {
+	if !todoFile.UpdateTask(localID, newText) {
 		fmt.Fprintf(os.Stderr, red("Task %d not found\n"), id)
 		os.Exit(1)
 	}
@@ -241,10 +289,13 @@ func EditTask(idStr, newText string) error {
 	if err := todoFile.Save(); err != nil {
 		return err
 	}
+	
+	// Clear cache after modification
+	_ = core.ClearCache()
 
 	fmt.Print(green("Updated: "))
 	fmt.Println(formatTaskLine(&core.Task{
-		ID:     id,
+		ID:     localID,
 		Text:   newText,
 		Status: taskStatus,
 	}, "", 0))
@@ -259,31 +310,16 @@ func ToggleTask(idStr string) error {
 		os.Exit(1)
 	}
 
-	cwd, err := os.Getwd()
+	todoFile, task, localID, _, err := loadTaskFile(id)
 	if err != nil {
-		return err
-	}
-
-	filePath, err := core.FindDefaultTodoFile(cwd)
-	if err != nil {
-		return err
-	}
-
-	todoFile, err := core.Load(filePath)
-	if err != nil {
-		return err
-	}
-
-	task := todoFile.GetTask(id)
-	if task == nil {
-		fmt.Fprintf(os.Stderr, red("Task %d not found\n"), id)
+		fmt.Fprintln(os.Stderr, red(err.Error()))
 		os.Exit(1)
 	}
 
 	taskText := task.Text
 	prevStatus := task.Status
 
-	if !todoFile.ToggleTask(id) {
+	if !todoFile.ToggleTask(localID) {
 		fmt.Fprintf(os.Stderr, red("Task %d not found\n"), id)
 		os.Exit(1)
 	}
@@ -291,6 +327,9 @@ func ToggleTask(idStr string) error {
 	if err := todoFile.Save(); err != nil {
 		return err
 	}
+	
+	// Clear cache after modification
+	_ = core.ClearCache()
 
 	newStatus := core.TaskCompleted
 	if prevStatus == core.TaskCompleted {
@@ -304,7 +343,7 @@ func ToggleTask(idStr string) error {
 
 	fmt.Print(green(action + ": "))
 	fmt.Println(formatTaskLine(&core.Task{
-		ID:     id,
+		ID:     localID,
 		Text:   taskText,
 		Status: newStatus,
 	}, "", 0))
@@ -319,30 +358,15 @@ func CompleteTask(idStr string) error {
 		os.Exit(1)
 	}
 
-	cwd, err := os.Getwd()
+	todoFile, task, localID, _, err := loadTaskFile(id)
 	if err != nil {
-		return err
-	}
-
-	filePath, err := core.FindDefaultTodoFile(cwd)
-	if err != nil {
-		return err
-	}
-
-	todoFile, err := core.Load(filePath)
-	if err != nil {
-		return err
-	}
-
-	task := todoFile.GetTask(id)
-	if task == nil {
-		fmt.Fprintf(os.Stderr, red("Task %d not found\n"), id)
+		fmt.Fprintln(os.Stderr, red(err.Error()))
 		os.Exit(1)
 	}
 
 	taskText := task.Text
 
-	if !todoFile.SetTaskStatus(id, core.TaskCompleted) {
+	if !todoFile.SetTaskStatus(localID, core.TaskCompleted) {
 		fmt.Fprintf(os.Stderr, red("Task %d not found\n"), id)
 		os.Exit(1)
 	}
@@ -350,10 +374,13 @@ func CompleteTask(idStr string) error {
 	if err := todoFile.Save(); err != nil {
 		return err
 	}
+	
+	// Clear cache after modification
+	_ = core.ClearCache()
 
 	fmt.Print(green("Completed: "))
 	fmt.Println(formatTaskLine(&core.Task{
-		ID:     id,
+		ID:     localID,
 		Text:   taskText,
 		Status: core.TaskCompleted,
 	}, "", 0))
@@ -416,6 +443,9 @@ func CompleteTasks(idsStr []string) error {
 	if err := todoFile.Save(); err != nil {
 		return err
 	}
+	
+	// Clear cache after modification
+	_ = core.ClearCache()
 
 	fmt.Println(green(fmt.Sprintf("Completed %d task(s):", len(completedTasks))))
 	for _, task := range completedTasks {
@@ -585,6 +615,9 @@ func DeleteCompletedTasks() error {
 	if err := todoFile.Save(); err != nil {
 		return err
 	}
+	
+	// Clear cache after modification
+	_ = core.ClearCache()
 
 	suffix := "s"
 	if count == 1 {
