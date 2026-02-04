@@ -9,11 +9,10 @@ import (
 
 // TaskCache represents a cached task location
 type TaskCache struct {
-	GlobalID    int    `json:"global_id"`
-	FilePath    string `json:"file_path"`
-	LocalID     int    `json:"local_id"`
-	TaskText    string `json:"task_text"`
-	LastListing time.Time `json:"last_listing"`
+	GlobalID int    `json:"global_id"`
+	FilePath string `json:"file_path"`
+	LocalID  int    `json:"local_id"`
+	TaskText string `json:"task_text"`
 }
 
 // Cache represents the task cache

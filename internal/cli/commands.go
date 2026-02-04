@@ -100,6 +100,13 @@ func loadTaskFile(id int) (*core.TodoFile, *core.Task, int, string, error) {
 	return todoFile, task, localID, filePath, nil
 }
 
+// clearCacheWithWarning clears the cache and logs a warning if it fails
+func clearCacheWithWarning() {
+	if err := core.ClearCache(); err != nil {
+		fmt.Fprintf(os.Stderr, yellow("Warning: Could not clear task cache: %v\n"), err)
+	}
+}
+
 
 // ListTasks lists all tasks
 func ListTasks(recursive bool) error {
@@ -162,7 +169,7 @@ func ListTasks(recursive bool) error {
 		}
 	} else {
 		// Clear cache when listing non-recursively
-		_ = core.ClearCache()
+		clearCacheWithWarning()
 		filePath, err := core.FindDefaultTodoFile(cwd)
 		if err != nil {
 			return err
@@ -231,7 +238,7 @@ func AddTask(text string) error {
 	}
 	
 	// Clear cache after modification
-	_ = core.ClearCache()
+	clearCacheWithWarning()
 
 	fmt.Print(green("Added: "))
 	fmt.Println(task.Text)
@@ -258,7 +265,7 @@ func DeleteTask(idStr string) error {
 	}
 	
 	// Clear cache after modification
-	_ = core.ClearCache()
+	clearCacheWithWarning()
 
 	fmt.Print(yellow("Deleted: "))
 	fmt.Println(task.Text)
@@ -291,7 +298,7 @@ func EditTask(idStr, newText string) error {
 	}
 	
 	// Clear cache after modification
-	_ = core.ClearCache()
+	clearCacheWithWarning()
 
 	fmt.Print(green("Updated: "))
 	fmt.Println(formatTaskLine(&core.Task{
@@ -329,7 +336,7 @@ func ToggleTask(idStr string) error {
 	}
 	
 	// Clear cache after modification
-	_ = core.ClearCache()
+	clearCacheWithWarning()
 
 	newStatus := core.TaskCompleted
 	if prevStatus == core.TaskCompleted {
@@ -376,7 +383,7 @@ func CompleteTask(idStr string) error {
 	}
 	
 	// Clear cache after modification
-	_ = core.ClearCache()
+	clearCacheWithWarning()
 
 	fmt.Print(green("Completed: "))
 	fmt.Println(formatTaskLine(&core.Task{
@@ -445,7 +452,7 @@ func CompleteTasks(idsStr []string) error {
 	}
 	
 	// Clear cache after modification
-	_ = core.ClearCache()
+	clearCacheWithWarning()
 
 	fmt.Println(green(fmt.Sprintf("Completed %d task(s):", len(completedTasks))))
 	for _, task := range completedTasks {
@@ -617,7 +624,7 @@ func DeleteCompletedTasks() error {
 	}
 	
 	// Clear cache after modification
-	_ = core.ClearCache()
+	clearCacheWithWarning()
 
 	suffix := "s"
 	if count == 1 {
