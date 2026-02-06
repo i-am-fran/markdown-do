@@ -15,7 +15,6 @@ type MenuAction string
 
 const (
 	ActionList            MenuAction = "list"
-	ActionDashboard      MenuAction = "dashboard"
 	ActionAdd             MenuAction = "add"
 	ActionAddNote         MenuAction = "addNote"
 	ActionFind            MenuAction = "find"
@@ -64,7 +63,6 @@ func NewMenuModel(todoFile *core.TodoFile, width, height int) MenuModel {
 
 	items := []list.Item{
 		menuItem{title: "List tasks" + taskSummary, action: ActionList},
-		menuItem{title: "Dashboard", action: ActionDashboard},
 		menuItem{title: "Add new task", action: ActionAdd},
 		menuItem{title: "Find tasks", action: ActionFind},
 		menuItem{title: "Delete completed tasks", action: ActionDeleteCompleted},

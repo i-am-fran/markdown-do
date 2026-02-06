@@ -21,7 +21,6 @@ type View string
 
 const (
 	ViewMenu            View = "menu"
-	ViewDashboard       View = "dashboard"
 	ViewTaskList        View = "taskList"
 	ViewTaskActions     View = "taskActions"
 	ViewAddTask         View = "addTask"
@@ -61,7 +60,6 @@ type Model struct {
 
 	// Sub-models for each view
 	menuModel            views.MenuModel
-	dashboardModel       views.DashboardModel
 	taskListModel        views.TaskListModel
 	taskActionsModel     views.TaskActionsModel
 	addTaskModel         views.AddTaskModel
@@ -383,9 +381,6 @@ func (m Model) handleMenuSelect(action views.MenuAction) (tea.Model, tea.Cmd) {
 	case views.ActionList:
 		m.view = ViewTaskList
 		m.taskListModel = views.NewTaskListModel(m.todoFile, m.width, m.height)
-	case views.ActionDashboard:
-		m.view = ViewDashboard
-		m.dashboardModel = views.NewDashboardModel(m.todoFile, m.width, m.height)
 	case views.ActionAdd:
 		m.view = ViewAddTask
 		m.addTaskModel = views.NewAddTaskModel(true, "", "", m.width, m.height)
@@ -436,7 +431,7 @@ type hideEscHintMsg struct{}
 
 func (m Model) handleBack() (tea.Model, tea.Cmd) {
 	switch m.view {
-	case ViewTaskList, ViewDashboard, ViewSettings, ViewSearch, ViewSubfolders, ViewLint, ViewDeleteCompleted:
+	case ViewTaskList, ViewSettings, ViewSearch, ViewSubfolders, ViewLint, ViewDeleteCompleted:
 		m.view = ViewMenu
 		m.menuModel = views.NewMenuModel(m.todoFile, m.width, m.height)
 	case ViewTaskActions:
@@ -761,8 +756,6 @@ func (m Model) View() string {
 	switch m.view {
 	case ViewMenu:
 		s += m.menuModel.View()
-	case ViewDashboard:
-		s += m.dashboardModel.View()
 	case ViewTaskList:
 		s += m.taskListModel.View()
 	case ViewTaskActions:
