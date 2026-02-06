@@ -1,0 +1,27 @@
+# Binaries
+/mdd
+mdd-*
+*.exe
+build/
+
+# Go
+vendor/
+
+# IDE/Editor
+.claude
+.nova
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project-specific
+CLAUDE.md
+branding/
+feedback/
+.mdd-cache
