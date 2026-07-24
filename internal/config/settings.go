@@ -36,21 +36,38 @@ func GetSettings() Settings {
 	data, err := os.ReadFile(configFile)
 	if err == nil {
 		var loaded Settings
-		if json.Unmarshal(data, &loaded) == nil {
-			// Merge with defaults
+		var present map[string]interface{}
+		if json.Unmarshal(data, &loaded) == nil && json.Unmarshal(data, &present) == nil {
+			// Only override a default when the key is actually present in the
+			// file — a bool field silently missing from an older config.json
+			// must not be read as an explicit `false`.
 			if loaded.Theme != "" {
 				settings.Theme = loaded.Theme
 			}
-			settings.Fullscreen = loaded.Fullscreen
-			settings.ShowCompleted = loaded.ShowCompleted
+			if _, ok := present["fullscreen"]; ok {
+				settings.Fullscreen = loaded.Fullscreen
+			}
+			if _, ok := present["showCompleted"]; ok {
+				settings.ShowCompleted = loaded.ShowCompleted
+			}
 			if loaded.Editor != "" {
 				settings.Editor = loaded.Editor
 			}
-			settings.ShowStatusBar = loaded.ShowStatusBar
-			settings.EnableAnimations = loaded.EnableAnimations
-			settings.EnableTUI = loaded.EnableTUI
-			settings.EnableInProgress = loaded.EnableInProgress
-			settings.ConfirmDestructive = loaded.ConfirmDestructive
+			if _, ok := present["showStatusBar"]; ok {
+				settings.ShowStatusBar = loaded.ShowStatusBar
+			}
+			if _, ok := present["enableAnimations"]; ok {
+				settings.EnableAnimations = loaded.EnableAnimations
+			}
+			if _, ok := present["enableTUI"]; ok {
+				settings.EnableTUI = loaded.EnableTUI
+			}
+			if _, ok := present["enableInProgress"]; ok {
+				settings.EnableInProgress = loaded.EnableInProgress
+			}
+			if _, ok := present["confirmDestructive"]; ok {
+				settings.ConfirmDestructive = loaded.ConfirmDestructive
+			}
 			if loaded.SectionAliases != nil {
 				settings.SectionAliases = loaded.SectionAliases
 			}
