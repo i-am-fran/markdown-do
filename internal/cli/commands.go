@@ -485,6 +485,22 @@ func OpenInEditor() error {
 		return err
 	}
 
+	return openPathInEditor(filePath)
+}
+
+// ConfigEdit opens the settings file (config.json) directly in the
+// configured editor.
+func ConfigEdit() error {
+	filePath, err := config.ConfigFilePath()
+	if err != nil {
+		return err
+	}
+
+	return openPathInEditor(filePath)
+}
+
+// openPathInEditor opens filePath in the user's configured editor.
+func openPathInEditor(filePath string) error {
 	settings := config.GetSettings()
 
 	var command string
@@ -804,6 +820,7 @@ func ShowHelp() {
   mdd config list    Show all settings
   mdd config get k   Show one setting, e.g. mdd config get editor
   mdd config set k v Change a setting, e.g. mdd config set editor vim
+  mdd config edit    Open config.json directly in your editor
   mdd version        Show version (also: -v, --version)
   mdd help           Show this help (also: -h, --help)
 

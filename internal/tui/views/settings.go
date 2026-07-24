@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/i-am-fran/markdowndo/internal/cli"
 	"github.com/i-am-fran/markdowndo/internal/config"
 	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
@@ -120,6 +121,7 @@ func buildSettingsItems(settings config.Settings) []list.Item {
 		settingsItem{title: fmt.Sprintf("Enable TUI: %s", enableTUILabel), action: "enableTUI"},
 		settingsItem{title: fmt.Sprintf("Enable in-progress status: %s", enableInProgressLabel), action: "enableInProgress"},
 		settingsItem{title: fmt.Sprintf("Confirm destructive actions: %s", confirmDestructiveLabel), action: "confirmDestructive"},
+		settingsItem{title: "Edit config file", action: "editConfig"},
 		settingsItem{title: "Reset to defaults", action: "reset"},
 		settingsItem{title: "Back", action: "back"},
 	}
@@ -231,6 +233,12 @@ func (m SettingsModel) Update(msg tea.Msg) (SettingsModel, tea.Cmd) {
 					config.UpdateSettings(map[string]interface{}{
 						"confirmDestructive": !m.settings.ConfirmDestructive,
 					})
+					m.settings = config.GetSettings()
+					m.list.SetItems(buildSettingsItems(m.settings))
+					return m, func() tea.Msg { return SettingsChangedMsg{} }
+				case "editConfig":
+					cli.ConfigEdit()
+					config.ClearCache()
 					m.settings = config.GetSettings()
 					m.list.SetItems(buildSettingsItems(m.settings))
 					return m, func() tea.Msg { return SettingsChangedMsg{} }

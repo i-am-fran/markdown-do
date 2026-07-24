@@ -25,6 +25,18 @@ func ensureConfigDir() error {
 	return os.MkdirAll(configDir, 0755)
 }
 
+// ConfigFilePath returns the path to the settings file
+// (~/.config/markdowndo/config.json), creating it with the current settings
+// first if it doesn't exist yet.
+func ConfigFilePath() (string, error) {
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+		if err := SaveSettings(GetSettings()); err != nil {
+			return "", err
+		}
+	}
+	return configFile, nil
+}
+
 // GetSettings returns the current settings (cached)
 func GetSettings() Settings {
 	if cached != nil {

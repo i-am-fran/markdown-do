@@ -137,8 +137,10 @@ func handleCLI(args cli.ParsedArgs) error {
 				usageError("config set requires a key and value, e.g. mdd config set editor vim")
 			}
 			return cli.ConfigSet(args.Args[1], strings.Join(args.Args[2:], " "))
+		case "edit":
+			return cli.ConfigEdit()
 		default:
-			usageError("unknown config subcommand %q — use list, get, or set", args.Args[0])
+			usageError("unknown config subcommand %q — use list, get, set, or edit", args.Args[0])
 		}
 		return nil
 

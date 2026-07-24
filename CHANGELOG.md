@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of launching the TUI.
 - `sectionAliases` setting: add custom `@alias` shortcuts alongside the
   built-in `ff`/`bb`/`ii`/`ww`, via `mdd config set alias.<name> <Section>`.
+- `mdd config edit` (and an "Edit config file" item in the TUI Settings menu)
+  opens `config.json` directly in the configured editor.
 
 ## [2.0.0] - 2026-07-24
 
