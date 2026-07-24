@@ -11,7 +11,7 @@ import (
 	"github.com/i-am-fran/markdowndo/internal/core"
 )
 
-const Version = "1.1.0"
+const Version = "2.0.0"
 
 var (
 	green         = color.New(color.FgGreen).SprintFunc()
@@ -244,19 +244,39 @@ func AddTask(text string) error {
 	return nil
 }
 
+// dieOnErr prints err's own message and exits(1) — used where err.Error()
+// is already the most useful message (load failures, validation errors).
+func dieOnErr(err error) {
+	if err != nil {
+		fmt.Fprintln(os.Stderr, red(err.Error()))
+		os.Exit(1)
+	}
+}
+
+// dieIfTaskNotFound prints a generic "Task %s not found" message and
+// exits(1) — used where the underlying error is a low-information
+// "task %d not found" that reads oddly against a string/stable ID.
+func dieIfTaskNotFound(idStr string, err error) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, red("Task %s not found\n"), idStr)
+		os.Exit(1)
+	}
+}
+
+// mustLoadTaskFile collapses the load-task-file-or-die pattern shared by
+// every single-ID CLI command.
+func mustLoadTaskFile(idStr string) (*core.TodoFile, *core.Task, int) {
+	todoFile, task, localID, _, err := loadTaskFile(idStr)
+	dieOnErr(err)
+	return todoFile, task, localID
+}
+
 // DeleteTask deletes a task by ID
 func DeleteTask(idStr string) error {
-	todoFile, _, localID, _, err := loadTaskFile(idStr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, red(err.Error()))
-		os.Exit(1)
-	}
+	todoFile, _, localID := mustLoadTaskFile(idStr)
 
 	deleted, err := PerformDeleteTask(todoFile, localID)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, red(err.Error()))
-		os.Exit(1)
-	}
+	dieOnErr(err)
 
 	fmt.Print(yellow("Deleted: "))
 	fmt.Println(deleted.Text)
@@ -265,17 +285,10 @@ func DeleteTask(idStr string) error {
 
 // EditTask edits a task's text
 func EditTask(idStr, newText string) error {
-	todoFile, _, localID, _, err := loadTaskFile(idStr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, red(err.Error()))
-		os.Exit(1)
-	}
+	todoFile, _, localID := mustLoadTaskFile(idStr)
 
 	updated, err := PerformEditTask(todoFile, localID, newText)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, red("Task %s not found\n"), idStr)
-		os.Exit(1)
-	}
+	dieIfTaskNotFound(idStr, err)
 
 	fmt.Print(green("Updated: "))
 	fmt.Println(formatTaskLine(updated, "", 0))
@@ -284,17 +297,10 @@ func EditTask(idStr, newText string) error {
 
 // AddTaskNote adds a note to a task
 func AddTaskNote(idStr, noteText string) error {
-	todoFile, _, localID, _, err := loadTaskFile(idStr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, red(err.Error()))
-		os.Exit(1)
-	}
+	todoFile, _, localID := mustLoadTaskFile(idStr)
 
 	updated, err := PerformAddTaskNote(todoFile, localID, noteText)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, red(err.Error()))
-		os.Exit(1)
-	}
+	dieOnErr(err)
 
 	fmt.Print(green("Added note to: "))
 	fmt.Println(formatTaskLine(updated, "", 0))
@@ -303,19 +309,12 @@ func AddTaskNote(idStr, noteText string) error {
 
 // ToggleTask toggles a task's status
 func ToggleTask(idStr string) error {
-	todoFile, task, localID, _, err := loadTaskFile(idStr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, red(err.Error()))
-		os.Exit(1)
-	}
+	todoFile, task, localID := mustLoadTaskFile(idStr)
 
 	prevStatus := task.Status
 
 	updated, err := PerformToggleTask(todoFile, localID)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, red("Task %s not found\n"), idStr)
-		os.Exit(1)
-	}
+	dieIfTaskNotFound(idStr, err)
 
 	action := "Completed"
 	if prevStatus == core.TaskCompleted {
@@ -327,38 +326,38 @@ func ToggleTask(idStr string) error {
 	return nil
 }
 
-// CompleteTask marks a task as completed
-func CompleteTask(idStr string) error {
-	todoFile, _, localID, _, err := loadTaskFile(idStr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, red(err.Error()))
-		os.Exit(1)
+// CompleteTask marks one or more tasks as completed, by position or stable
+// ID. Each ID is resolved independently through the cache-aware
+// loadTaskFile, so (unlike the old flag-split -c/-cm pair) multi-ID
+// completion also works across the recursive-listing task cache.
+func CompleteTask(idsStr []string) error {
+	var completed []core.Task
+	var failedIDs []string
+
+	for _, idStr := range idsStr {
+		todoFile, _, localID, _, err := loadTaskFile(idStr)
+		if err != nil {
+			failedIDs = append(failedIDs, idStr)
+			continue
+		}
+
+		updated, err := PerformCompleteTask(todoFile, localID)
+		if err != nil {
+			failedIDs = append(failedIDs, idStr)
+			continue
+		}
+
+		completed = append(completed, *updated)
 	}
 
-	updated, err := PerformCompleteTask(todoFile, localID)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, red("Task %s not found\n"), idStr)
-		os.Exit(1)
+	if len(idsStr) == 1 {
+		dieIfTaskNotFound(idsStr[0], errIfEmpty(completed))
+		fmt.Print(green("Completed: "))
+		fmt.Println(formatTaskLine(&completed[0], "", 0))
+		return nil
 	}
 
-	fmt.Print(green("Completed: "))
-	fmt.Println(formatTaskLine(updated, "", 0))
-	return nil
-}
-
-// CompleteTasks completes multiple tasks at once
-func CompleteTasks(idsStr []string) error {
-	todoFile, _, err := LoadDefaultTodoFile()
-	if err != nil {
-		return err
-	}
-
-	completedTasks, failedIDs, err := PerformCompleteTasks(todoFile, idsStr)
-	if err != nil {
-		return err
-	}
-
-	if len(completedTasks) == 0 {
+	if len(completed) == 0 {
 		fmt.Fprintln(os.Stderr, red("No tasks were completed"))
 		if len(failedIDs) > 0 {
 			fmt.Fprintf(os.Stderr, red("Failed to complete tasks: %v\n"), failedIDs)
@@ -366,8 +365,8 @@ func CompleteTasks(idsStr []string) error {
 		os.Exit(1)
 	}
 
-	fmt.Println(green(fmt.Sprintf("Completed %d task(s):", len(completedTasks))))
-	for _, task := range completedTasks {
+	fmt.Println(green(fmt.Sprintf("Completed %d task(s):", len(completed))))
+	for _, task := range completed {
 		fmt.Println(formatTaskLine(&task, "", 0))
 	}
 
@@ -375,6 +374,15 @@ func CompleteTasks(idsStr []string) error {
 		fmt.Fprintf(os.Stderr, yellow("\nWarning: Failed to complete some tasks: %v\n"), failedIDs)
 	}
 
+	return nil
+}
+
+// errIfEmpty returns a non-nil error when tasks is empty, for reuse with
+// dieIfTaskNotFound's error-presence check.
+func errIfEmpty(tasks []core.Task) error {
+	if len(tasks) == 0 {
+		return fmt.Errorf("no tasks completed")
+	}
 	return nil
 }
 
@@ -635,30 +643,30 @@ func ShowHelp() {
 %s
   mdd              Open interactive TUI
   mdd <task text>  Add a new task (quotes optional)
+  mdd add <text>   Add a new task, explicitly (see "A note on task text" below)
 
 %s
-  mdd -l             List tasks
-  mdd -ls            List tasks recursively (subdirectories)
-  mdd -f <keyword>   Find tasks by keyword
-  mdd -fs <keyword>  Find tasks by keyword, recursively
+  mdd list             List tasks
+  mdd list -r          List tasks recursively (subdirectories)
+  mdd find <keyword>   Find tasks by keyword
+  mdd find <kw> -r     Find tasks by keyword, recursively
 
 %s
-  mdd -t <id>             Toggle task status (pending <-> completed)
-  mdd -c <id>             Complete task by ID
-  mdd -cm <id1> <id2>...  Complete multiple tasks by ID
-  mdd -e <id> <text>      Edit task text
-  mdd -an <id> <text>     Add a note to a task (shown inline wherever it's listed)
-  mdd -d <id>             Delete task by ID
-  mdd -dc                 Delete all completed tasks
+  mdd toggle <id>             Toggle task status (pending <-> completed)
+  mdd complete <id> [id2...]  Complete one or more tasks by ID
+  mdd edit <id> <text>        Edit task text
+  mdd annotate <id> <text>    Add a note to a task (shown inline wherever it's listed)
+  mdd remove <id>             Delete task by ID
+  mdd clear                   Delete all completed tasks
 
 %s
-  mdd -n <text>      Add a note to the ## Notes section
-  mdd -o             Open TODO file in editor
-  mdd -lint          Lint and fix TODO file formatting
-  mdd -id <PREFIX>   Tag every task with sequential IDs (PREFIX01, PREFIX02, ...)
-  mdd -id -r         Remove all task ID tags
-  mdd -v, --version  Show version
-  mdd -h, --help     Show this help
+  mdd notes <text>   Add a note to the ## Notes section
+  mdd open           Open TODO file in editor
+  mdd lint           Lint and fix TODO file formatting
+  mdd tag <PREFIX>   Tag every task with sequential IDs (PREFIX01, PREFIX02, ...)
+  mdd untag          Remove all task ID tags
+  mdd version        Show version (also: -v, --version)
+  mdd help           Show this help (also: -h, --help)
 
 %s
   End a task with "@Section" to file it there (created automatically
@@ -671,22 +679,31 @@ func ShowHelp() {
 
 %s
   <id> above accepts either a task's position number, or its ID tag
-  once IDs have been assigned with -id (e.g. "mdd -c ABC01").
+  once IDs have been assigned with tag (e.g. "mdd complete ABC01").
 
 %s
-  mdd Buy groceries          Add a task to the inbox
-  mdd "Fix login bug @bb"    Add a task to the Bugs section
-  mdd "Dark mode @Features"  Add a task to the Features section
-  mdd -l                     Show all tasks
-  mdd -t 2                   Toggle task #2
-  mdd -c 1                   Complete task #1
-  mdd -cm 1 2 3              Complete tasks #1, #2, and #3
-  mdd -e 1 Fix the bug       Edit task #1
-  mdd -an 1 Needs a review   Add a note to task #1
-  mdd -d 3                   Delete task #3
-  mdd -f bug                 Find tasks containing "bug"
-  mdd -id ABC                Tag all tasks: [ABC01], [ABC02], ...
-  mdd -c ABC01               Complete the task tagged ABC01
-  mdd -id -r                 Remove all ID tags
-`, bold(cyan("mdd")), bold("Usage:"), bold("Viewing & Finding:"), bold("Managing Tasks:"), bold("Utilities:"), bold("Sections:"), bold("Task IDs:"), bold("Examples:"))
+  A word like "complete" or "list" is only treated as a command when
+  what follows it looks like that command's arguments (e.g. "complete"
+  needs a task ID next). Otherwise it's added as a task, so
+  "mdd Complete the tax return" still just adds a task. If your task
+  text is ever misread as a command, use "mdd add" to force it:
+
+    mdd add "Find a good plumber"
+
+%s
+  mdd Buy groceries            Add a task to the inbox
+  mdd "Fix login bug @bb"      Add a task to the Bugs section
+  mdd "Dark mode @Features"    Add a task to the Features section
+  mdd list                     Show all tasks
+  mdd toggle 2                 Toggle task #2
+  mdd complete 1               Complete task #1
+  mdd complete 1 2 3           Complete tasks #1, #2, and #3
+  mdd edit 1 Fix the bug       Edit task #1
+  mdd annotate 1 Needs review  Add a note to task #1
+  mdd remove 3                 Delete task #3
+  mdd find bug                 Find tasks containing "bug"
+  mdd tag ABC                  Tag all tasks: [ABC01], [ABC02], ...
+  mdd complete ABC01           Complete the task tagged ABC01
+  mdd untag                    Remove all ID tags
+`, bold(cyan("mdd")), bold("Usage:"), bold("Viewing & Finding:"), bold("Managing Tasks:"), bold("Utilities:"), bold("Sections:"), bold("Task IDs:"), bold("A note on task text:"), bold("Examples:"))
 }

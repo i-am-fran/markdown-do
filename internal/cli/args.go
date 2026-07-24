@@ -1,67 +1,109 @@
 package cli
 
 import (
+	"regexp"
 	"strings"
 )
 
-// ParsedArgs represents parsed command line arguments
+// ParsedArgs is the result of parsing CLI arguments into a command and its
+// arguments. Command is "" only when the input was empty or contained
+// nothing but flags.
 type ParsedArgs struct {
-	Text   string
-	Value  string
-	Values []string
-	Flags  map[string]bool
+	Command   string   // "add", a known verb, or "unknown" for an unrecognized dash flag
+	Args      []string // remaining positional tokens (the command word removed)
+	Text      string   // Args joined with " "
+	Recursive bool     // -r / --recursive present anywhere in the input
 }
 
-// ParseArgs parses command line arguments
+// idShapeRegex matches tokens that look like a task reference: a position
+// number, or a stable ID tag (e.g. "ABC01", matching the pattern used by
+// core.idTagRegex/stableIDRegex).
+var idShapeRegex = regexp.MustCompile(`^(?:\d+|[A-Za-z]{3}\d+)$`)
+
+// idArgCommands are only recognized as that command when their first
+// argument is ID-shaped; otherwise the whole input falls through to an
+// implicit "add" so that task text like "Complete the tax return" isn't
+// misinterpreted as a command.
+var idArgCommands = map[string]bool{
+	"complete": true,
+	"toggle":   true,
+	"edit":     true,
+	"remove":   true,
+	"annotate": true,
+}
+
+// zeroArgCommands are only recognized as that command when nothing follows
+// them (other than -r/--recursive, already stripped by the time this check
+// runs); otherwise the input falls through to an implicit "add" so that
+// task text like "List of birthday gifts" isn't misinterpreted.
+var zeroArgCommands = map[string]bool{
+	"list":    true,
+	"open":    true,
+	"lint":    true,
+	"clear":   true,
+	"untag":   true,
+	"help":    true,
+	"version": true,
+}
+
+// freeTextCommands take arbitrary trailing text, so there's no shape to
+// disambiguate against — they're recognized purely by their first word.
+var freeTextCommands = map[string]bool{
+	"find":  true,
+	"notes": true,
+	"tag":   true,
+	"add":   true,
+}
+
+// ParseArgs parses command line arguments into a command and its arguments.
 func ParseArgs(args []string) ParsedArgs {
-	flags := make(map[string]bool)
-	var positional []string
-	var value string
-	var values []string
-
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-
-		if strings.HasPrefix(arg, "-") {
-			flag := strings.TrimLeft(arg, "-")
-			flags[flag] = true
-
-			// Check if next arg is a value for this flag
-			if i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
-				switch flag {
-				case "c", "d", "e", "f", "fs", "n", "t", "id", "an":
-					value = args[i+1]
-					i++
-				case "cm":
-					// For -cm flag, collect all following non-flag arguments as values
-					for i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
-						values = append(values, args[i+1])
-						i++
-					}
-				}
-			}
-		} else {
-			positional = append(positional, arg)
+	for _, a := range args {
+		if a == "-h" || a == "--help" {
+			return ParsedArgs{Command: "help"}
+		}
+		if a == "-v" || a == "--version" {
+			return ParsedArgs{Command: "version"}
 		}
 	}
 
-	// Join all positional args as the task text
-	text := strings.Join(positional, " ")
+	var rest []string
+	recursive := false
+	for _, a := range args {
+		if a == "-r" || a == "--recursive" {
+			recursive = true
+			continue
+		}
+		rest = append(rest, a)
+	}
 
-	return ParsedArgs{
-		Text:   text,
-		Value:  value,
-		Values: values,
-		Flags:  flags,
+	if len(rest) == 0 {
+		return ParsedArgs{Recursive: recursive}
+	}
+
+	word := rest[0]
+	tail := rest[1:]
+
+	switch {
+	case idArgCommands[word] && len(tail) > 0 && idShapeRegex.MatchString(tail[0]):
+		return newParsedArgs(word, tail, recursive)
+	case zeroArgCommands[word] && len(tail) == 0:
+		return newParsedArgs(word, tail, recursive)
+	case freeTextCommands[word]:
+		return newParsedArgs(word, tail, recursive)
+	case strings.HasPrefix(word, "-"):
+		// An unrecognized dash flag (likely a pre-2.0 flag like -c/-d/-lint)
+		// is reported loudly instead of being silently added as task text.
+		return newParsedArgs("unknown", rest, recursive)
+	default:
+		return newParsedArgs("add", rest, recursive)
 	}
 }
 
-// HasFlag checks if a flag is set
-func (p *ParsedArgs) HasFlag(names ...string) bool {
-	for _, name := range names {
-		if p.Flags[name] {
-			return true
-		}
+func newParsedArgs(command string, args []string, recursive bool) ParsedArgs {
+	return ParsedArgs{
+		Command:   command,
+		Args:      args,
+		Text:      strings.Join(args, " "),
+		Recursive: recursive,
 	}
-	return false
 }
