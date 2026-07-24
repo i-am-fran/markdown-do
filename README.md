@@ -47,10 +47,10 @@ go install github.com/i-am-fran/markdowndo/cmd/mdd@latest
 mdd Buy milk
 
 # List tasks
-mdd -l
+mdd list
 
-# Toggle task #1 (pending <-> completed)
-mdd -t 1
+# Complete task #1
+mdd complete 1
 
 # Open interactive mode
 mdd
@@ -64,35 +64,67 @@ mdd
 mdd Buy groceries              # Add task (quotes optional)
 mdd "Fix bug in auth"          # Add task with quotes
 mdd "New feature @Features"    # Add to specific section
-mdd -n "Meeting notes"         # Add note to ## Notes section
+mdd add "..."                  # Force add, if task text is ever misread as a command
+mdd notes "Meeting notes"      # Add note to ## Notes section
 ```
 
 ### Viewing Tasks
 
 ```bash
-mdd -l                         # List tasks in current directory
-mdd -ls                        # List tasks recursively (subdirectories)
-mdd -f bug                     # Find tasks containing "bug"
-mdd -fs auth                   # Find recursively
+mdd list                       # List tasks in current directory
+mdd list -r                    # List tasks recursively (subdirectories)
+mdd find bug                   # Find tasks containing "bug"
+mdd find auth -r               # Find recursively
 ```
 
 ### Managing Tasks
 
 ```bash
-mdd -t 1                       # Toggle task #1 status
-mdd -c 1                       # Mark task #1 as complete
-mdd -e 1 "Updated text"        # Edit task #1
-mdd -d 1                       # Delete task #1
-mdd -dc                        # Delete all completed tasks
+mdd toggle 1                   # Toggle task #1 status
+mdd complete 1                 # Mark task #1 as complete
+mdd complete 1 2 3             # Mark tasks #1, #2, and #3 as complete
+mdd edit 1 "Updated text"      # Edit task #1
+mdd annotate 1 "Needs review"  # Add a note to task #1
+mdd remove 1                   # Delete task #1
+mdd clear                      # Delete all completed tasks
 ```
+
+`remove` and `clear` prompt for confirmation first if the `confirmDestructive`
+setting is on (skip with `-y`/`--yes`).
+
+### Task IDs
+
+Tag every task in a file with stable, sequential IDs so they're easy to
+reference — useful when working with LLMs or across sessions where position
+numbers can shift.
+
+```bash
+mdd tag ABC                    # Tag all tasks: [ABC01], [ABC02], ...
+mdd complete ABC01             # Reference a task by its stable ID
+mdd untag                      # Remove all ID tags
+```
+
+Any command that takes `<id>` accepts either a task's position number or its
+ID tag once IDs have been assigned.
 
 ### File Operations
 
 ```bash
-mdd -o                         # Open TODO.md in editor
-mdd -lint                      # Lint and auto-fix formatting
-mdd -h                         # Show help
+mdd open                       # Open TODO.md in editor
+mdd lint                       # Lint and auto-fix formatting
+mdd config list                # Show all settings
+mdd config get editor          # Show one setting
+mdd config set editor vim      # Change a setting
+mdd config edit                # Open config.json directly in your editor
+mdd help                       # Show help (also -h, --help)
+mdd version                    # Show version (also -v, --version)
 ```
+
+A word like `complete` or `list` is only treated as a command when what
+follows it matches that command's shape (e.g. `complete` needs a task ID
+next); otherwise it's added as a task, so `mdd Complete the tax return`
+still just adds a task. Use `mdd add "..."` to force add if your task text
+is ever misread as a command.
 
 ## Interactive Mode (TUI)
 
@@ -121,29 +153,30 @@ Run `mdd` without arguments to enter interactive mode.
 
 ## Task Format
 
-MarkdownDO uses standard markdown checkbox syntax:
+MarkdownDO uses standard markdown checkbox syntax, plus a non-standard third
+state:
 
 ```markdown
 # TODO
 
 - [ ] Pending task
+- [/] In-progress task (only reachable via toggle when enableInProgress is on)
 - [x] Completed task
-
-## Features
-
-- [ ] Add dark mode @Features
-- [x] Initial setup done
+  - A note about the task
+  - Another note
 ```
+
+A task's trailing indented plain-bullet lines (no checkbox) are its notes —
+added with `mdd annotate N "text"`, they always travel with the task through
+edit/move/delete/complete.
 
 ### Status Cycle
 
-Toggle (`mdd -t N` or `c` in TUI) cycles through:
+Toggle (`mdd toggle N` or `c` in TUI) cycles through pending &lt;-&gt;
+completed by default, or pending -&gt; in-progress -&gt; completed -&gt;
+pending when the `enableInProgress` setting is on.
 
-```text
-pending [ ] <-> completed [x]
-```
-
-Use `mdd -c N` to mark a task as complete directly.
+Use `mdd complete N` to mark a task as complete directly.
 
 ### Sections
 
@@ -154,7 +187,7 @@ mdd "New task @Backend"        # Adds to ## Backend (creates if needed)
 mdd "Another task"             # Adds to inbox (top of file)
 ```
 
-Section aliases for quick add: `@ff` -> Features, `@bb` -> Bugs, `@ii` -> Ideas, `@ww` -> Warnings
+Section aliases for quick add: `@ff` -> Features, `@bb` -> Bugs, `@ii` -> Ideas, `@ww` -> Warnings (extend with custom ones via `mdd config set alias.<name> <Section>`)
 
 In the TUI, use `m` to move tasks between sections.
 
@@ -173,10 +206,16 @@ Settings are stored in `~/.config/markdowndo/config.json`.
 
 | Setting | Default | Description |
 | ------- | ------- | ----------- |
-| `fullscreen` | `false` | Use alternate screen buffer for TUI |
-| `showCompleted` | `true` | Show completed tasks in lists |
-| `editor` | `"system"` | Editor for `-o` command |
 | `theme` | `"default"` | TUI color theme |
+| `fullscreen` | `true` | Use alternate screen buffer for TUI |
+| `showCompleted` | `true` | Show completed tasks in lists |
+| `editor` | `"system"` | Editor for the `open` command |
+| `showStatusBar` | `true` | Show the TUI status bar |
+| `enableAnimations` | `true` | Enable TUI animations |
+| `enableTUI` | `true` | When false, a bare `mdd` shows help instead of launching the TUI |
+| `enableInProgress` | `false` | Enables the `- [/]` in-progress checkbox state and 3-way toggle cycle |
+| `confirmDestructive` | `false` | Require a y/n prompt before `remove`/`clear` (skip with `-y`/`--yes`) |
+| `sectionAliases` | `{}` | Custom `@alias` shortcuts layered on top of the built-in ones |
 
 ### Editor Options
 
@@ -193,7 +232,7 @@ MarkdownDO looks for these files (in order):
 2. `todo.md` in current directory
 3. Creates `TODO.md` if none exists
 
-For recursive operations (`-ls`, `-fs`), it searches all subdirectories.
+For recursive operations (`list -r`, `find -r`), it searches all subdirectories.
 
 ## Examples
 
@@ -201,20 +240,20 @@ For recursive operations (`-ls`, `-fs`), it searches all subdirectories.
 
 ```bash
 # Morning: check your tasks
-mdd -l
+mdd list
 
 # Add tasks as they come up
 mdd "Review PR #42"
 mdd "Deploy to staging @DevOps"
 
 # Start working on something
-mdd -t 1
+mdd toggle 1
 
 # Done with a task
-mdd -c 1
+mdd complete 1
 
 # End of day: clean up
-mdd -dc
+mdd clear
 ```
 
 ### Project Organization

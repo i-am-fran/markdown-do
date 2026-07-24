@@ -1,9 +1,10 @@
 # MarkdownDO
 
-- [ ] [MDD15] Deprecate TUI for now
 - [ ] [MDD12] Add manual at `man mdd`
 - [ ] [MDD07] Add some tests
-- [ ] [MDD05] Is it possible to add autocomplete suggestions? I want users to type `mdd -c ta` and hit `Tab` to get `mdd -c task`
+- [x] [MDD19] Rebuild website and documentation website
+- [x] [MDD21] Create website and documentation using web-docs-template
+- [x] [MDD15] Deprecate TUI for now
 - [x] [MDD14] Replace delete, use `-r` instead of `-d`
 - [x] [MDD17] Simplify all the commands
 - [x] [MDD11] Add instructions to update and versioning. Versioning should be global claude instructions
@@ -14,13 +15,15 @@
 
 ## Bugs 
 
-- [ ] [MDD06] Allow to escape special characters i.e. `{`
+- [ ] [MDD06] Allow to escape special characters i.e. `{` by typing `\{`
 - [ ] [MDD03] If a task ends with `?` I get an error, unless I use quote marks
 - [ ] [MDD18] Complete/edit/toggle can print the wrong task in their confirmation message when Save() reorders tasks (PerformCompleteTask/PerformEditTask/PerformToggleTask in logic.go call GetTask(id) after Save(), which can now belong to a different task)
 
 ## In Review / Ideas
 
+- [ ] [MDD20] Add an option to archive tasks (move them at the bottom of the file). Still use sections? Maybe as H3s?
 - [ ] [MDD16] Allow to add tasks to todo files in subfolders
+- [ ] [MDD05] Is it possible to add autocomplete suggestions? I want users to type `mdd -c ta` and hit `Tab` to get `mdd -c task`
 - [x] [MDD02] Use `- [/]` to mark tasks as in progress
 - [x] [MDD13] Add config options, for example to enable in-progress tasks, which is not default markdown. How?
 
