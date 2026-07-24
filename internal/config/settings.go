@@ -46,6 +46,14 @@ func GetSettings() Settings {
 			if loaded.Editor != "" {
 				settings.Editor = loaded.Editor
 			}
+			settings.ShowStatusBar = loaded.ShowStatusBar
+			settings.EnableAnimations = loaded.EnableAnimations
+			settings.EnableTUI = loaded.EnableTUI
+			settings.EnableInProgress = loaded.EnableInProgress
+			settings.ConfirmDestructive = loaded.ConfirmDestructive
+			if loaded.SectionAliases != nil {
+				settings.SectionAliases = loaded.SectionAliases
+			}
 		}
 	}
 
@@ -93,6 +101,21 @@ func UpdateSettings(updates map[string]interface{}) error {
 	}
 	if v, ok := updates["enableAnimations"].(bool); ok {
 		current.EnableAnimations = v
+	}
+	if v, ok := updates["enableTUI"].(bool); ok {
+		current.EnableTUI = v
+	}
+	if v, ok := updates["enableInProgress"].(bool); ok {
+		current.EnableInProgress = v
+	}
+	if v, ok := updates["confirmDestructive"].(bool); ok {
+		current.ConfirmDestructive = v
+	}
+	if v, ok := updates["sectionAlias"].([2]string); ok {
+		if current.SectionAliases == nil {
+			current.SectionAliases = map[string]string{}
+		}
+		current.SectionAliases[v[0]] = v[1]
 	}
 
 	return SaveSettings(current)

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-07-24
+
+### Added
+- `mdd config list` / `mdd config get <key>` / `mdd config set <key> <value>`
+  to view and change settings from the CLI, without opening the TUI.
+- Optional third task state, `- [/]` (in-progress), gated by the new
+  `enableInProgress` setting. When on, toggling cycles pending -> in-progress
+  -> completed -> pending instead of the plain pending/completed flip;
+  `- [/]` always parses and displays correctly regardless of the setting.
+- `confirmDestructive` setting: prompts for y/n before `mdd clear` / `mdd
+  remove`; add `-y`/`--yes` to skip the prompt.
+- `enableTUI` setting: when off, a bare `mdd` invocation shows help instead
+  of launching the TUI.
+- `sectionAliases` setting: add custom `@alias` shortcuts alongside the
+  built-in `ff`/`bb`/`ii`/`ww`, via `mdd config set alias.<name> <Section>`.
+
 ## [2.0.0] - 2026-07-24
 
 ### Changed

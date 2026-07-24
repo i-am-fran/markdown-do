@@ -56,17 +56,17 @@ func (m ToastModel) Update(msg tea.Msg) (ToastModel, tea.Cmd) {
 		if !m.visible {
 			return m, nil
 		}
-		
+
 		m.timeRemaining -= 100 * time.Millisecond
-		
+
 		if m.timeRemaining <= 0 {
 			m.visible = false
 			return m, nil
 		}
-		
+
 		return m, m.tickCmd()
 	}
-	
+
 	return m, nil
 }
 
@@ -75,12 +75,12 @@ func (m ToastModel) View() string {
 	if !m.visible {
 		return ""
 	}
-	
+
 	seconds := int(m.timeRemaining.Seconds())
 	if seconds < 0 {
 		seconds = 0
 	}
-	
+
 	// Create progress bar
 	totalWidth := 30
 	filled := int(float64(m.timeRemaining) / float64(5*time.Second) * float64(totalWidth))
@@ -90,7 +90,7 @@ func (m ToastModel) View() string {
 	if filled > totalWidth {
 		filled = totalWidth
 	}
-	
+
 	progressBar := ""
 	for i := 0; i < totalWidth; i++ {
 		if i < filled {
@@ -99,10 +99,10 @@ func (m ToastModel) View() string {
 			progressBar += "░"
 		}
 	}
-	
+
 	// Build toast content
 	content := fmt.Sprintf("%s\n\nPress 'u' to undo (%ds) %s", m.message, seconds+1, progressBar)
-	
+
 	// Style the toast
 	toast := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
@@ -112,7 +112,7 @@ func (m ToastModel) View() string {
 		Background(colors.HeaderBG).
 		Width(m.width - 10).
 		Render(content)
-	
+
 	return toast
 }
 

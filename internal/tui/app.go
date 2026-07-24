@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -81,6 +80,7 @@ type Model struct {
 
 // New creates a new TUI model
 func New() Model {
+	core.SetSectionAliases(config.GetSettings().SectionAliases)
 	return Model{
 		view:         ViewMenu,
 		width:        80,
@@ -100,22 +100,12 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) loadTodoFile() tea.Cmd {
 	return func() tea.Msg {
-		cwd, err := os.Getwd()
+		todoFile, filePath, err := cli.LoadDefaultTodoFile()
 		if err != nil {
 			return todoFileLoadedMsg{err: err}
 		}
 
-		path, err := core.FindDefaultTodoFile(cwd)
-		if err != nil {
-			return todoFileLoadedMsg{err: err}
-		}
-
-		todoFile, err := core.Load(path)
-		if err != nil {
-			return todoFileLoadedMsg{err: err}
-		}
-
-		return todoFileLoadedMsg{todoFile: todoFile, filePath: path}
+		return todoFileLoadedMsg{todoFile: todoFile, filePath: filePath}
 	}
 }
 
@@ -315,7 +305,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.paletteModel, cmd = m.paletteModel.Update(msg)
 			return m, cmd
 		}
-		
+
 		// Global quit with ctrl+c
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
@@ -457,16 +447,20 @@ func (m Model) handleToggleTask(taskID int) (tea.Model, tea.Cmd) {
 
 	// Create snapshot before toggle
 	snapshot := m.todoFile.Snapshot()
-	prevStatus := task.Status
-	
-	m.todoFile.ToggleTask(taskID)
-	m.todoFile.Save()
 
-	msg := "Task completed"
-	if prevStatus == core.TaskCompleted {
-		msg = "Task reopened"
+	updated, err := cli.PerformToggleTask(m.todoFile, taskID)
+	if err != nil {
+		return m, nil
 	}
-	
+
+	msg := "Task reopened"
+	switch updated.Status {
+	case core.TaskCompleted:
+		msg = "Task completed"
+	case core.TaskInProgress:
+		msg = "Task started"
+	}
+
 	// Add to undo stack
 	m.undoStack.Push(undo.Action{
 		Description: msg,
@@ -474,7 +468,7 @@ func (m Model) handleToggleTask(taskID int) (tea.Model, tea.Cmd) {
 		Timestamp:   time.Now(),
 		FilePath:    m.filePath,
 	})
-	
+
 	m.taskListModel.Refresh(m.todoFile)
 	m.statusBarModel.Update(m.todoFile, m.filePath)
 
@@ -483,7 +477,7 @@ func (m Model) handleToggleTask(taskID int) (tea.Model, tea.Cmd) {
 
 	// Show toast notification
 	toastCmd := m.toastModel.Show(msg, 5*time.Second)
-	
+
 	// Return both commands
 	return m, tea.Batch(toastCmd, animCmd)
 }
@@ -523,8 +517,12 @@ func (m Model) handleAddTaskSubmit(text string) (tea.Model, tea.Cmd) {
 	}
 
 	if m.view == ViewAddNote {
-		m.todoFile.AddNote(text)
-		m.todoFile.Save()
+		todoFile, err := cli.PerformAddNote(m.todoFile, m.filePath, text)
+		if err != nil {
+			m.message = &Message{Type: "error", Text: err.Error()}
+			return m, nil
+		}
+		m.todoFile = todoFile
 		m.message = &Message{Type: "success", Text: "Added note: " + text}
 		m.view = ViewMenu
 		m.menuModel = views.NewMenuModel(m.todoFile, m.width, m.height)
@@ -534,12 +532,12 @@ func (m Model) handleAddTaskSubmit(text string) (tea.Model, tea.Cmd) {
 		})
 	}
 
-	task, err := m.todoFile.AddTask(text)
+	todoFile, task, err := cli.PerformAddTask(m.todoFile, m.filePath, text)
 	if err != nil {
 		m.message = &Message{Type: "error", Text: err.Error()}
 		return m, nil
 	}
-	m.todoFile.Save()
+	m.todoFile = todoFile
 	m.lastAddedTask = task.Text
 	m.addTaskModel.SetLastAddedWithID(task.Text, task.ID)
 	m.statusBarModel.Update(m.todoFile, m.filePath)
@@ -551,10 +549,11 @@ func (m Model) handleTextPromptSubmit(text string) (tea.Model, tea.Cmd) {
 	if m.view == ViewEditTask && m.selectedTaskID != nil && m.todoFile != nil {
 		// Create snapshot before edit
 		snapshot := m.todoFile.Snapshot()
-		
-		m.todoFile.UpdateTask(*m.selectedTaskID, text)
-		m.todoFile.Save()
-		
+
+		if _, err := cli.PerformEditTask(m.todoFile, *m.selectedTaskID, text); err != nil {
+			return m, nil
+		}
+
 		// Add to undo stack
 		m.undoStack.Push(undo.Action{
 			Description: "Task updated",
@@ -562,12 +561,12 @@ func (m Model) handleTextPromptSubmit(text string) (tea.Model, tea.Cmd) {
 			Timestamp:   time.Now(),
 			FilePath:    m.filePath,
 		})
-		
+
 		m.view = ViewTaskList
 		m.selectedTaskID = nil
 		m.taskListModel.Refresh(m.todoFile)
 		m.statusBarModel.Update(m.todoFile, m.filePath)
-		
+
 		// Show toast notification
 		return m, m.toastModel.Show("Task updated", 5*time.Second)
 	}
@@ -582,14 +581,15 @@ func (m Model) handleMoveTask(section *string, taskID int) (tea.Model, tea.Cmd) 
 	// Create snapshot before move
 	snapshot := m.todoFile.Snapshot()
 
-	m.todoFile.MoveTask(taskID, section)
-	m.todoFile.Save()
+	if _, err := cli.PerformMoveTask(m.todoFile, taskID, section); err != nil {
+		return m, nil
+	}
 
 	target := "Inbox"
 	if section != nil {
 		target = *section
 	}
-	
+
 	// Add to undo stack
 	m.undoStack.Push(undo.Action{
 		Description: "Moved to " + target,
@@ -597,7 +597,7 @@ func (m Model) handleMoveTask(section *string, taskID int) (tea.Model, tea.Cmd) 
 		Timestamp:   time.Now(),
 		FilePath:    m.filePath,
 	})
-	
+
 	m.view = ViewTaskList
 	m.selectedTaskID = nil
 	m.taskListModel.Refresh(m.todoFile)
@@ -615,13 +615,14 @@ func (m Model) handleConfirm(confirmed bool) (tea.Model, tea.Cmd) {
 
 	if m.selectedTaskID != nil && m.todoFile != nil {
 		taskID := *m.selectedTaskID
-		
+
 		// Create snapshot before delete
 		snapshot := m.todoFile.Snapshot()
-		
-		m.todoFile.DeleteTask(taskID)
-		m.todoFile.Save()
-		
+
+		if _, err := cli.PerformDeleteTask(m.todoFile, taskID); err != nil {
+			return m, nil
+		}
+
 		// Add to undo stack
 		m.undoStack.Push(undo.Action{
 			Description: "Task deleted",
@@ -629,18 +630,18 @@ func (m Model) handleConfirm(confirmed bool) (tea.Model, tea.Cmd) {
 			Timestamp:   time.Now(),
 			FilePath:    m.filePath,
 		})
-		
+
 		m.view = ViewTaskList
 		m.selectedTaskID = nil
 		m.taskListModel.Refresh(m.todoFile)
 		m.statusBarModel.Update(m.todoFile, m.filePath)
-		
+
 		// Start collapse animation
 		animCmd := m.taskListModel.StartCollapseAnimation(taskID)
-		
+
 		// Show toast notification
 		toastCmd := m.toastModel.Show("Task deleted", 5*time.Second)
-		
+
 		// Return both commands
 		return m, tea.Batch(toastCmd, animCmd)
 	}
@@ -654,23 +655,22 @@ func (m Model) handleUndo() (tea.Model, tea.Cmd) {
 	if action == nil {
 		return m, nil
 	}
-	
+
 	// Hide the toast
 	m.toastModel.Hide()
-	
+
 	// Restore the snapshot
 	if m.todoFile != nil && action.FilePath == m.filePath {
-		m.todoFile.Restore(action.Snapshot)
-		m.todoFile.Save()
-		
-		// Refresh UI
-		m.taskListModel.Refresh(m.todoFile)
-		m.statusBarModel.Update(m.todoFile, m.filePath)
-		
-		// Show success message
-		m.message = &Message{Type: "success", Text: "Undo: " + action.Description}
+		if err := cli.PerformRestore(m.todoFile, action.Snapshot); err == nil {
+			// Refresh UI
+			m.taskListModel.Refresh(m.todoFile)
+			m.statusBarModel.Update(m.todoFile, m.filePath)
+
+			// Show success message
+			m.message = &Message{Type: "success", Text: "Undo: " + action.Description}
+		}
 	}
-	
+
 	return m, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
 		return clearMessageMsg{}
 	})
@@ -797,7 +797,7 @@ func (m Model) View() string {
 			Padding(1, 2).
 			MaxWidth(m.width - 4)
 		overlay := helpStyle.Render(helpView)
-		
+
 		// Center the help overlay
 		lines := lipgloss.Height(s)
 		helpHeight := lipgloss.Height(overlay)
@@ -805,7 +805,7 @@ func (m Model) View() string {
 		if padding < 0 {
 			padding = 0
 		}
-		
+
 		s = lipgloss.PlaceVertical(lines, lipgloss.Center,
 			lipgloss.JoinVertical(lipgloss.Left,
 				lipgloss.NewStyle().Height(padding).Render(""),

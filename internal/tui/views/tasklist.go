@@ -37,8 +37,11 @@ func (i taskListItem) Title() string {
 	}
 
 	checkbox := "☐"
-	if i.task.Status == core.TaskCompleted {
+	switch i.task.Status {
+	case core.TaskCompleted:
 		checkbox = "☑"
+	case core.TaskInProgress:
+		checkbox = "◐"
 	}
 	return fmt.Sprintf("  %s %s", checkbox, i.task.Text)
 }
@@ -171,7 +174,7 @@ func (m TaskListModel) Update(msg tea.Msg) (TaskListModel, tea.Cmd) {
 				delete(m.animations, taskID)
 			}
 		}
-		
+
 		// Continue ticking if any animations are active
 		if anyActive && m.settings.EnableAnimations {
 			return m, m.animationTick()
@@ -236,7 +239,7 @@ func (m TaskListModel) Update(msg tea.Msg) (TaskListModel, tea.Cmd) {
 
 		case key.Matches(msg, key.NewBinding(key.WithKeys("v"))):
 			return m, func() tea.Msg { return ToggleShowCompletedMsg{} }
-		
+
 		case key.Matches(msg, key.NewBinding(key.WithKeys("/"))):
 			// Start filtering - let the list handle the / key to enter filter mode
 			var cmd tea.Cmd
@@ -276,13 +279,13 @@ func (m TaskListModel) Update(msg tea.Msg) (TaskListModel, tea.Cmd) {
 	// Update the list for all other messages
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
-	
+
 	// Update paginator based on list cursor
 	if m.paginator.PerPage > 0 {
 		currentPage := m.list.Index() / m.paginator.PerPage
 		m.paginator.Page = currentPage
 	}
-	
+
 	return m, cmd
 }
 
@@ -310,7 +313,7 @@ func (m TaskListModel) View() string {
 			Padding(2, 3).
 			Width(m.width - 4).
 			MarginTop(2)
-		
+
 		var title, hint string
 		if m.settings.ShowCompleted {
 			title = "No tasks found"
@@ -319,16 +322,16 @@ func (m TaskListModel) View() string {
 			title = "All done! No pending tasks"
 			hint = "Press v to show completed tasks, or + to add a new task"
 		}
-		
+
 		titleStyle := lipgloss.NewStyle().
 			Foreground(colors.Accent).
 			Bold(true).
 			MarginBottom(1)
-		
+
 		hintStyle := lipgloss.NewStyle().
 			Foreground(colors.Muted).
 			Italic(true)
-		
+
 		content := titleStyle.Render(title) + "\n" + hintStyle.Render(hint)
 		return emptyCardStyle.Render(content) + "\n\n" + m.list.View()
 	}
@@ -345,9 +348,9 @@ func (m TaskListModel) View() string {
 		filterHint = "  / filter"
 	}
 	hint := fmt.Sprintf("c complete  d delete  e edit  m move  %s%s  esc back", toggleHint, filterHint)
-	
+
 	view := m.list.View()
-	
+
 	// Show paginator if there are multiple pages
 	if m.paginator.TotalPages > 1 {
 		paginatorView := "\n" + lipgloss.NewStyle().
@@ -357,11 +360,11 @@ func (m TaskListModel) View() string {
 			Render(m.paginator.View())
 		view += paginatorView
 	}
-	
+
 	hintStyle := lipgloss.NewStyle().
 		Foreground(colors.Hint).
 		Italic(true)
-	
+
 	return view + "\n\n" + hintStyle.Render(hint)
 }
 
@@ -439,7 +442,7 @@ func (m *TaskListModel) StartFlashAnimation(taskID int) tea.Cmd {
 	if !m.settings.EnableAnimations {
 		return nil
 	}
-	
+
 	m.animations[taskID] = animation.NewFlashAnimation()
 	return m.animationTick()
 }
@@ -449,7 +452,7 @@ func (m *TaskListModel) StartCollapseAnimation(taskID int) tea.Cmd {
 	if !m.settings.EnableAnimations {
 		return nil
 	}
-	
+
 	m.animations[taskID] = animation.NewCollapseAnimation()
 	return m.animationTick()
 }

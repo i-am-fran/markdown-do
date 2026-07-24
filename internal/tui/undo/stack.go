@@ -30,10 +30,10 @@ func NewStack(timeout time.Duration) *Stack {
 func (s *Stack) Push(action Action) {
 	// Clean expired actions
 	s.cleanExpired()
-	
+
 	// Add new action
 	s.actions = append(s.actions, action)
-	
+
 	// Keep only last 10 actions
 	if len(s.actions) > 10 {
 		s.actions = s.actions[len(s.actions)-10:]
@@ -44,11 +44,11 @@ func (s *Stack) Push(action Action) {
 func (s *Stack) Pop() *Action {
 	// Clean expired actions first
 	s.cleanExpired()
-	
+
 	if len(s.actions) == 0 {
 		return nil
 	}
-	
+
 	action := s.actions[len(s.actions)-1]
 	s.actions = s.actions[:len(s.actions)-1]
 	return &action
@@ -58,11 +58,11 @@ func (s *Stack) Pop() *Action {
 func (s *Stack) Peek() *Action {
 	// Clean expired actions first
 	s.cleanExpired()
-	
+
 	if len(s.actions) == 0 {
 		return nil
 	}
-	
+
 	return &s.actions[len(s.actions)-1]
 }
 
@@ -83,14 +83,14 @@ func (s *Stack) TimeRemaining() time.Duration {
 	if action == nil {
 		return 0
 	}
-	
+
 	elapsed := time.Since(action.Timestamp)
 	remaining := s.timeout - elapsed
-	
+
 	if remaining < 0 {
 		return 0
 	}
-	
+
 	return remaining
 }
 
@@ -98,12 +98,12 @@ func (s *Stack) TimeRemaining() time.Duration {
 func (s *Stack) cleanExpired() {
 	now := time.Now()
 	validActions := make([]Action, 0)
-	
+
 	for _, action := range s.actions {
 		if now.Sub(action.Timestamp) < s.timeout {
 			validActions = append(validActions, action)
 		}
 	}
-	
+
 	s.actions = validActions
 }

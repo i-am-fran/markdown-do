@@ -476,16 +476,30 @@ func (tf *TodoFile) UpdateTask(id int, text string) bool {
 	return true
 }
 
-// ToggleTask toggles the status of a task
-func (tf *TodoFile) ToggleTask(id int) bool {
+// ToggleTask toggles the status of a task. When enableInProgress is true,
+// status cycles pending -> in-progress -> completed -> pending; otherwise it's
+// a plain pending<->completed flip (in-progress tasks toggle to completed).
+func (tf *TodoFile) ToggleTask(id int, enableInProgress bool) bool {
 	task := tf.GetTask(id)
 	if task == nil {
 		return false
 	}
 
-	newStatus := TaskCompleted
-	if task.Status == TaskCompleted {
-		newStatus = TaskPending
+	var newStatus TaskStatus
+	if enableInProgress {
+		switch task.Status {
+		case TaskPending:
+			newStatus = TaskInProgress
+		case TaskInProgress:
+			newStatus = TaskCompleted
+		default:
+			newStatus = TaskPending
+		}
+	} else {
+		newStatus = TaskCompleted
+		if task.Status == TaskCompleted {
+			newStatus = TaskPending
+		}
 	}
 
 	updatedLine := FormatTask(&Task{
@@ -968,15 +982,15 @@ func (tf *TodoFile) reorderTasks() {
 	groups := tf.GetTasksGroupedBySectionOrdered()
 
 	sortByStatus := func(tasks []Task) []Task {
-		var pending, completed []Task
+		var active, completed []Task
 		for _, t := range tasks {
-			if t.Status == TaskPending {
-				pending = append(pending, t)
-			} else {
+			if t.Status == TaskCompleted {
 				completed = append(completed, t)
+			} else {
+				active = append(active, t)
 			}
 		}
-		return append(pending, completed...)
+		return append(active, completed...)
 	}
 
 	changed := false

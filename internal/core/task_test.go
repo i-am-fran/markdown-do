@@ -50,6 +50,20 @@ func TestFormatTaskCompletedRoundTrip(t *testing.T) {
 	}
 }
 
+func TestFormatTaskInProgressRoundTrip(t *testing.T) {
+	original := "- [/] [ABC01] Buy milk"
+	task := ParseTaskLine(original, 0, 1, nil)
+	if task == nil {
+		t.Fatal("expected task to parse, got nil")
+	}
+	if task.Status != TaskInProgress {
+		t.Errorf("expected TaskInProgress, got %v", task.Status)
+	}
+	if got := FormatTask(task); got != original {
+		t.Errorf("round trip mismatch: got %q, want %q", got, original)
+	}
+}
+
 func TestFormatTaskBlockRoundTrip(t *testing.T) {
 	task := &Task{Text: "Buy milk", Status: TaskPending, Notes: []string{"note one", "note two"}}
 	block := FormatTaskBlock(task)
@@ -84,6 +98,21 @@ func TestBlockLineCount(t *testing.T) {
 	empty := &Task{}
 	if got := empty.BlockLineCount(); got != 1 {
 		t.Errorf("expected BlockLineCount 1 for no notes, got %d", got)
+	}
+}
+
+func TestSetSectionAliasesAddsCustomAlias(t *testing.T) {
+	SetSectionAliases(map[string]string{"pp": "Projects"})
+
+	parsed := ParseTaskInput("Plan launch @pp")
+	if parsed.SectionTag == nil || *parsed.SectionTag != "Projects" {
+		t.Fatalf("expected custom alias to resolve to Projects, got %v", parsed.SectionTag)
+	}
+
+	// Built-in aliases still resolve alongside the custom one.
+	parsed = ParseTaskInput("Fix bug @bb")
+	if parsed.SectionTag == nil || *parsed.SectionTag != "Bugs" {
+		t.Fatalf("expected built-in alias to still resolve to Bugs, got %v", parsed.SectionTag)
 	}
 }
 

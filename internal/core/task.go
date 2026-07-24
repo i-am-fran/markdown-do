@@ -10,8 +10,9 @@ import (
 type TaskStatus string
 
 const (
-	TaskPending   TaskStatus = "pending"
-	TaskCompleted TaskStatus = "completed"
+	TaskPending    TaskStatus = "pending"
+	TaskInProgress TaskStatus = "in-progress"
+	TaskCompleted  TaskStatus = "completed"
 )
 
 // Task represents a single task item
@@ -64,6 +65,15 @@ var sectionAliases = map[string]string{
 	"ww": "Warnings",
 }
 
+// SetSectionAliases adds or overrides `@alias` shortcuts on top of the
+// built-in ones (ff/bb/ii/ww). Intended to be called once at startup with the
+// user's configured aliases, before any task input is parsed.
+func SetSectionAliases(overrides map[string]string) {
+	for k, v := range overrides {
+		sectionAliases[strings.ToLower(k)] = v
+	}
+}
+
 var (
 	headerRegex   = regexp.MustCompile(`^##\s+(.+)$`)
 	taskRegex     = regexp.MustCompile(`^(\s*)-\s*\[([ xX/])\]\s*(.*)$`)
@@ -86,8 +96,11 @@ func ParseHeaderLine(line string) *string {
 // FormatTask formats a task as a markdown checkbox line
 func FormatTask(task *Task) string {
 	checkbox := "[ ]"
-	if task.Status == TaskCompleted {
+	switch task.Status {
+	case TaskCompleted:
 		checkbox = "[x]"
+	case TaskInProgress:
+		checkbox = "[/]"
 	}
 	text := task.Text
 	if task.StableID != "" {
@@ -114,10 +127,12 @@ func ParseTaskLine(line string, lineNumber int, id int, section *string) *Task {
 
 	marker := strings.ToLower(match[2])
 	status := TaskPending
-	if marker == "x" {
+	switch marker {
+	case "x":
 		status = TaskCompleted
+	case "/":
+		status = TaskInProgress
 	}
-	// Note: '/' is treated as 'pending' since in-progress status is removed
 
 	rawText := match[3]
 	stableID := ""

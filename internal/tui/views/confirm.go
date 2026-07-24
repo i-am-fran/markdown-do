@@ -68,7 +68,7 @@ func (m ConfirmModel) View() string {
 		MarginTop(1)
 
 	content := titleStyle.Render(m.message) + "\n" + hintStyle.Render("y yes  n no")
-	
+
 	return cardStyle.Render(content)
 }
 

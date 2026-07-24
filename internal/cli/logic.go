@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/i-am-fran/markdowndo/internal/config"
 	"github.com/i-am-fran/markdowndo/internal/core"
 )
 
@@ -79,7 +80,7 @@ func PerformAddNote(todoFile *core.TodoFile, filePath, text string) (*core.TodoF
 
 // PerformToggleTask toggles a task's status and saves.
 func PerformToggleTask(todoFile *core.TodoFile, id int) (*core.Task, error) {
-	if !todoFile.ToggleTask(id) {
+	if !todoFile.ToggleTask(id, config.GetSettings().EnableInProgress) {
 		return nil, fmt.Errorf("task %d not found", id)
 	}
 

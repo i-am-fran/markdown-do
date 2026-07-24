@@ -5,13 +5,14 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/i-am-fran/markdowndo/internal/config"
 	"github.com/i-am-fran/markdowndo/internal/core"
 )
 
-const Version = "2.0.0"
+const Version = "2.1.0"
 
 var (
 	green         = color.New(color.FgGreen).SprintFunc()
@@ -40,6 +41,9 @@ func formatTaskLine(task *core.Task, showFile string, displayID int) string {
 	case core.TaskCompleted:
 		checkbox = green("[x]")
 		text = strikethrough(taskText)
+	case core.TaskInProgress:
+		checkbox = cyan("[/]")
+		text = taskText
 	default:
 		checkbox = "[ ]"
 		text = taskText
@@ -271,9 +275,29 @@ func mustLoadTaskFile(idStr string) (*core.TodoFile, *core.Task, int) {
 	return todoFile, task, localID
 }
 
+// confirmPrompt shows msg and reads a y/n answer from stdin. It returns true
+// immediately, without prompting, when confirmation isn't required (the
+// confirmDestructive setting is off) or the caller already passed -y/--yes.
+func confirmPrompt(msg string, yes bool) bool {
+	if yes || !config.GetSettings().ConfirmDestructive {
+		return true
+	}
+
+	fmt.Printf("%s [y/N] ", msg)
+	var answer string
+	fmt.Scanln(&answer)
+	answer = strings.ToLower(strings.TrimSpace(answer))
+	return answer == "y" || answer == "yes"
+}
+
 // DeleteTask deletes a task by ID
-func DeleteTask(idStr string) error {
-	todoFile, _, localID := mustLoadTaskFile(idStr)
+func DeleteTask(idStr string, yes bool) error {
+	todoFile, task, localID := mustLoadTaskFile(idStr)
+
+	if !confirmPrompt(fmt.Sprintf("Delete task: %s?", task.Text), yes) {
+		fmt.Println("Cancelled")
+		return nil
+	}
 
 	deleted, err := PerformDeleteTask(todoFile, localID)
 	dieOnErr(err)
@@ -309,16 +333,17 @@ func AddTaskNote(idStr, noteText string) error {
 
 // ToggleTask toggles a task's status
 func ToggleTask(idStr string) error {
-	todoFile, task, localID := mustLoadTaskFile(idStr)
-
-	prevStatus := task.Status
+	todoFile, _, localID := mustLoadTaskFile(idStr)
 
 	updated, err := PerformToggleTask(todoFile, localID)
 	dieIfTaskNotFound(idStr, err)
 
-	action := "Completed"
-	if prevStatus == core.TaskCompleted {
-		action = "Reopened"
+	action := "Reopened"
+	switch updated.Status {
+	case core.TaskCompleted:
+		action = "Completed"
+	case core.TaskInProgress:
+		action = "Started"
 	}
 
 	fmt.Print(green(action + ": "))
@@ -498,10 +523,25 @@ func OpenInEditor() error {
 }
 
 // DeleteCompletedTasks deletes all completed tasks
-func DeleteCompletedTasks() error {
+func DeleteCompletedTasks(yes bool) error {
 	todoFile, _, err := LoadDefaultTodoFile()
 	if err != nil {
 		return err
+	}
+
+	pendingCount := len(todoFile.GetCompletedTasks())
+	if pendingCount == 0 {
+		fmt.Println("No completed tasks to delete")
+		return nil
+	}
+
+	suffix := "s"
+	if pendingCount == 1 {
+		suffix = ""
+	}
+	if !confirmPrompt(fmt.Sprintf("Delete %d completed task%s?", pendingCount, suffix), yes) {
+		fmt.Println("Cancelled")
+		return nil
 	}
 
 	count, err := PerformDeleteCompletedTasks(todoFile)
@@ -509,16 +549,102 @@ func DeleteCompletedTasks() error {
 		return err
 	}
 
-	if count == 0 {
-		fmt.Println("No completed tasks to delete")
-		return nil
+	fmt.Println(green(fmt.Sprintf("Deleted %d completed task%s", count, suffix)))
+	return nil
+}
+
+// ConfigList prints every setting, one per line.
+func ConfigList() error {
+	s := config.GetSettings()
+	fmt.Printf("theme: %s\n", s.Theme)
+	fmt.Printf("fullscreen: %t\n", s.Fullscreen)
+	fmt.Printf("showCompleted: %t\n", s.ShowCompleted)
+	fmt.Printf("editor: %s\n", s.Editor)
+	fmt.Printf("showStatusBar: %t\n", s.ShowStatusBar)
+	fmt.Printf("enableAnimations: %t\n", s.EnableAnimations)
+	fmt.Printf("enableTUI: %t\n", s.EnableTUI)
+	fmt.Printf("enableInProgress: %t\n", s.EnableInProgress)
+	fmt.Printf("confirmDestructive: %t\n", s.ConfirmDestructive)
+	for name, section := range s.SectionAliases {
+		fmt.Printf("alias.%s: %s\n", name, section)
+	}
+	return nil
+}
+
+// ConfigGet prints a single setting's value.
+func ConfigGet(key string) error {
+	s := config.GetSettings()
+	switch {
+	case key == "theme":
+		fmt.Println(s.Theme)
+	case key == "fullscreen":
+		fmt.Println(s.Fullscreen)
+	case key == "showCompleted":
+		fmt.Println(s.ShowCompleted)
+	case key == "editor":
+		fmt.Println(s.Editor)
+	case key == "showStatusBar":
+		fmt.Println(s.ShowStatusBar)
+	case key == "enableAnimations":
+		fmt.Println(s.EnableAnimations)
+	case key == "enableTUI":
+		fmt.Println(s.EnableTUI)
+	case key == "enableInProgress":
+		fmt.Println(s.EnableInProgress)
+	case key == "confirmDestructive":
+		fmt.Println(s.ConfirmDestructive)
+	case strings.HasPrefix(key, "alias."):
+		name := strings.TrimPrefix(key, "alias.")
+		v, ok := s.SectionAliases[name]
+		if !ok {
+			return fmt.Errorf("no alias set for %q", name)
+		}
+		fmt.Println(v)
+	default:
+		return fmt.Errorf("unknown setting %q", key)
+	}
+	return nil
+}
+
+// ConfigSet updates a single setting and persists it.
+func ConfigSet(key, value string) error {
+	switch {
+	case key == "theme":
+		dieOnErr(config.UpdateSettings(map[string]interface{}{"theme": value}))
+
+	case key == "editor":
+		valid := false
+		for _, opt := range config.EditorOptions() {
+			if string(opt.Value) == value {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("invalid editor %q — options: system, vim, nano, default-app", value)
+		}
+		dieOnErr(config.UpdateSettings(map[string]interface{}{"editor": config.EditorOption(value)}))
+
+	case key == "fullscreen" || key == "showCompleted" || key == "showStatusBar" ||
+		key == "enableAnimations" || key == "enableTUI" || key == "enableInProgress" || key == "confirmDestructive":
+		b, err := strconv.ParseBool(value)
+		if err != nil {
+			return fmt.Errorf("%q must be true or false", key)
+		}
+		dieOnErr(config.UpdateSettings(map[string]interface{}{key: b}))
+
+	case strings.HasPrefix(key, "alias."):
+		name := strings.ToLower(strings.TrimPrefix(key, "alias."))
+		if name == "" {
+			return fmt.Errorf("alias name required, e.g. mdd config set alias.xx Features")
+		}
+		dieOnErr(config.UpdateSettings(map[string]interface{}{"sectionAlias": [2]string{name, value}}))
+
+	default:
+		return fmt.Errorf("unknown setting %q", key)
 	}
 
-	suffix := "s"
-	if count == 1 {
-		suffix = ""
-	}
-	fmt.Println(green(fmt.Sprintf("Deleted %d completed task%s", count, suffix)))
+	fmt.Printf("%s: %s\n", key, value)
 	return nil
 }
 
@@ -576,12 +702,16 @@ func LintFile() error {
 
 	tasks := todoFile.GetTasks()
 	pendingCount := 0
+	inProgressCount := 0
 	completedCount := 0
 	for _, t := range tasks {
-		if t.Status == core.TaskPending {
-			pendingCount++
-		} else {
+		switch t.Status {
+		case core.TaskCompleted:
 			completedCount++
+		case core.TaskInProgress:
+			inProgressCount++
+		default:
+			pendingCount++
 		}
 	}
 
@@ -597,7 +727,11 @@ func LintFile() error {
 		if len(tasks) == 1 {
 			suffix = ""
 		}
-		fmt.Println(fmt.Sprintf("Checked %d task%s (%d pending, %d completed)", len(tasks), suffix, pendingCount, completedCount))
+		if inProgressCount > 0 {
+			fmt.Println(fmt.Sprintf("Checked %d task%s (%d pending, %d in progress, %d completed)", len(tasks), suffix, pendingCount, inProgressCount, completedCount))
+		} else {
+			fmt.Println(fmt.Sprintf("Checked %d task%s (%d pending, %d completed)", len(tasks), suffix, pendingCount, completedCount))
+		}
 		return nil
 	}
 
@@ -658,6 +792,8 @@ func ShowHelp() {
   mdd annotate <id> <text>    Add a note to a task (shown inline wherever it's listed)
   mdd remove <id>             Delete task by ID
   mdd clear                   Delete all completed tasks
+                              (both prompt first if confirmDestructive is on;
+                               add -y/--yes to skip the prompt)
 
 %s
   mdd notes <text>   Add a note to the ## Notes section
@@ -665,6 +801,9 @@ func ShowHelp() {
   mdd lint           Lint and fix TODO file formatting
   mdd tag <PREFIX>   Tag every task with sequential IDs (PREFIX01, PREFIX02, ...)
   mdd untag          Remove all task ID tags
+  mdd config list    Show all settings
+  mdd config get k   Show one setting, e.g. mdd config get editor
+  mdd config set k v Change a setting, e.g. mdd config set editor vim
   mdd version        Show version (also: -v, --version)
   mdd help           Show this help (also: -h, --help)
 

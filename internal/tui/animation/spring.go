@@ -45,13 +45,13 @@ func (s *State) Update() bool {
 	if !s.Active {
 		return false
 	}
-	
+
 	elapsed := time.Since(s.StartTime)
 	if elapsed >= s.Duration {
 		s.Active = false
 		return false
 	}
-	
+
 	return true
 }
 
@@ -60,9 +60,9 @@ func (s *State) Value() float64 {
 	if !s.Active {
 		return 0.0
 	}
-	
+
 	progress := float64(time.Since(s.StartTime)) / float64(s.Duration)
-	
+
 	switch s.Type {
 	case AnimationFlash:
 		// Flash: quick pulse up and down with easing
@@ -74,12 +74,12 @@ func (s *State) Value() float64 {
 		// Ease in: start slow, speed up
 		p := (progress - 0.5) * 2
 		return 1.0 - easeInQuad(p)
-		
+
 	case AnimationCollapse:
 		// Collapse: smooth decrease from 1 to 0 with spring-like easing
 		return 1.0 - easeOutElastic(progress)
 	}
-	
+
 	return 0.0
 }
 
@@ -107,4 +107,3 @@ func easeOutElastic(t float64) float64 {
 	s := p / 4
 	return 1 - (0.1*(-10*t)+1)*(-10*t)*s
 }
-

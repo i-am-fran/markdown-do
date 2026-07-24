@@ -98,10 +98,28 @@ func buildSettingsItems(settings config.Settings) []list.Item {
 		showCompletedLabel = "on"
 	}
 
+	enableTUILabel := "off"
+	if settings.EnableTUI {
+		enableTUILabel = "on"
+	}
+
+	enableInProgressLabel := "off"
+	if settings.EnableInProgress {
+		enableInProgressLabel = "on"
+	}
+
+	confirmDestructiveLabel := "off"
+	if settings.ConfirmDestructive {
+		confirmDestructiveLabel = "on"
+	}
+
 	return []list.Item{
 		settingsItem{title: fmt.Sprintf("Editor: %s", editorLabel), action: "editor"},
 		settingsItem{title: fmt.Sprintf("Fullscreen mode: %s", fullscreenLabel), action: "fullscreen"},
 		settingsItem{title: fmt.Sprintf("Show completed tasks: %s", showCompletedLabel), action: "showCompleted"},
+		settingsItem{title: fmt.Sprintf("Enable TUI: %s", enableTUILabel), action: "enableTUI"},
+		settingsItem{title: fmt.Sprintf("Enable in-progress status: %s", enableInProgressLabel), action: "enableInProgress"},
+		settingsItem{title: fmt.Sprintf("Confirm destructive actions: %s", confirmDestructiveLabel), action: "confirmDestructive"},
 		settingsItem{title: "Reset to defaults", action: "reset"},
 		settingsItem{title: "Back", action: "back"},
 	}
@@ -191,6 +209,27 @@ func (m SettingsModel) Update(msg tea.Msg) (SettingsModel, tea.Cmd) {
 				case "showCompleted":
 					config.UpdateSettings(map[string]interface{}{
 						"showCompleted": !m.settings.ShowCompleted,
+					})
+					m.settings = config.GetSettings()
+					m.list.SetItems(buildSettingsItems(m.settings))
+					return m, func() tea.Msg { return SettingsChangedMsg{} }
+				case "enableTUI":
+					config.UpdateSettings(map[string]interface{}{
+						"enableTUI": !m.settings.EnableTUI,
+					})
+					m.settings = config.GetSettings()
+					m.list.SetItems(buildSettingsItems(m.settings))
+					return m, func() tea.Msg { return SettingsChangedMsg{} }
+				case "enableInProgress":
+					config.UpdateSettings(map[string]interface{}{
+						"enableInProgress": !m.settings.EnableInProgress,
+					})
+					m.settings = config.GetSettings()
+					m.list.SetItems(buildSettingsItems(m.settings))
+					return m, func() tea.Msg { return SettingsChangedMsg{} }
+				case "confirmDestructive":
+					config.UpdateSettings(map[string]interface{}{
+						"confirmDestructive": !m.settings.ConfirmDestructive,
 					})
 					m.settings = config.GetSettings()
 					m.list.SetItems(buildSettingsItems(m.settings))

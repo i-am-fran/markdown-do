@@ -294,12 +294,41 @@ func TestUpdateTaskPreservesNotes(t *testing.T) {
 func TestToggleTaskPreservesNotes(t *testing.T) {
 	content := "# TODO\n\n- [ ] Task one\n  - note one\n"
 	tf := NewTodoFile("TODO.md", content)
-	if !tf.ToggleTask(1) {
+	if !tf.ToggleTask(1, false) {
 		t.Fatal("expected ToggleTask to succeed")
 	}
 	task := tf.GetTask(1)
 	if len(task.Notes) != 1 || task.Notes[0] != "note one" {
 		t.Errorf("expected note preserved after toggle, got %v", task.Notes)
+	}
+}
+
+func TestToggleTaskBinaryFlip(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Task one\n")
+	tf.ToggleTask(1, false)
+	if got := tf.GetTask(1).Status; got != TaskCompleted {
+		t.Errorf("expected TaskCompleted, got %v", got)
+	}
+	tf.ToggleTask(1, false)
+	if got := tf.GetTask(1).Status; got != TaskPending {
+		t.Errorf("expected TaskPending, got %v", got)
+	}
+}
+
+func TestToggleTaskInProgressCycle(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Task one\n")
+
+	tf.ToggleTask(1, true)
+	if got := tf.GetTask(1).Status; got != TaskInProgress {
+		t.Errorf("expected TaskInProgress, got %v", got)
+	}
+	tf.ToggleTask(1, true)
+	if got := tf.GetTask(1).Status; got != TaskCompleted {
+		t.Errorf("expected TaskCompleted, got %v", got)
+	}
+	tf.ToggleTask(1, true)
+	if got := tf.GetTask(1).Status; got != TaskPending {
+		t.Errorf("expected TaskPending, got %v", got)
 	}
 }
 

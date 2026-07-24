@@ -20,9 +20,9 @@
 
 ## In Review / Ideas
 
-- [ ] [MDD02] Use `- [/]` to mark tasks as in progress
 - [ ] [MDD16] Allow to add tasks to todo files in subfolders
-- [ ] [MDD13] Add config options, for example to enable in-progress tasks, which is not default markdown. How?
+- [x] [MDD02] Use `- [/]` to mark tasks as in progress
+- [x] [MDD13] Add config options, for example to enable in-progress tasks, which is not default markdown. How?
 
 ## Admin
 

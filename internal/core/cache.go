@@ -27,7 +27,7 @@ func GetCacheFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	// Use .mdd-cache in the current directory
 	return filepath.Join(cwd, ".mdd-cache"), nil
 }
@@ -38,13 +38,13 @@ func SaveCache(cache *Cache) error {
 	if err != nil {
 		return err
 	}
-	
+
 	cache.LastListing = time.Now()
 	data, err := json.Marshal(cache)
 	if err != nil {
 		return err
 	}
-	
+
 	return os.WriteFile(cachePath, data, 0644)
 }
 
@@ -54,22 +54,22 @@ func LoadCache() (*Cache, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Check if cache file exists
 	if _, err := os.Stat(cachePath); os.IsNotExist(err) {
 		return nil, nil // No cache exists
 	}
-	
+
 	data, err := os.ReadFile(cachePath)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var cache Cache
 	if err := json.Unmarshal(data, &cache); err != nil {
 		return nil, err
 	}
-	
+
 	return &cache, nil
 }
 
@@ -79,11 +79,11 @@ func ClearCache() error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Remove the cache file if it exists
 	if _, err := os.Stat(cachePath); err == nil {
 		return os.Remove(cachePath)
 	}
-	
+
 	return nil
 }

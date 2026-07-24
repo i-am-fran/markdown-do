@@ -2,12 +2,11 @@ package views
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdowndo/internal/cli"
 	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
 
@@ -49,13 +48,7 @@ func (m DeleteCompletedModel) Init() tea.Cmd {
 
 func (m DeleteCompletedModel) loadCompletedCount() tea.Cmd {
 	return func() tea.Msg {
-		cwd, _ := os.Getwd()
-		path, err := core.FindDefaultTodoFile(cwd)
-		if err != nil {
-			return deleteCompletedCountMsg{count: 0}
-		}
-
-		todoFile, err := core.Load(path)
+		todoFile, _, err := cli.LoadDefaultTodoFile()
 		if err != nil {
 			return deleteCompletedCountMsg{count: 0}
 		}
@@ -106,19 +99,15 @@ func (m DeleteCompletedModel) Update(msg tea.Msg) (DeleteCompletedModel, tea.Cmd
 
 func (m DeleteCompletedModel) performDelete() tea.Cmd {
 	return func() tea.Msg {
-		cwd, _ := os.Getwd()
-		path, err := core.FindDefaultTodoFile(cwd)
+		todoFile, _, err := cli.LoadDefaultTodoFile()
 		if err != nil {
 			return deleteCompletedDoneMsg{count: 0}
 		}
 
-		todoFile, err := core.Load(path)
+		count, err := cli.PerformDeleteCompletedTasks(todoFile)
 		if err != nil {
 			return deleteCompletedDoneMsg{count: 0}
 		}
-
-		count := todoFile.DeleteCompletedTasks()
-		todoFile.Save()
 
 		return deleteCompletedDoneMsg{count: count}
 	}
@@ -174,12 +163,12 @@ func (m DeleteCompletedModel) View() string {
 	if m.completedCount == 1 {
 		suffix = ""
 	}
-	
+
 	titleStyle := lipgloss.NewStyle().
 		Foreground(colors.Accent).
 		Bold(true).
 		MarginBottom(1)
-	
+
 	hintStyle := lipgloss.NewStyle().
 		Foreground(colors.Hint).
 		Italic(true).

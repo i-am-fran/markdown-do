@@ -47,7 +47,7 @@ func (m StatusBarModel) View() string {
 	totalTasks := len(m.todoFile.GetTasks())
 	pendingTasks := 0
 	for _, task := range m.todoFile.GetTasks() {
-		if task.Status == core.TaskPending {
+		if task.Status != core.TaskCompleted {
 			pendingTasks++
 		}
 	}
@@ -67,7 +67,7 @@ func (m StatusBarModel) View() string {
 	if totalTasks > 0 {
 		completionPercent = float64(totalTasks-pendingTasks) / float64(totalTasks) * 100
 	}
-	
+
 	// Visual progress indicator (small bar)
 	progressWidth := 10
 	filled := int(completionPercent / 100 * float64(progressWidth))
@@ -75,10 +75,10 @@ func (m StatusBarModel) View() string {
 		filled = progressWidth
 	}
 	progressBar := strings.Repeat("█", filled) + strings.Repeat("░", progressWidth-filled)
-	
+
 	// Left side: task count with progress
 	leftText := fmt.Sprintf("%d/%d [%s] %.0f%%", pendingTasks, totalTasks, progressBar, completionPercent)
-	
+
 	// Right side: file path
 	rightText := displayPath
 

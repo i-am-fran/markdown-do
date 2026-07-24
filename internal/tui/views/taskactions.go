@@ -97,7 +97,7 @@ func (m TaskActionsModel) Update(msg tea.Msg) (TaskActionsModel, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if item, ok := m.list.SelectedItem().(taskActionItem); ok {
+			if item, ok := m.list.SelectedItem().(taskActionItem); ok && m.task != nil {
 				return m, func() tea.Msg {
 					return TaskActionSelectMsg{Action: item.action, TaskID: m.task.ID}
 				}
@@ -114,6 +114,10 @@ func (m TaskActionsModel) Update(msg tea.Msg) (TaskActionsModel, tea.Cmd) {
 
 // View implements tea.Model
 func (m TaskActionsModel) View() string {
+	if m.task == nil {
+		return "No task selected"
+	}
+
 	// Render task text with markdown styling in a card
 	taskPreview := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
@@ -122,7 +126,7 @@ func (m TaskActionsModel) View() string {
 		Width(m.width - 4).
 		MarginBottom(1).
 		Render(markdown.Render(m.task.Text))
-	
+
 	hint := lipgloss.NewStyle().
 		Foreground(colors.Hint).
 		Italic(true).

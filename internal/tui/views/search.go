@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/i-am-fran/markdowndo/internal/cli"
 	"github.com/i-am-fran/markdowndo/internal/core"
 	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 	"github.com/i-am-fran/markdowndo/internal/tui/markdown"
@@ -29,8 +30,11 @@ type searchResultItem struct {
 
 func (i searchResultItem) Title() string {
 	checkbox := "☐"
-	if i.result.Task.Status == core.TaskCompleted {
+	switch i.result.Task.Status {
+	case core.TaskCompleted:
 		checkbox = "☑"
+	case core.TaskInProgress:
+		checkbox = "◐"
 	}
 	return fmt.Sprintf("  %s %s", checkbox, i.result.Task.Text)
 }
@@ -40,20 +44,23 @@ func (i searchResultItem) FilterValue() string { return i.result.Task.Text }
 // HighlightMatches highlights the matched characters in the text
 func (i searchResultItem) HighlightedTitle(query string) string {
 	checkbox := "☐"
-	if i.result.Task.Status == core.TaskCompleted {
+	switch i.result.Task.Status {
+	case core.TaskCompleted:
 		checkbox = "☑"
+	case core.TaskInProgress:
+		checkbox = "◐"
 	}
-	
+
 	if query == "" {
 		return fmt.Sprintf("  %s %s", checkbox, i.result.Task.Text)
 	}
-	
+
 	// Find fuzzy matches
 	matches := fuzzy.Find(query, []string{i.result.Task.Text})
 	if len(matches) == 0 {
 		return fmt.Sprintf("  %s %s", checkbox, i.result.Task.Text)
 	}
-	
+
 	// Highlight matched characters
 	match := matches[0]
 	highlighted := ""
@@ -66,7 +73,7 @@ func (i searchResultItem) HighlightedTitle(query string) string {
 		}
 	}
 	highlighted += i.result.Task.Text[lastIdx:]
-	
+
 	return fmt.Sprintf("  %s %s", checkbox, highlighted)
 }
 
@@ -423,13 +430,17 @@ func (m *SearchModel) toggleSelectedTask() tea.Cmd {
 			return nil
 		}
 
-		prevStatus := task.Status
-		todoFile.ToggleTask(m.selectedResult.Task.ID)
-		todoFile.Save()
+		updated, err := cli.PerformToggleTask(todoFile, m.selectedResult.Task.ID)
+		if err != nil {
+			return nil
+		}
 
-		msg := "Task completed"
-		if prevStatus == core.TaskCompleted {
-			msg = "Task reopened"
+		msg := "Task reopened"
+		switch updated.Status {
+		case core.TaskCompleted:
+			msg = "Task completed"
+		case core.TaskInProgress:
+			msg = "Task started"
 		}
 
 		return SearchTaskActionCompleteMsg{Message: msg, Keyword: m.keyword, Recursive: m.recursive}
@@ -447,8 +458,9 @@ func (m *SearchModel) deleteSelectedTask() tea.Cmd {
 			return nil
 		}
 
-		todoFile.DeleteTask(m.selectedResult.Task.ID)
-		todoFile.Save()
+		if _, err := cli.PerformDeleteTask(todoFile, m.selectedResult.Task.ID); err != nil {
+			return nil
+		}
 
 		return SearchTaskActionCompleteMsg{Message: "Task deleted", Keyword: m.keyword, Recursive: m.recursive}
 	}
@@ -465,8 +477,9 @@ func (m *SearchModel) editSelectedTask(newText string) tea.Cmd {
 			return nil
 		}
 
-		todoFile.UpdateTask(m.selectedResult.Task.ID, newText)
-		todoFile.Save()
+		if _, err := cli.PerformEditTask(todoFile, m.selectedResult.Task.ID, newText); err != nil {
+			return nil
+		}
 
 		return SearchTaskActionCompleteMsg{Message: "Task updated", Keyword: m.keyword, Recursive: m.recursive}
 	}
@@ -483,8 +496,9 @@ func (m *SearchModel) moveSelectedTask(section *string) tea.Cmd {
 			return nil
 		}
 
-		todoFile.MoveTask(m.selectedResult.Task.ID, section)
-		todoFile.Save()
+		if _, err := cli.PerformMoveTask(todoFile, m.selectedResult.Task.ID, section); err != nil {
+			return nil
+		}
 
 		target := "Inbox"
 		if section != nil {
@@ -537,31 +551,31 @@ func (m *SearchModel) setupMoveMode() {
 func (m SearchModel) renderResultsWithPreview() string {
 	// Get selected item for preview
 	selectedItem := m.list.SelectedItem()
-	
+
 	// Calculate split widths (60% list, 40% preview)
 	listWidth := int(float64(m.width) * 0.6)
 	previewWidth := m.width - listWidth - 2
-	
+
 	// Adjust list size for split view
 	listView := m.list.View()
-	
+
 	// Generate preview
 	preview := ""
 	if item, ok := selectedItem.(searchResultItem); ok {
 		preview = m.renderTaskPreview(item.result, previewWidth)
 	}
-	
+
 	if preview == "" {
 		return listView
 	}
-	
+
 	// Join list and preview side by side
 	return lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		listView,
 		lipgloss.NewStyle().
 			Width(previewWidth).
-			Height(m.height - 6).
+			Height(m.height-6).
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(colors.Border).
 			Padding(1).
@@ -572,7 +586,7 @@ func (m SearchModel) renderResultsWithPreview() string {
 // renderTaskPreview renders a preview of the task
 func (m SearchModel) renderTaskPreview(result SearchResult, width int) string {
 	var lines []string
-	
+
 	// File path
 	if m.recursive {
 		lines = append(lines, lipgloss.NewStyle().
@@ -581,7 +595,7 @@ func (m SearchModel) renderTaskPreview(result SearchResult, width int) string {
 			Render("File: "+result.RelativePath))
 		lines = append(lines, "")
 	}
-	
+
 	// Section
 	if result.Task.Section != nil {
 		lines = append(lines, lipgloss.NewStyle().
@@ -589,29 +603,33 @@ func (m SearchModel) renderTaskPreview(result SearchResult, width int) string {
 			Render("Section: "+*result.Task.Section))
 		lines = append(lines, "")
 	}
-	
+
 	// Task text with markdown rendering
 	lines = append(lines, lipgloss.NewStyle().
 		Bold(true).
 		Render("Task:"))
 	lines = append(lines, "")
-	
+
 	// Render markdown
 	rendered := markdown.Render(result.Task.Text)
 	lines = append(lines, rendered)
-	
+
 	// Status
 	lines = append(lines, "")
 	status := "Pending"
 	statusColor := colors.Warning
-	if result.Task.Status == core.TaskCompleted {
+	switch result.Task.Status {
+	case core.TaskCompleted:
 		status = "Completed"
 		statusColor = colors.Success
+	case core.TaskInProgress:
+		status = "In Progress"
+		statusColor = colors.Accent
 	}
 	lines = append(lines, lipgloss.NewStyle().
 		Foreground(statusColor).
 		Render("Status: "+status))
-	
+
 	return strings.Join(lines, "\n")
 }
 
@@ -646,19 +664,19 @@ func (m SearchModel) View() string {
 				Padding(2, 3).
 				Width(m.width - 4).
 				MarginTop(2)
-			
+
 			titleStyle := lipgloss.NewStyle().
 				Foreground(colors.Warning).
 				Bold(true).
 				MarginBottom(1)
-			
+
 			hintStyle := lipgloss.NewStyle().
 				Foreground(colors.Muted).
 				Italic(true)
-			
+
 			content := titleStyle.Render("No matching tasks found") + "\n" +
 				hintStyle.Render("Try a different search term or press esc to search again")
-			
+
 			return emptyCardStyle.Render(content) + "\n\n" +
 				lipgloss.NewStyle().Foreground(colors.Hint).Italic(true).Render("esc new search")
 		}

@@ -13,6 +13,7 @@ type ParsedArgs struct {
 	Args      []string // remaining positional tokens (the command word removed)
 	Text      string   // Args joined with " "
 	Recursive bool     // -r / --recursive present anywhere in the input
+	Yes       bool     // -y / --yes present anywhere in the input
 }
 
 // idShapeRegex matches tokens that look like a task reference: a position
@@ -49,10 +50,11 @@ var zeroArgCommands = map[string]bool{
 // freeTextCommands take arbitrary trailing text, so there's no shape to
 // disambiguate against — they're recognized purely by their first word.
 var freeTextCommands = map[string]bool{
-	"find":  true,
-	"notes": true,
-	"tag":   true,
-	"add":   true,
+	"find":   true,
+	"notes":  true,
+	"tag":    true,
+	"add":    true,
+	"config": true,
 }
 
 // ParseArgs parses command line arguments into a command and its arguments.
@@ -68,16 +70,21 @@ func ParseArgs(args []string) ParsedArgs {
 
 	var rest []string
 	recursive := false
+	yes := false
 	for _, a := range args {
 		if a == "-r" || a == "--recursive" {
 			recursive = true
+			continue
+		}
+		if a == "-y" || a == "--yes" {
+			yes = true
 			continue
 		}
 		rest = append(rest, a)
 	}
 
 	if len(rest) == 0 {
-		return ParsedArgs{Recursive: recursive}
+		return ParsedArgs{Recursive: recursive, Yes: yes}
 	}
 
 	word := rest[0]
@@ -85,25 +92,26 @@ func ParseArgs(args []string) ParsedArgs {
 
 	switch {
 	case idArgCommands[word] && len(tail) > 0 && idShapeRegex.MatchString(tail[0]):
-		return newParsedArgs(word, tail, recursive)
+		return newParsedArgs(word, tail, recursive, yes)
 	case zeroArgCommands[word] && len(tail) == 0:
-		return newParsedArgs(word, tail, recursive)
+		return newParsedArgs(word, tail, recursive, yes)
 	case freeTextCommands[word]:
-		return newParsedArgs(word, tail, recursive)
+		return newParsedArgs(word, tail, recursive, yes)
 	case strings.HasPrefix(word, "-"):
 		// An unrecognized dash flag (likely a pre-2.0 flag like -c/-d/-lint)
 		// is reported loudly instead of being silently added as task text.
-		return newParsedArgs("unknown", rest, recursive)
+		return newParsedArgs("unknown", rest, recursive, yes)
 	default:
-		return newParsedArgs("add", rest, recursive)
+		return newParsedArgs("add", rest, recursive, yes)
 	}
 }
 
-func newParsedArgs(command string, args []string, recursive bool) ParsedArgs {
+func newParsedArgs(command string, args []string, recursive, yes bool) ParsedArgs {
 	return ParsedArgs{
 		Command:   command,
 		Args:      args,
 		Text:      strings.Join(args, " "),
 		Recursive: recursive,
+		Yes:       yes,
 	}
 }

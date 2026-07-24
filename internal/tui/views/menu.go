@@ -144,26 +144,33 @@ func (m MenuModel) View() string {
 		tasks := m.todoFile.GetTasks()
 		total := len(tasks)
 		pending := 0
+		inProgress := 0
 		completed := 0
 		for _, t := range tasks {
-			if t.Status == core.TaskPending {
-				pending++
-			} else {
+			switch t.Status {
+			case core.TaskCompleted:
 				completed++
+			case core.TaskInProgress:
+				inProgress++
+			default:
+				pending++
 			}
 		}
-		
+
 		if total > 0 {
 			statsStyle := lipgloss.NewStyle().
 				Foreground(colors.Muted).
 				Italic(true).
 				MarginTop(1)
-			
-			stats = "\n" + statsStyle.Render(
-				fmt.Sprintf("%d pending • %d completed • %d total", pending, completed, total))
+
+			summary := fmt.Sprintf("%d pending • %d completed • %d total", pending, completed, total)
+			if inProgress > 0 {
+				summary = fmt.Sprintf("%d pending • %d in progress • %d completed • %d total", pending, inProgress, completed, total)
+			}
+			stats = "\n" + statsStyle.Render(summary)
 		}
 	}
-	
+
 	hint := lipgloss.NewStyle().
 		Foreground(colors.Hint).
 		Italic(true).

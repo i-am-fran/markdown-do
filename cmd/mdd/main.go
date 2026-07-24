@@ -7,12 +7,21 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/i-am-fran/markdowndo/internal/cli"
+	"github.com/i-am-fran/markdowndo/internal/config"
+	"github.com/i-am-fran/markdowndo/internal/core"
 	"github.com/i-am-fran/markdowndo/internal/tui"
 )
 
 func main() {
-	// No arguments at all -> TUI
+	settings := config.GetSettings()
+	core.SetSectionAliases(settings.SectionAliases)
+
+	// No arguments at all -> TUI, unless disabled via settings
 	if len(os.Args) == 1 {
+		if !settings.EnableTUI {
+			cli.ShowHelp()
+			return
+		}
 		p := tea.NewProgram(tui.New(), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
@@ -85,10 +94,10 @@ func handleCLI(args cli.ParsedArgs) error {
 		if len(args.Args) != 1 {
 			usageError("remove takes a single task id, e.g. mdd remove 3")
 		}
-		return cli.DeleteTask(args.Args[0])
+		return cli.DeleteTask(args.Args[0], args.Yes)
 
 	case "clear":
-		return cli.DeleteCompletedTasks()
+		return cli.DeleteCompletedTasks(args.Yes)
 
 	case "notes":
 		if len(args.Args) == 0 {
@@ -110,6 +119,28 @@ func handleCLI(args cli.ParsedArgs) error {
 
 	case "untag":
 		return cli.RemoveTaskIDs()
+
+	case "config":
+		if len(args.Args) == 0 {
+			usageError("config requires a subcommand, e.g. mdd config list")
+		}
+		switch args.Args[0] {
+		case "list":
+			return cli.ConfigList()
+		case "get":
+			if len(args.Args) != 2 {
+				usageError("config get requires a single key, e.g. mdd config get editor")
+			}
+			return cli.ConfigGet(args.Args[1])
+		case "set":
+			if len(args.Args) < 3 {
+				usageError("config set requires a key and value, e.g. mdd config set editor vim")
+			}
+			return cli.ConfigSet(args.Args[1], strings.Join(args.Args[2:], " "))
+		default:
+			usageError("unknown config subcommand %q — use list, get, or set", args.Args[0])
+		}
+		return nil
 
 	case "add":
 		if args.Text == "" {

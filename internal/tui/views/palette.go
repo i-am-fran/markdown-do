@@ -98,7 +98,7 @@ func (m PaletteModel) Update(msg tea.Msg) (PaletteModel, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		
+
 		paletteWidth := 60
 		if msg.Width < 70 {
 			paletteWidth = msg.Width - 10
@@ -107,7 +107,7 @@ func (m PaletteModel) Update(msg tea.Msg) (PaletteModel, tea.Cmd) {
 		if msg.Height < 20 {
 			paletteHeight = msg.Height - 5
 		}
-		
+
 		m.list.SetSize(paletteWidth, paletteHeight)
 		return m, nil
 

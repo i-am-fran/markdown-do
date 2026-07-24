@@ -15,8 +15,8 @@ var (
 	// Success - Modern green for success messages
 	Success = lipgloss.CompleteColor{
 		TrueColor: "#10B981", // Emerald green
-		ANSI256:   "42",       // green
-		ANSI:      "2",        // green
+		ANSI256:   "42",      // green
+		ANSI:      "2",       // green
 	}
 
 	// Error - Modern red for error messages

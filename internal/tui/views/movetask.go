@@ -154,17 +154,17 @@ func (m MoveTaskModel) View() string {
 			Foreground(colors.Accent).
 			Bold(true).
 			MarginBottom(1)
-		
+
 		inputStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(colors.Border).
 			Padding(0, 1).
 			Width(m.width - 6)
-		
+
 		hintStyle := lipgloss.NewStyle().
 			Foreground(colors.Hint).
 			Italic(true)
-		
+
 		s := titleStyle.Render("New section name:") + "\n"
 		s += inputStyle.Render(m.textInput.View()) + "\n\n"
 		s += hintStyle.Render("enter create  esc back")

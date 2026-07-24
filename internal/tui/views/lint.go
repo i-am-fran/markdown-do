@@ -2,11 +2,11 @@ package views
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/i-am-fran/markdowndo/internal/cli"
 	"github.com/i-am-fran/markdowndo/internal/core"
 	"github.com/i-am-fran/markdowndo/internal/tui/colors"
 )
@@ -18,9 +18,10 @@ type LintModel struct {
 	issues     []core.LintIssue
 	fixedCount int
 	taskStats  struct {
-		total     int
-		pending   int
-		completed int
+		total      int
+		pending    int
+		inProgress int
+		completed  int
 	}
 	loading bool
 	width   int
@@ -53,40 +54,38 @@ func (m LintModel) Init() tea.Cmd {
 
 func (m LintModel) runLint() tea.Cmd {
 	return func() tea.Msg {
-		cwd, _ := os.Getwd()
-		path, err := core.FindDefaultTodoFile(cwd)
-		if err != nil {
-			return lintCompleteMsg{}
-		}
-
-		todoFile, err := core.Load(path)
+		todoFile, filePath, err := cli.LoadDefaultTodoFile()
 		if err != nil {
 			return lintCompleteMsg{}
 		}
 
 		tasks := todoFile.GetTasks()
 		pending := 0
+		inProgress := 0
 		completed := 0
 		for _, t := range tasks {
-			if t.Status == core.TaskPending {
-				pending++
-			} else {
+			switch t.Status {
+			case core.TaskCompleted:
 				completed++
+			case core.TaskInProgress:
+				inProgress++
+			default:
+				pending++
 			}
 		}
 
-		result := todoFile.Lint()
-
-		if result.FixedCount > 0 {
-			todoFile.Save()
+		result, err := cli.PerformLint(todoFile)
+		if err != nil {
+			return lintCompleteMsg{}
 		}
 
 		return lintCompleteMsg{
-			filePath:   path,
+			filePath:   filePath,
 			issues:     result.Issues,
 			fixedCount: result.FixedCount,
 			total:      len(tasks),
 			pending:    pending,
+			inProgress: inProgress,
 			completed:  completed,
 		}
 	}
@@ -108,6 +107,7 @@ func (m LintModel) Update(msg tea.Msg) (LintModel, tea.Cmd) {
 		m.fixedCount = msg.fixedCount
 		m.taskStats.total = msg.total
 		m.taskStats.pending = msg.pending
+		m.taskStats.inProgress = msg.inProgress
 		m.taskStats.completed = msg.completed
 		return m, nil
 
@@ -193,12 +193,16 @@ func (m LintModel) View() string {
 		Foreground(colors.Muted).
 		Italic(true).
 		MarginBottom(1)
-	s += statsStyle.Render(
-		fmt.Sprintf("Checked %d task%s (%d pending, %d completed)",
-			m.taskStats.total, suffix, m.taskStats.pending, m.taskStats.completed)) + "\n"
+	statsText := fmt.Sprintf("Checked %d task%s (%d pending, %d completed)",
+		m.taskStats.total, suffix, m.taskStats.pending, m.taskStats.completed)
+	if m.taskStats.inProgress > 0 {
+		statsText = fmt.Sprintf("Checked %d task%s (%d pending, %d in progress, %d completed)",
+			m.taskStats.total, suffix, m.taskStats.pending, m.taskStats.inProgress, m.taskStats.completed)
+	}
+	s += statsStyle.Render(statsText) + "\n"
 
 	s += m.list.View() + "\n\n"
-	
+
 	hintStyle := lipgloss.NewStyle().
 		Foreground(colors.Hint).
 		Italic(true)
@@ -213,5 +217,6 @@ type lintCompleteMsg struct {
 	fixedCount int
 	total      int
 	pending    int
+	inProgress int
 	completed  int
 }
