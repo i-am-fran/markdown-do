@@ -2,11 +2,15 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
+
+var idTagRegex = regexp.MustCompile(`^([A-Z]{3})(\d+)$`)
 
 // TodoFile manages a TODO.md file
 type TodoFile struct {
@@ -56,7 +60,9 @@ func (tf *TodoFile) parse(content string) {
 	taskID := 1
 	var currentSection *string
 
-	for i, line := range tf.lines {
+	for i := 0; i < len(tf.lines); i++ {
+		line := tf.lines[i]
+
 		// Check for section header (## Header)
 		if sectionName := ParseHeaderLine(line); sectionName != nil {
 			currentSection = sectionName
@@ -69,10 +75,39 @@ func (tf *TodoFile) parse(content string) {
 
 		// Check for task
 		if task := ParseTaskLine(line, i, taskID, CopySectionPtr(currentSection)); task != nil {
+			notes, consumed := collectTaskNotes(tf.lines, i+1)
+			task.Notes = notes
 			tf.tasks = append(tf.tasks, *task)
 			taskID++
+			i += consumed
 		}
 	}
+}
+
+// collectTaskNotes scans forward from start, returning the trimmed text of
+// each contiguous indented plain-bullet line and how many lines were
+// consumed. A note run ends at a blank line, a section header, a checkbox
+// line (which always wins over note detection), a non-indented line, or EOF.
+func collectTaskNotes(lines []string, start int) (notes []string, consumed int) {
+	for i := start; i < len(lines); i++ {
+		line := lines[i]
+		if strings.TrimSpace(line) == "" {
+			break
+		}
+		if ParseHeaderLine(line) != nil {
+			break
+		}
+		if ParseTaskLine(line, 0, 0, nil) != nil {
+			break
+		}
+		m := noteRegex.FindStringSubmatch(line)
+		if m == nil {
+			break
+		}
+		notes = append(notes, strings.TrimSpace(m[1]))
+		consumed++
+	}
+	return notes, consumed
 }
 
 // GetTasks returns a copy of all tasks
@@ -90,6 +125,77 @@ func (tf *TodoFile) GetTask(id int) *Task {
 		}
 	}
 	return nil
+}
+
+// GetTaskByStableID returns a task by its persistent StableID (case-insensitive)
+func (tf *TodoFile) GetTaskByStableID(id string) *Task {
+	for i := range tf.tasks {
+		if strings.EqualFold(tf.tasks[i].StableID, id) {
+			return &tf.tasks[i]
+		}
+	}
+	return nil
+}
+
+// SetTaskIDs assigns sequential IDs (e.g. ABC01, ABC02, ...) to every task in
+// the file, overwriting any IDs already present. Numbering starts at the
+// bottom of the file (the oldest task, since new tasks are inserted at the
+// top) and increases moving upward.
+func (tf *TodoFile) SetTaskIDs(prefix string) error {
+	normalizedPrefix, err := ValidateIDPrefix(prefix)
+	if err != nil {
+		return err
+	}
+
+	total := len(tf.tasks)
+	for i, task := range tf.tasks {
+		task.StableID = normalizedPrefix + idSuffix(total-i)
+		tf.lines[task.LineNumber] = FormatTask(&task)
+	}
+
+	tf.parse(strings.Join(tf.lines, "\n"))
+	return nil
+}
+
+// RemoveTaskIDs strips the StableID tag from every task in the file.
+// Returns true if any task had an ID removed.
+func (tf *TodoFile) RemoveTaskIDs() bool {
+	changed := false
+	for _, task := range tf.tasks {
+		if task.StableID == "" {
+			continue
+		}
+		task.StableID = ""
+		tf.lines[task.LineNumber] = FormatTask(&task)
+		changed = true
+	}
+
+	if changed {
+		tf.parse(strings.Join(tf.lines, "\n"))
+	}
+	return changed
+}
+
+// activeIDSequence returns the prefix and next available number of the ID
+// scheme currently in use in the file, if any task has a StableID.
+func (tf *TodoFile) activeIDSequence() (prefix string, nextNum int, ok bool) {
+	maxNum := 0
+	for _, t := range tf.tasks {
+		match := idTagRegex.FindStringSubmatch(t.StableID)
+		if match == nil {
+			continue
+		}
+		prefix = match[1]
+		ok = true
+		if n, err := strconv.Atoi(match[2]); err == nil && n > maxNum {
+			maxNum = n
+		}
+	}
+	return prefix, maxNum + 1, ok
+}
+
+func idSuffix(n int) string {
+	return fmt.Sprintf("%02d", n)
 }
 
 // GetPendingTasks returns all pending tasks
@@ -215,6 +321,9 @@ func (tf *TodoFile) AddTask(text string) (*Task, error) {
 	}
 
 	newTaskLine := "- [ ] " + taskText
+	if prefix, nextNum, ok := tf.activeIDSequence(); ok {
+		newTaskLine = "- [ ] [" + prefix + idSuffix(nextNum) + "] " + taskText
+	}
 
 	var lineNumber int
 	if parsed.SectionTag != nil {
@@ -354,11 +463,14 @@ func (tf *TodoFile) UpdateTask(id int, text string) bool {
 		return false
 	}
 
-	checkbox := " "
-	if task.Status == TaskCompleted {
-		checkbox = "x"
-	}
-	updatedLine := "- [" + checkbox + "] " + text
+	updatedLine := FormatTask(&Task{
+		ID:         task.ID,
+		StableID:   task.StableID,
+		Text:       text,
+		Status:     task.Status,
+		LineNumber: task.LineNumber,
+		Section:    task.Section,
+	})
 	tf.lines[task.LineNumber] = updatedLine
 	tf.parse(strings.Join(tf.lines, "\n"))
 	return true
@@ -378,6 +490,7 @@ func (tf *TodoFile) ToggleTask(id int) bool {
 
 	updatedLine := FormatTask(&Task{
 		ID:         task.ID,
+		StableID:   task.StableID,
 		Text:       task.Text,
 		Status:     newStatus,
 		LineNumber: task.LineNumber,
@@ -397,6 +510,7 @@ func (tf *TodoFile) SetTaskStatus(id int, status TaskStatus) bool {
 
 	updatedLine := FormatTask(&Task{
 		ID:         task.ID,
+		StableID:   task.StableID,
 		Text:       task.Text,
 		Status:     status,
 		LineNumber: task.LineNumber,
@@ -424,6 +538,15 @@ func (tf *TodoFile) GetSectionNames() []string {
 	return names
 }
 
+// formatNoteLines formats a task's notes as indented plain-bullet lines.
+func formatNoteLines(notes []string) []string {
+	lines := make([]string, len(notes))
+	for i, note := range notes {
+		lines[i] = "  - " + note
+	}
+	return lines
+}
+
 // MoveTask moves a task to a different section
 func (tf *TodoFile) MoveTask(taskID int, targetSection *string) bool {
 	task := tf.GetTask(taskID)
@@ -431,8 +554,9 @@ func (tf *TodoFile) MoveTask(taskID int, targetSection *string) bool {
 		return false
 	}
 
-	// Remove from current location
-	tf.lines = append(tf.lines[:task.LineNumber], tf.lines[task.LineNumber+1:]...)
+	// Remove block (task line + notes) from current location
+	end := task.LineNumber + task.BlockLineCount()
+	tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
 	tf.parse(strings.Join(tf.lines, "\n"))
 
 	// Find new position
@@ -443,27 +567,43 @@ func (tf *TodoFile) MoveTask(taskID int, targetSection *string) bool {
 		insertLine = tf.findOrCreateSection(*targetSection)
 	}
 
-	// Insert at new location
-	var formattedTask string
-	// If moving to Notes section, convert to plain list item (remove checkbox)
+	// Build the block to insert
+	// If moving to Notes section, convert the task line to a plain list item
+	// (remove checkbox) but keep its note bullets underneath it.
+	var block []string
 	if targetSection != nil && strings.EqualFold(*targetSection, "Notes") {
-		formattedTask = "- " + task.Text
+		block = append([]string{"- " + task.Text}, formatNoteLines(task.Notes)...)
 	} else {
-		formattedTask = FormatTask(task)
+		block = FormatTaskBlock(task)
 	}
-	tf.lines = append(tf.lines[:insertLine], append([]string{formattedTask}, tf.lines[insertLine:]...)...)
+	tf.lines = append(tf.lines[:insertLine], append(block, tf.lines[insertLine:]...)...)
 	tf.parse(strings.Join(tf.lines, "\n"))
 	return true
 }
 
-// DeleteTask deletes a task by ID
+// DeleteTask deletes a task (and its notes) by ID
 func (tf *TodoFile) DeleteTask(id int) bool {
 	task := tf.GetTask(id)
 	if task == nil {
 		return false
 	}
 
-	tf.lines = append(tf.lines[:task.LineNumber], tf.lines[task.LineNumber+1:]...)
+	end := task.LineNumber + task.BlockLineCount()
+	tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
+	tf.parse(strings.Join(tf.lines, "\n"))
+	return true
+}
+
+// AddTaskNote appends a note to the given task, after any existing notes.
+func (tf *TodoFile) AddTaskNote(id int, text string) bool {
+	task := tf.GetTask(id)
+	if task == nil {
+		return false
+	}
+
+	insertAt := task.LineNumber + task.BlockLineCount()
+	noteLine := "  - " + strings.TrimSpace(text)
+	tf.lines = append(tf.lines[:insertAt], append([]string{noteLine}, tf.lines[insertAt:]...)...)
 	tf.parse(strings.Join(tf.lines, "\n"))
 	return true
 }
@@ -481,7 +621,8 @@ func (tf *TodoFile) DeleteCompletedTasks() int {
 	})
 
 	for _, task := range completed {
-		tf.lines = append(tf.lines[:task.LineNumber], tf.lines[task.LineNumber+1:]...)
+		end := task.LineNumber + task.BlockLineCount()
+		tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
 	}
 
 	tf.parse(strings.Join(tf.lines, "\n"))
@@ -812,15 +953,20 @@ func (tf *TodoFile) Serialize() string {
 	return strings.Join(tf.lines, "\n")
 }
 
+// reorderTasks sorts each section's tasks pending-before-completed, keeping
+// every task's notes attached to it. It rewrites each section group's line
+// span as a single block-formatted chunk (a permutation of the same lines,
+// so the span's length - and every other group's line numbers - is
+// unaffected). If a group's tasks don't exactly fill their line span (e.g. a
+// stray blank line between two tasks in the same section), that group is
+// left untouched rather than risk corrupting content.
 func (tf *TodoFile) reorderTasks() {
 	if len(tf.tasks) <= 1 {
 		return
 	}
 
-	// Group tasks by section
 	groups := tf.GetTasksGroupedBySectionOrdered()
 
-	// Helper to sort tasks: pending -> completed
 	sortByStatus := func(tasks []Task) []Task {
 		var pending, completed []Task
 		for _, t := range tasks {
@@ -833,27 +979,36 @@ func (tf *TodoFile) reorderTasks() {
 		return append(pending, completed...)
 	}
 
-	// Collect sorted tasks
-	var sortedTasks []Task
+	changed := false
 	for _, group := range groups {
-		sortedTasks = append(sortedTasks, sortByStatus(group.Tasks)...)
+		if len(group.Tasks) <= 1 {
+			continue
+		}
+
+		rangeStart := group.Tasks[0].LineNumber
+		last := group.Tasks[len(group.Tasks)-1]
+		rangeEnd := last.LineNumber + last.BlockLineCount()
+
+		totalBlockLines := 0
+		for _, t := range group.Tasks {
+			totalBlockLines += t.BlockLineCount()
+		}
+		if totalBlockLines != rangeEnd-rangeStart {
+			continue
+		}
+
+		var newLines []string
+		for _, t := range sortByStatus(group.Tasks) {
+			newLines = append(newLines, FormatTaskBlock(&t)...)
+		}
+
+		tf.lines = append(tf.lines[:rangeStart], append(newLines, tf.lines[rangeEnd:]...)...)
+		changed = true
 	}
 
-	// Get the line numbers where tasks currently are
-	taskLineNumbers := make([]int, len(tf.tasks))
-	for i, t := range tf.tasks {
-		taskLineNumbers[i] = t.LineNumber
+	if changed {
+		tf.parse(strings.Join(tf.lines, "\n"))
 	}
-	sort.Ints(taskLineNumbers)
-
-	// Replace task lines with sorted tasks
-	for i, task := range sortedTasks {
-		lineNum := taskLineNumbers[i]
-		tf.lines[lineNum] = FormatTask(&task)
-	}
-
-	// Re-parse to update task references
-	tf.parse(strings.Join(tf.lines, "\n"))
 }
 
 // ensureNotesLast ensures the Notes section is always at the end
@@ -953,8 +1108,7 @@ func (tf *TodoFile) Restore(snapshot []string) {
 	// Restore lines from snapshot
 	tf.lines = make([]string, len(snapshot))
 	copy(tf.lines, snapshot)
-	
+
 	// Re-parse the content
 	tf.parse(strings.Join(tf.lines, "\n"))
 }
-

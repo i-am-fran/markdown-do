@@ -1,0 +1,434 @@
+package core
+
+import (
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+func TestSetTaskIDsAssignsSequentialTags(t *testing.T) {
+	content := "# TODO\n\n- [ ] Buy milk\n- [x] Walk dog\n- [ ] Call mom\n"
+	tf := NewTodoFile("TODO.md", content)
+
+	if err := tf.SetTaskIDs("abc"); err != nil {
+		t.Fatalf("SetTaskIDs failed: %v", err)
+	}
+
+	want := []string{"ABC03", "ABC02", "ABC01"}
+	tasks := tf.GetTasks()
+	if len(tasks) != len(want) {
+		t.Fatalf("expected %d tasks, got %d", len(want), len(tasks))
+	}
+	for i, task := range tasks {
+		if task.StableID != want[i] {
+			t.Errorf("task %d: expected StableID %q, got %q", i, want[i], task.StableID)
+		}
+	}
+}
+
+func TestSetTaskIDsRejectsInvalidPrefix(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Buy milk\n")
+	if err := tf.SetTaskIDs("abcd"); err == nil {
+		t.Error("expected error for 4-letter prefix, got nil")
+	}
+	if err := tf.SetTaskIDs("a1"); err == nil {
+		t.Error("expected error for non-alphabetic prefix, got nil")
+	}
+}
+
+func TestSetTaskIDsOverwritesExisting(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] [XYZ01] Buy milk\n")
+	if err := tf.SetTaskIDs("abc"); err != nil {
+		t.Fatalf("SetTaskIDs failed: %v", err)
+	}
+	task := tf.GetTasks()[0]
+	if task.StableID != "ABC01" {
+		t.Errorf("expected overwritten StableID %q, got %q", "ABC01", task.StableID)
+	}
+}
+
+func TestRemoveTaskIDs(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Buy milk\n- [x] Walk dog\n")
+	if err := tf.SetTaskIDs("abc"); err != nil {
+		t.Fatalf("SetTaskIDs failed: %v", err)
+	}
+
+	if changed := tf.RemoveTaskIDs(); !changed {
+		t.Fatal("expected RemoveTaskIDs to report a change")
+	}
+	for _, task := range tf.GetTasks() {
+		if task.StableID != "" {
+			t.Errorf("expected empty StableID after removal, got %q", task.StableID)
+		}
+	}
+
+	if changed := tf.RemoveTaskIDs(); changed {
+		t.Error("expected RemoveTaskIDs to be a no-op when no IDs remain")
+	}
+}
+
+func TestAddTaskContinuesActiveSequence(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Buy milk\n- [x] Walk dog\n")
+	if err := tf.SetTaskIDs("abc"); err != nil {
+		t.Fatalf("SetTaskIDs failed: %v", err)
+	}
+
+	task, err := tf.AddTask("Call mom")
+	if err != nil {
+		t.Fatalf("AddTask failed: %v", err)
+	}
+	if task.StableID != "ABC03" {
+		t.Errorf("expected new task to continue sequence with %q, got %q", "ABC03", task.StableID)
+	}
+}
+
+func TestAddTaskNoIDWhenSequenceInactive(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Buy milk\n")
+	task, err := tf.AddTask("Call mom")
+	if err != nil {
+		t.Fatalf("AddTask failed: %v", err)
+	}
+	if task.StableID != "" {
+		t.Errorf("expected no StableID when no ID scheme is active, got %q", task.StableID)
+	}
+}
+
+func TestGetTaskByStableIDCaseInsensitive(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Buy milk\n")
+	if err := tf.SetTaskIDs("abc"); err != nil {
+		t.Fatalf("SetTaskIDs failed: %v", err)
+	}
+
+	if tf.GetTaskByStableID("abc01") == nil {
+		t.Error("expected case-insensitive lookup to find task")
+	}
+	if tf.GetTaskByStableID("ABC01") == nil {
+		t.Error("expected uppercase lookup to find task")
+	}
+	if tf.GetTaskByStableID("nonexistent") != nil {
+		t.Error("expected nil for unknown StableID")
+	}
+}
+
+func TestLoadDoesNotAutoAssignIDs(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "TODO.md")
+
+	tf := NewTodoFile(path, "# TODO\n\n- [ ] Buy milk\n")
+	if err := tf.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	reloaded, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+	for _, task := range reloaded.GetTasks() {
+		if task.StableID != "" {
+			t.Errorf("expected Load to leave tasks untagged, got StableID %q", task.StableID)
+		}
+	}
+}
+
+func TestParseAttachesNotesToTask(t *testing.T) {
+	content := "# TODO\n\n- [ ] Some task\n  - a note about the task\n  - another note\n"
+	tf := NewTodoFile("TODO.md", content)
+	tasks := tf.GetTasks()
+	if len(tasks) != 1 {
+		t.Fatalf("expected 1 task, got %d", len(tasks))
+	}
+	want := []string{"a note about the task", "another note"}
+	if len(tasks[0].Notes) != len(want) {
+		t.Fatalf("expected %d notes, got %d: %v", len(want), len(tasks[0].Notes), tasks[0].Notes)
+	}
+	for i := range want {
+		if tasks[0].Notes[i] != want[i] {
+			t.Errorf("note %d: expected %q, got %q", i, want[i], tasks[0].Notes[i])
+		}
+	}
+}
+
+func TestParseTaskWithoutNotesHasEmptyNotes(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Some task\n")
+	tasks := tf.GetTasks()
+	if len(tasks[0].Notes) != 0 {
+		t.Errorf("expected no notes, got %v", tasks[0].Notes)
+	}
+}
+
+func TestParseNotesStopAtBlankLine(t *testing.T) {
+	content := "# TODO\n\n- [ ] Some task\n  - a note\n\n- [ ] Another task\n"
+	tf := NewTodoFile("TODO.md", content)
+	tasks := tf.GetTasks()
+	if len(tasks) != 2 {
+		t.Fatalf("expected 2 tasks, got %d", len(tasks))
+	}
+	if len(tasks[0].Notes) != 1 || tasks[0].Notes[0] != "a note" {
+		t.Errorf("expected task 0 to have 1 note, got %v", tasks[0].Notes)
+	}
+	if len(tasks[1].Notes) != 0 {
+		t.Errorf("expected task 1 to have no notes, got %v", tasks[1].Notes)
+	}
+}
+
+func TestParseNotesStopAtNewTask(t *testing.T) {
+	content := "# TODO\n\n- [ ] Task one\n  - note for one\n- [ ] Task two\n"
+	tf := NewTodoFile("TODO.md", content)
+	tasks := tf.GetTasks()
+	if len(tasks) != 2 {
+		t.Fatalf("expected 2 tasks, got %d", len(tasks))
+	}
+	if len(tasks[0].Notes) != 1 || tasks[0].Notes[0] != "note for one" {
+		t.Errorf("expected task 0 to have 1 note, got %v", tasks[0].Notes)
+	}
+	if len(tasks[1].Notes) != 0 {
+		t.Errorf("expected task 1 to have no notes, got %v", tasks[1].Notes)
+	}
+}
+
+func TestParseNotesStopAtNonIndentedLine(t *testing.T) {
+	content := "# TODO\n\n- [ ] Some task\n  - a note\nsome stray plain text\n"
+	tf := NewTodoFile("TODO.md", content)
+	tasks := tf.GetTasks()
+	if len(tasks[0].Notes) != 1 || tasks[0].Notes[0] != "a note" {
+		t.Errorf("expected 1 note, got %v", tasks[0].Notes)
+	}
+}
+
+func TestParseIndentedChecklistLineIsNewTaskNotNote(t *testing.T) {
+	content := "# TODO\n\n- [ ] Parent task\n  - [ ] Child checklist item\n"
+	tf := NewTodoFile("TODO.md", content)
+	tasks := tf.GetTasks()
+	if len(tasks) != 2 {
+		t.Fatalf("expected 2 tasks (indented checkbox is a sibling task), got %d", len(tasks))
+	}
+	if len(tasks[0].Notes) != 0 {
+		t.Errorf("expected parent task to have no notes, got %v", tasks[0].Notes)
+	}
+	if tasks[1].Text != "Child checklist item" {
+		t.Errorf("expected second task text %q, got %q", "Child checklist item", tasks[1].Text)
+	}
+}
+
+func TestParseConsecutiveTasksEachWithNotes(t *testing.T) {
+	content := "# TODO\n\n- [ ] Task one\n  - note one-a\n- [ ] Task two\n  - note two-a\n  - note two-b\n"
+	tf := NewTodoFile("TODO.md", content)
+	tasks := tf.GetTasks()
+	if len(tasks) != 2 {
+		t.Fatalf("expected 2 tasks, got %d", len(tasks))
+	}
+	if len(tasks[0].Notes) != 1 || tasks[0].Notes[0] != "note one-a" {
+		t.Errorf("expected task 0 notes [note one-a], got %v", tasks[0].Notes)
+	}
+	if len(tasks[1].Notes) != 2 || tasks[1].Notes[0] != "note two-a" || tasks[1].Notes[1] != "note two-b" {
+		t.Errorf("expected task 1 notes [note two-a note two-b], got %v", tasks[1].Notes)
+	}
+}
+
+func TestSerializeRoundTripsTaskNotes(t *testing.T) {
+	content := "# TODO\n\n- [ ] Some task\n  - a note about the task\n  - another note\n"
+	tf := NewTodoFile("TODO.md", content)
+	if got := tf.Serialize(); got != content {
+		t.Errorf("round trip mismatch:\ngot:  %q\nwant: %q", got, content)
+	}
+}
+
+func TestDeleteTaskRemovesItsNotes(t *testing.T) {
+	content := "# TODO\n\n- [ ] Task one\n  - note one\n  - note two\n- [ ] Task two\n"
+	tf := NewTodoFile("TODO.md", content)
+	if !tf.DeleteTask(1) {
+		t.Fatal("expected DeleteTask to succeed")
+	}
+	tasks := tf.GetTasks()
+	if len(tasks) != 1 || tasks[0].Text != "Task two" {
+		t.Fatalf("expected only Task two to remain, got %+v", tasks)
+	}
+	if strings.Contains(tf.Serialize(), "note one") || strings.Contains(tf.Serialize(), "note two") {
+		t.Errorf("expected notes removed along with task, got: %q", tf.Serialize())
+	}
+}
+
+func TestMoveTaskCarriesNotesToNewSection(t *testing.T) {
+	content := "# TODO\n\n- [ ] Task one\n  - note one\n"
+	tf := NewTodoFile("TODO.md", content)
+	section := "Errands"
+	if !tf.MoveTask(1, &section) {
+		t.Fatal("expected MoveTask to succeed")
+	}
+	task := tf.GetTask(1)
+	if task == nil || task.Section == nil || *task.Section != "Errands" {
+		t.Fatalf("expected task moved to Errands, got %+v", task)
+	}
+	if len(task.Notes) != 1 || task.Notes[0] != "note one" {
+		t.Errorf("expected note to travel with task, got %v", task.Notes)
+	}
+}
+
+func TestMoveTaskIntoNotesSectionKeepsNoteBullets(t *testing.T) {
+	content := "# TODO\n\n- [ ] Task one\n  - note one\n"
+	tf := NewTodoFile("TODO.md", content)
+	if !tf.MoveTask(1, stringPtrCore("Notes")) {
+		t.Fatal("expected MoveTask to succeed")
+	}
+	serialized := tf.Serialize()
+	if !strings.Contains(serialized, "- Task one") {
+		t.Errorf("expected task converted to plain list item, got: %q", serialized)
+	}
+	if !strings.Contains(serialized, "note one") {
+		t.Errorf("expected note bullet preserved, got: %q", serialized)
+	}
+}
+
+func TestUpdateTaskPreservesNotes(t *testing.T) {
+	content := "# TODO\n\n- [ ] Task one\n  - note one\n"
+	tf := NewTodoFile("TODO.md", content)
+	if !tf.UpdateTask(1, "Task one edited") {
+		t.Fatal("expected UpdateTask to succeed")
+	}
+	task := tf.GetTask(1)
+	if len(task.Notes) != 1 || task.Notes[0] != "note one" {
+		t.Errorf("expected note preserved after update, got %v", task.Notes)
+	}
+}
+
+func TestToggleTaskPreservesNotes(t *testing.T) {
+	content := "# TODO\n\n- [ ] Task one\n  - note one\n"
+	tf := NewTodoFile("TODO.md", content)
+	if !tf.ToggleTask(1) {
+		t.Fatal("expected ToggleTask to succeed")
+	}
+	task := tf.GetTask(1)
+	if len(task.Notes) != 1 || task.Notes[0] != "note one" {
+		t.Errorf("expected note preserved after toggle, got %v", task.Notes)
+	}
+}
+
+func TestSetTaskStatusPreservesNotes(t *testing.T) {
+	content := "# TODO\n\n- [ ] Task one\n  - note one\n"
+	tf := NewTodoFile("TODO.md", content)
+	if !tf.SetTaskStatus(1, TaskCompleted) {
+		t.Fatal("expected SetTaskStatus to succeed")
+	}
+	task := tf.GetTask(1)
+	if len(task.Notes) != 1 || task.Notes[0] != "note one" {
+		t.Errorf("expected note preserved after status change, got %v", task.Notes)
+	}
+}
+
+func TestReorderOnSaveKeepsNotesWithTheirTask(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "TODO.md")
+	content := "# TODO\n\n- [x] Completed task\n  - note a\n  - note b\n- [ ] Pending task\n"
+	tf := NewTodoFile(path, content)
+	if err := tf.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	reloaded, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+	tasks := reloaded.GetTasks()
+	if len(tasks) != 2 {
+		t.Fatalf("expected 2 tasks, got %d", len(tasks))
+	}
+	if tasks[0].Text != "Pending task" || len(tasks[0].Notes) != 0 {
+		t.Errorf("expected pending task first with no notes, got %+v", tasks[0])
+	}
+	if tasks[1].Text != "Completed task" || len(tasks[1].Notes) != 2 {
+		t.Errorf("expected completed task last with 2 notes, got %+v", tasks[1])
+	}
+}
+
+func TestAddTaskNoteAppendsNoteLine(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Task one\n")
+	if !tf.AddTaskNote(1, "a new note") {
+		t.Fatal("expected AddTaskNote to succeed")
+	}
+	task := tf.GetTask(1)
+	if len(task.Notes) != 1 || task.Notes[0] != "a new note" {
+		t.Errorf("expected note appended, got %v", task.Notes)
+	}
+}
+
+func TestAddTaskNoteOnTaskWithExistingNotes(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Task one\n  - first note\n")
+	if !tf.AddTaskNote(1, "second note") {
+		t.Fatal("expected AddTaskNote to succeed")
+	}
+	task := tf.GetTask(1)
+	want := []string{"first note", "second note"}
+	if len(task.Notes) != len(want) {
+		t.Fatalf("expected %d notes, got %d: %v", len(want), len(task.Notes), task.Notes)
+	}
+	for i := range want {
+		if task.Notes[i] != want[i] {
+			t.Errorf("note %d: expected %q, got %q", i, want[i], task.Notes[i])
+		}
+	}
+}
+
+func TestAddTaskNoteUnknownIDReturnsFalse(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Task one\n")
+	if tf.AddTaskNote(99, "a note") {
+		t.Error("expected AddTaskNote to return false for unknown ID")
+	}
+}
+
+func TestReorderSkipsGroupWithUnexpectedGapLines(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "TODO.md")
+	content := "# TODO\n\n- [x] Completed task\n\n- [ ] Pending task\n"
+	tf := NewTodoFile(path, content)
+	if err := tf.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	reloaded, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+	tasks := reloaded.GetTasks()
+	if len(tasks) != 2 {
+		t.Fatalf("expected 2 tasks, got %d", len(tasks))
+	}
+	if tasks[0].Text != "Completed task" || tasks[1].Text != "Pending task" {
+		t.Errorf("expected original order preserved when group has an unexpected gap, got %+v", tasks)
+	}
+}
+
+func TestDeleteCompletedTasksRemovesNotes(t *testing.T) {
+	content := "# TODO\n\n- [ ] Task pending\n- [x] Task done\n  - note a\n"
+	tf := NewTodoFile("TODO.md", content)
+	count := tf.DeleteCompletedTasks()
+	if count != 1 {
+		t.Fatalf("expected 1 deleted task, got %d", count)
+	}
+	if strings.Contains(tf.Serialize(), "note a") {
+		t.Errorf("expected note removed along with completed task, got: %q", tf.Serialize())
+	}
+}
+
+func stringPtrCore(s string) *string { return &s }
+
+func TestSetTaskIDsPersistsAcrossLoad(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "TODO.md")
+
+	tf := NewTodoFile(path, "# TODO\n\n- [ ] Buy milk\n- [ ] Walk dog\n")
+	if err := tf.SetTaskIDs("abc"); err != nil {
+		t.Fatalf("SetTaskIDs failed: %v", err)
+	}
+	if err := tf.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	reloaded, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+	tasks := reloaded.GetTasks()
+	if tasks[0].StableID != "ABC02" || tasks[1].StableID != "ABC01" {
+		t.Errorf("expected tags to persist across Load, got %q, %q", tasks[0].StableID, tasks[1].StableID)
+	}
+}

@@ -11,7 +11,7 @@ import (
 	"github.com/i-am-fran/markdowndo/internal/core"
 )
 
-const Version = "1.0.0"
+const Version = "1.1.0"
 
 var (
 	green         = color.New(color.FgGreen).SprintFunc()
@@ -31,13 +31,18 @@ func formatTaskLine(task *core.Task, showFile string, displayID int) string {
 		id = task.ID
 	}
 
+	taskText := task.Text
+	if task.StableID != "" {
+		taskText = color.New(color.FgHiBlack).Sprint("["+task.StableID+"]") + " " + taskText
+	}
+
 	switch task.Status {
 	case core.TaskCompleted:
 		checkbox = green("[x]")
-		text = strikethrough(task.Text)
+		text = strikethrough(taskText)
 	default:
 		checkbox = "[ ]"
-		text = task.Text
+		text = taskText
 	}
 
 	idStr := fmt.Sprintf("%d.", id)
@@ -46,11 +51,16 @@ func formatTaskLine(task *core.Task, showFile string, displayID int) string {
 		file = fmt.Sprintf(" (%s)", showFile)
 	}
 
-	return fmt.Sprintf("  %s %s %s%s", idStr, checkbox, text, file)
+	line := fmt.Sprintf("  %s %s %s%s", idStr, checkbox, text, file)
+	for _, note := range task.Notes {
+		line += "\n" + color.New(color.FgHiBlack).Sprintf("      - %s", note)
+	}
+	return line
 }
 
-// loadTaskFile loads the task and file for a given ID, checking cache if needed
-func loadTaskFile(id int) (*core.TodoFile, *core.Task, int, string, error) {
+// loadTaskFile loads the task and file for a given ID (positional number or
+// stable ID string), checking cache if needed
+func loadTaskFile(idStr string) (*core.TodoFile, *core.Task, int, string, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, nil, 0, "", err
@@ -66,9 +76,24 @@ func loadTaskFile(id int) (*core.TodoFile, *core.Task, int, string, error) {
 		return nil, nil, 0, "", err
 	}
 
+	id, isNumeric := 0, true
+	if n, err := strconv.Atoi(idStr); err == nil {
+		id = n
+	} else {
+		isNumeric = false
+	}
+
+	if !isNumeric {
+		task := todoFile.GetTaskByStableID(idStr)
+		if task == nil {
+			return nil, nil, 0, "", fmt.Errorf("task %s not found", idStr)
+		}
+		return todoFile, task, task.ID, filePath, nil
+	}
+
 	task := todoFile.GetTask(id)
 	localID := id
-	
+
 	if task == nil {
 		// Task not found in local file, try to use cache
 		cache, err := core.LoadCache()
@@ -79,13 +104,13 @@ func loadTaskFile(id int) (*core.TodoFile, *core.Task, int, string, error) {
 				if err != nil {
 					return nil, nil, 0, "", fmt.Errorf("error loading cached file %s: %v", cachedTask.FilePath, err)
 				}
-				
+
 				// Get the task using the local ID
 				task = todoFile.GetTask(cachedTask.LocalID)
 				if task == nil {
 					return nil, nil, 0, "", fmt.Errorf("task %d not found in cached file", id)
 				}
-				
+
 				// Use the cached file path and local ID
 				filePath = cachedTask.FilePath
 				localID = cachedTask.LocalID
@@ -96,7 +121,7 @@ func loadTaskFile(id int) (*core.TodoFile, *core.Task, int, string, error) {
 			return nil, nil, 0, "", fmt.Errorf("task %d not found", id)
 		}
 	}
-	
+
 	return todoFile, task, localID, filePath, nil
 }
 
@@ -106,7 +131,6 @@ func clearCacheWithWarning() {
 		fmt.Fprintf(os.Stderr, yellow("Warning: Could not clear task cache: %v\n"), err)
 	}
 }
-
 
 // ListTasks lists all tasks
 func ListTasks(recursive bool) error {
@@ -146,7 +170,7 @@ func ListTasks(recursive bool) error {
 				} else {
 					for _, task := range tasks {
 						fmt.Println(formatTaskLine(&task, "", globalTaskID))
-						
+
 						// Store task in cache
 						cache.Tasks[globalTaskID] = core.TaskCache{
 							GlobalID: globalTaskID,
@@ -154,14 +178,14 @@ func ListTasks(recursive bool) error {
 							LocalID:  task.ID,
 							TaskText: task.Text,
 						}
-						
+
 						globalTaskID++
 					}
 				}
 			}
 			fmt.Println()
 		}
-		
+
 		// Save cache to disk
 		if err := core.SaveCache(cache); err != nil {
 			// Don't fail if cache can't be saved, just log a warning
@@ -205,40 +229,15 @@ func ListTasks(recursive bool) error {
 
 // AddTask adds a new task
 func AddTask(text string) error {
-	cwd, err := os.Getwd()
+	todoFile, filePath, err := LoadDefaultTodoFile()
 	if err != nil {
 		return err
 	}
 
-	filePath, err := core.FindDefaultTodoFile(cwd)
+	_, task, err := PerformAddTask(todoFile, filePath, text)
 	if err != nil {
 		return err
 	}
-
-	todoFile, err := core.Load(filePath)
-	if err != nil {
-		return err
-	}
-
-	// Create file if it doesn't exist
-	if len(todoFile.GetTasks()) == 0 && todoFile.Serialize() == "" {
-		todoFile, err = core.Create(filePath)
-		if err != nil {
-			return err
-		}
-	}
-
-	task, err := todoFile.AddTask(text)
-	if err != nil {
-		return err
-	}
-
-	if err := todoFile.Save(); err != nil {
-		return err
-	}
-	
-	// Clear cache after modification
-	clearCacheWithWarning()
 
 	fmt.Print(green("Added: "))
 	fmt.Println(task.Text)
@@ -247,196 +246,116 @@ func AddTask(text string) error {
 
 // DeleteTask deletes a task by ID
 func DeleteTask(idStr string) error {
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, red("Invalid task ID"))
-		os.Exit(1)
-	}
-
-	todoFile, task, localID, _, err := loadTaskFile(id)
+	todoFile, _, localID, _, err := loadTaskFile(idStr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, red(err.Error()))
 		os.Exit(1)
 	}
 
-	todoFile.DeleteTask(localID)
-	if err := todoFile.Save(); err != nil {
-		return err
+	deleted, err := PerformDeleteTask(todoFile, localID)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, red(err.Error()))
+		os.Exit(1)
 	}
-	
-	// Clear cache after modification
-	clearCacheWithWarning()
 
 	fmt.Print(yellow("Deleted: "))
-	fmt.Println(task.Text)
+	fmt.Println(deleted.Text)
 	return nil
 }
 
 // EditTask edits a task's text
 func EditTask(idStr, newText string) error {
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, red("Invalid task ID"))
-		os.Exit(1)
-	}
-
-	todoFile, task, localID, _, err := loadTaskFile(id)
+	todoFile, _, localID, _, err := loadTaskFile(idStr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, red(err.Error()))
 		os.Exit(1)
 	}
 
-	taskStatus := task.Status
-
-	if !todoFile.UpdateTask(localID, newText) {
-		fmt.Fprintf(os.Stderr, red("Task %d not found\n"), id)
+	updated, err := PerformEditTask(todoFile, localID, newText)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, red("Task %s not found\n"), idStr)
 		os.Exit(1)
 	}
 
-	if err := todoFile.Save(); err != nil {
-		return err
-	}
-	
-	// Clear cache after modification
-	clearCacheWithWarning()
-
 	fmt.Print(green("Updated: "))
-	fmt.Println(formatTaskLine(&core.Task{
-		ID:     localID,
-		Text:   newText,
-		Status: taskStatus,
-	}, "", 0))
+	fmt.Println(formatTaskLine(updated, "", 0))
+	return nil
+}
+
+// AddTaskNote adds a note to a task
+func AddTaskNote(idStr, noteText string) error {
+	todoFile, _, localID, _, err := loadTaskFile(idStr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, red(err.Error()))
+		os.Exit(1)
+	}
+
+	updated, err := PerformAddTaskNote(todoFile, localID, noteText)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, red(err.Error()))
+		os.Exit(1)
+	}
+
+	fmt.Print(green("Added note to: "))
+	fmt.Println(formatTaskLine(updated, "", 0))
 	return nil
 }
 
 // ToggleTask toggles a task's status
 func ToggleTask(idStr string) error {
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, red("Invalid task ID"))
-		os.Exit(1)
-	}
-
-	todoFile, task, localID, _, err := loadTaskFile(id)
+	todoFile, task, localID, _, err := loadTaskFile(idStr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, red(err.Error()))
 		os.Exit(1)
 	}
 
-	taskText := task.Text
 	prevStatus := task.Status
 
-	if !todoFile.ToggleTask(localID) {
-		fmt.Fprintf(os.Stderr, red("Task %d not found\n"), id)
+	updated, err := PerformToggleTask(todoFile, localID)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, red("Task %s not found\n"), idStr)
 		os.Exit(1)
 	}
 
-	if err := todoFile.Save(); err != nil {
-		return err
-	}
-	
-	// Clear cache after modification
-	clearCacheWithWarning()
-
-	newStatus := core.TaskCompleted
-	if prevStatus == core.TaskCompleted {
-		newStatus = core.TaskPending
-	}
-
 	action := "Completed"
-	if newStatus == core.TaskPending {
+	if prevStatus == core.TaskCompleted {
 		action = "Reopened"
 	}
 
 	fmt.Print(green(action + ": "))
-	fmt.Println(formatTaskLine(&core.Task{
-		ID:     localID,
-		Text:   taskText,
-		Status: newStatus,
-	}, "", 0))
+	fmt.Println(formatTaskLine(updated, "", 0))
 	return nil
 }
 
 // CompleteTask marks a task as completed
 func CompleteTask(idStr string) error {
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, red("Invalid task ID"))
-		os.Exit(1)
-	}
-
-	todoFile, task, localID, _, err := loadTaskFile(id)
+	todoFile, _, localID, _, err := loadTaskFile(idStr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, red(err.Error()))
 		os.Exit(1)
 	}
 
-	taskText := task.Text
-
-	if !todoFile.SetTaskStatus(localID, core.TaskCompleted) {
-		fmt.Fprintf(os.Stderr, red("Task %d not found\n"), id)
+	updated, err := PerformCompleteTask(todoFile, localID)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, red("Task %s not found\n"), idStr)
 		os.Exit(1)
 	}
 
-	if err := todoFile.Save(); err != nil {
-		return err
-	}
-	
-	// Clear cache after modification
-	clearCacheWithWarning()
-
 	fmt.Print(green("Completed: "))
-	fmt.Println(formatTaskLine(&core.Task{
-		ID:     localID,
-		Text:   taskText,
-		Status: core.TaskCompleted,
-	}, "", 0))
+	fmt.Println(formatTaskLine(updated, "", 0))
 	return nil
 }
 
 // CompleteTasks completes multiple tasks at once
 func CompleteTasks(idsStr []string) error {
-	cwd, err := os.Getwd()
+	todoFile, _, err := LoadDefaultTodoFile()
 	if err != nil {
 		return err
 	}
 
-	filePath, err := core.FindDefaultTodoFile(cwd)
+	completedTasks, failedIDs, err := PerformCompleteTasks(todoFile, idsStr)
 	if err != nil {
 		return err
-	}
-
-	todoFile, err := core.Load(filePath)
-	if err != nil {
-		return err
-	}
-
-	var completedTasks []core.Task
-	var failedIDs []string
-
-	for _, idStr := range idsStr {
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			failedIDs = append(failedIDs, idStr)
-			continue
-		}
-
-		task := todoFile.GetTask(id)
-		if task == nil {
-			failedIDs = append(failedIDs, idStr)
-			continue
-		}
-
-		taskText := task.Text
-		if todoFile.SetTaskStatus(id, core.TaskCompleted) {
-			completedTasks = append(completedTasks, core.Task{
-				ID:     id,
-				Text:   taskText,
-				Status: core.TaskCompleted,
-			})
-		} else {
-			failedIDs = append(failedIDs, idStr)
-		}
 	}
 
 	if len(completedTasks) == 0 {
@@ -446,13 +365,6 @@ func CompleteTasks(idsStr []string) error {
 		}
 		os.Exit(1)
 	}
-
-	if err := todoFile.Save(); err != nil {
-		return err
-	}
-	
-	// Clear cache after modification
-	clearCacheWithWarning()
 
 	fmt.Println(green(fmt.Sprintf("Completed %d task(s):", len(completedTasks))))
 	for _, task := range completedTasks {
@@ -468,31 +380,12 @@ func CompleteTasks(idsStr []string) error {
 
 // AddNote adds a note to the Notes section
 func AddNote(text string) error {
-	cwd, err := os.Getwd()
+	todoFile, filePath, err := LoadDefaultTodoFile()
 	if err != nil {
 		return err
 	}
 
-	filePath, err := core.FindDefaultTodoFile(cwd)
-	if err != nil {
-		return err
-	}
-
-	todoFile, err := core.Load(filePath)
-	if err != nil {
-		return err
-	}
-
-	// Create file if it doesn't exist
-	if len(todoFile.GetTasks()) == 0 && todoFile.Serialize() == "" {
-		todoFile, err = core.Create(filePath)
-		if err != nil {
-			return err
-		}
-	}
-
-	todoFile.AddNote(text)
-	if err := todoFile.Save(); err != nil {
+	if _, err := PerformAddNote(todoFile, filePath, text); err != nil {
 		return err
 	}
 
@@ -598,33 +491,20 @@ func OpenInEditor() error {
 
 // DeleteCompletedTasks deletes all completed tasks
 func DeleteCompletedTasks() error {
-	cwd, err := os.Getwd()
+	todoFile, _, err := LoadDefaultTodoFile()
 	if err != nil {
 		return err
 	}
 
-	filePath, err := core.FindDefaultTodoFile(cwd)
+	count, err := PerformDeleteCompletedTasks(todoFile)
 	if err != nil {
 		return err
 	}
 
-	todoFile, err := core.Load(filePath)
-	if err != nil {
-		return err
-	}
-
-	count := todoFile.DeleteCompletedTasks()
 	if count == 0 {
 		fmt.Println("No completed tasks to delete")
 		return nil
 	}
-
-	if err := todoFile.Save(); err != nil {
-		return err
-	}
-	
-	// Clear cache after modification
-	clearCacheWithWarning()
 
 	suffix := "s"
 	if count == 1 {
@@ -634,19 +514,51 @@ func DeleteCompletedTasks() error {
 	return nil
 }
 
+// SetTaskIDs tags every task in the file with sequential IDs like ABC01, ABC02, ...
+func SetTaskIDs(prefix string) error {
+	todoFile, _, err := LoadDefaultTodoFile()
+	if err != nil {
+		return err
+	}
+
+	count, err := PerformSetTaskIDs(todoFile, prefix)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, red(err.Error()))
+		os.Exit(1)
+	}
+
+	suffix := "s"
+	if count == 1 {
+		suffix = ""
+	}
+	fmt.Println(green(fmt.Sprintf("Tagged %d task%s with IDs", count, suffix)))
+	return nil
+}
+
+// RemoveTaskIDs strips ID tags from every task in the file
+func RemoveTaskIDs() error {
+	todoFile, _, err := LoadDefaultTodoFile()
+	if err != nil {
+		return err
+	}
+
+	changed, err := PerformRemoveTaskIDs(todoFile)
+	if err != nil {
+		return err
+	}
+
+	if !changed {
+		fmt.Println("No task IDs to remove")
+		return nil
+	}
+
+	fmt.Println(yellow("Removed task IDs"))
+	return nil
+}
+
 // LintFile lints and fixes the TODO file
 func LintFile() error {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	filePath, err := core.FindDefaultTodoFile(cwd)
-	if err != nil {
-		return err
-	}
-
-	todoFile, err := core.Load(filePath)
+	todoFile, filePath, err := LoadDefaultTodoFile()
 	if err != nil {
 		return err
 	}
@@ -665,7 +577,10 @@ func LintFile() error {
 		}
 	}
 
-	result := todoFile.Lint()
+	result, err := PerformLint(todoFile)
+	if err != nil {
+		return err
+	}
 
 	if len(result.Issues) == 0 {
 		fmt.Println(green("✓ No issues found"))
@@ -692,9 +607,6 @@ func LintFile() error {
 	fmt.Println()
 
 	if result.FixedCount > 0 {
-		if err := todoFile.Save(); err != nil {
-			return err
-		}
 		suffix := "s"
 		if result.FixedCount == 1 {
 			suffix = ""
@@ -721,32 +633,60 @@ func ShowHelp() {
 %s - MarkdownDO: Manage TODO.md files
 
 %s
-  mdd                    Open interactive TUI
-  mdd <task text>        Add a new task (quotes optional)
-  mdd -l                 List tasks
-  mdd -ls                List tasks recursively
-  mdd -t <id>            Toggle task status
-  mdd -c <id>            Complete task by ID
-  mdd -cm <id1> <id2>... Complete multiple tasks by IDs
-  mdd -e <id> <text>     Edit task text
-  mdd -d <id>            Delete task by ID
-  mdd -dc                Delete all completed tasks
-  mdd -f <keyword>       Find tasks by keyword
-  mdd -fs <keyword>      Find tasks recursively
-  mdd -n <text>          Add a note to ## Notes section
-  mdd -o                 Open TODO file in editor
-  mdd -lint              Lint and fix TODO file formatting
-  mdd -v, --version      Show version
-  mdd -h, --help         Show this help
+  mdd              Open interactive TUI
+  mdd <task text>  Add a new task (quotes optional)
 
 %s
-  mdd Buy groceries      Add new task (no quotes needed)
-  mdd -l                 Show all tasks
-  mdd -t 2               Toggle task #2
-  mdd -c 1               Complete task #1
-  mdd -cm 1 2 3          Complete tasks #1, #2, and #3
-  mdd -e 1 Fix the bug   Edit task #1
-  mdd -d 3               Delete task #3
-  mdd -f bug             Find tasks containing "bug"
-`, bold(cyan("mdd")), bold("Usage:"), bold("Examples:"))
+  mdd -l             List tasks
+  mdd -ls            List tasks recursively (subdirectories)
+  mdd -f <keyword>   Find tasks by keyword
+  mdd -fs <keyword>  Find tasks by keyword, recursively
+
+%s
+  mdd -t <id>             Toggle task status (pending <-> completed)
+  mdd -c <id>             Complete task by ID
+  mdd -cm <id1> <id2>...  Complete multiple tasks by ID
+  mdd -e <id> <text>      Edit task text
+  mdd -an <id> <text>     Add a note to a task (shown inline wherever it's listed)
+  mdd -d <id>             Delete task by ID
+  mdd -dc                 Delete all completed tasks
+
+%s
+  mdd -n <text>      Add a note to the ## Notes section
+  mdd -o             Open TODO file in editor
+  mdd -lint          Lint and fix TODO file formatting
+  mdd -id <PREFIX>   Tag every task with sequential IDs (PREFIX01, PREFIX02, ...)
+  mdd -id -r         Remove all task ID tags
+  mdd -v, --version  Show version
+  mdd -h, --help     Show this help
+
+%s
+  End a task with "@Section" to file it there (created automatically
+  if it doesn't exist yet). Built-in shortcuts, case-insensitive:
+
+    @ff  -> Features        @ii  -> Ideas
+    @bb  -> Bugs            @ww  -> Warnings
+
+  Any other @name creates/uses a custom section, e.g. @Admin.
+
+%s
+  <id> above accepts either a task's position number, or its ID tag
+  once IDs have been assigned with -id (e.g. "mdd -c ABC01").
+
+%s
+  mdd Buy groceries          Add a task to the inbox
+  mdd "Fix login bug @bb"    Add a task to the Bugs section
+  mdd "Dark mode @Features"  Add a task to the Features section
+  mdd -l                     Show all tasks
+  mdd -t 2                   Toggle task #2
+  mdd -c 1                   Complete task #1
+  mdd -cm 1 2 3              Complete tasks #1, #2, and #3
+  mdd -e 1 Fix the bug       Edit task #1
+  mdd -an 1 Needs a review   Add a note to task #1
+  mdd -d 3                   Delete task #3
+  mdd -f bug                 Find tasks containing "bug"
+  mdd -id ABC                Tag all tasks: [ABC01], [ABC02], ...
+  mdd -c ABC01               Complete the task tagged ABC01
+  mdd -id -r                 Remove all ID tags
+`, bold(cyan("mdd")), bold("Usage:"), bold("Viewing & Finding:"), bold("Managing Tasks:"), bold("Utilities:"), bold("Sections:"), bold("Task IDs:"), bold("Examples:"))
 }

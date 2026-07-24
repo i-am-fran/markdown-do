@@ -87,6 +87,11 @@ func handleCLI(args cli.ParsedArgs) error {
 		return cli.EditTask(args.Value, args.Text)
 	}
 
+	// Add note to a task
+	if args.HasFlag("an") {
+		return cli.AddTaskNote(args.Value, args.Text)
+	}
+
 	// Delete task
 	if args.HasFlag("d") {
 		return cli.DeleteTask(args.Value)
@@ -110,6 +115,18 @@ func handleCLI(args cli.ParsedArgs) error {
 	// Lint
 	if args.HasFlag("lint") {
 		return cli.LintFile()
+	}
+
+	// Set or remove task ID tags
+	if args.HasFlag("id") {
+		if args.HasFlag("r") {
+			return cli.RemoveTaskIDs()
+		}
+		if args.Value == "" {
+			fmt.Fprintln(os.Stderr, "Error: -id requires a 3-letter prefix (e.g. mdd -id ABC), or -id -r to remove IDs")
+			os.Exit(1)
+		}
+		return cli.SetTaskIDs(args.Value)
 	}
 
 	// If we get here, treat the text as a task to add

@@ -29,7 +29,7 @@ func ParseArgs(args []string) ParsedArgs {
 			// Check if next arg is a value for this flag
 			if i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
 				switch flag {
-				case "c", "d", "e", "f", "fs", "n", "t":
+				case "c", "d", "e", "f", "fs", "n", "t", "id", "an":
 					value = args[i+1]
 					i++
 				case "cm":

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"regexp"
 	"strings"
 )
@@ -16,10 +17,18 @@ const (
 // Task represents a single task item
 type Task struct {
 	ID         int
+	StableID   string // persistent, user-visible ID tag, e.g. "ABC01"; empty unless assigned via -id
 	Text       string
 	Status     TaskStatus
 	LineNumber int
-	Section    *string // nil means no section
+	Section    *string  // nil means no section
+	Notes      []string // trimmed text of trailing indented bullet lines
+}
+
+// BlockLineCount returns how many physical lines this task occupies,
+// including its own checkbox line and all trailing note lines.
+func (t *Task) BlockLineCount() int {
+	return 1 + len(t.Notes)
 }
 
 // Section represents a section header in the TODO file
@@ -56,9 +65,12 @@ var sectionAliases = map[string]string{
 }
 
 var (
-	headerRegex  = regexp.MustCompile(`^##\s+(.+)$`)
-	taskRegex    = regexp.MustCompile(`^(\s*)-\s*\[([ xX/])\]\s*(.*)$`)
-	sectionRegex = regexp.MustCompile(`(?:^|\s)@(\w+)\s*$`)
+	headerRegex   = regexp.MustCompile(`^##\s+(.+)$`)
+	taskRegex     = regexp.MustCompile(`^(\s*)-\s*\[([ xX/])\]\s*(.*)$`)
+	sectionRegex  = regexp.MustCompile(`(?:^|\s)@(\w+)\s*$`)
+	stableIDRegex = regexp.MustCompile(`^\[([A-Z]{3}\d+)\]\s*`)
+	idPrefixRegex = regexp.MustCompile(`^[A-Za-z]{3}$`)
+	noteRegex     = regexp.MustCompile(`^\s+-\s+(\S.*)$`)
 )
 
 // ParseHeaderLine extracts section name from a header line
@@ -77,7 +89,20 @@ func FormatTask(task *Task) string {
 	if task.Status == TaskCompleted {
 		checkbox = "[x]"
 	}
-	return "- " + checkbox + " " + task.Text
+	text := task.Text
+	if task.StableID != "" {
+		text = "[" + task.StableID + "] " + text
+	}
+	return "- " + checkbox + " " + text
+}
+
+// FormatTaskBlock formats a task's checkbox line followed by its note lines.
+func FormatTaskBlock(task *Task) []string {
+	block := []string{FormatTask(task)}
+	for _, note := range task.Notes {
+		block = append(block, "  - "+note)
+	}
+	return block
 }
 
 // ParseTaskLine parses a markdown task line
@@ -94,15 +119,30 @@ func ParseTaskLine(line string, lineNumber int, id int, section *string) *Task {
 	}
 	// Note: '/' is treated as 'pending' since in-progress status is removed
 
-	text := strings.TrimSpace(match[3])
+	rawText := match[3]
+	stableID := ""
+	if idMatch := stableIDRegex.FindStringSubmatch(rawText); idMatch != nil {
+		stableID = idMatch[1]
+		rawText = stableIDRegex.ReplaceAllString(rawText, "")
+	}
+	text := strings.TrimSpace(rawText)
 
 	return &Task{
 		ID:         id,
+		StableID:   stableID,
 		Text:       text,
 		Status:     status,
 		LineNumber: lineNumber,
 		Section:    section,
 	}
+}
+
+// ValidateIDPrefix normalizes and validates a 3-letter ID prefix (e.g. "abc" -> "ABC")
+func ValidateIDPrefix(prefix string) (string, error) {
+	if !idPrefixRegex.MatchString(prefix) {
+		return "", errors.New("id prefix must be exactly 3 letters (e.g. \"ABC\")")
+	}
+	return strings.ToUpper(prefix), nil
 }
 
 // ParseTaskInput parses user input to extract task text and optional section tag

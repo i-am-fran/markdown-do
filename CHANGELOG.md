@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-07-24
+
+### Added
+- Per-task notes: attach freeform notes to a task with `mdd -an <id> <text>`,
+  expressed as an indented bullet list following the checklist item. Notes
+  render inline wherever the task is listed and travel with it through
+  edit, move, delete, and complete.
+
 ## [1.0.0] - 2026-02-06
 
 ### Added
