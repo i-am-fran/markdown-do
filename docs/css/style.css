@@ -779,7 +779,7 @@ code {
   aspect-ratio: 2 / 1;
   object-fit: cover;
   border-radius: var(--radius-lg);
-  margin: 0 auto var(--space-5);
+  margin: var(--space-6) auto 0;
 }
 
 .cta-card h2 {
