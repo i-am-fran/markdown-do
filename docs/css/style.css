@@ -290,12 +290,23 @@ code {
 }
 
 .topnav__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-sans);
   font-size: 18px;
   font-weight: 600;
   color: var(--color-heading);
   text-decoration: none;
   margin-right: auto;
+}
+
+.topnav__logo-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  object-fit: cover;
 }
 
 .topnav__links a {
