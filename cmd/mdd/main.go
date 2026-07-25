@@ -20,6 +20,17 @@ func main() {
 		return
 	}
 
+	// Hidden completion helper, called by the bash/zsh scripts printed by
+	// "mdd completion bash|zsh". Intercepted before ParseArgs since it needs
+	// to reason about partial words that ParseArgs's shape-matching would
+	// otherwise misclassify.
+	if os.Args[1] == "__complete" {
+		for _, c := range cli.Complete(os.Args[2:]) {
+			fmt.Println(c)
+		}
+		return
+	}
+
 	args := cli.ParseArgs(os.Args[1:])
 
 	// If nothing but flags were passed (no command), fall back to help.
@@ -135,6 +146,18 @@ func handleCLI(args cli.ParsedArgs) error {
 		default:
 			usageError("unknown config subcommand %q — use list, get, set, or edit", args.Args[0])
 		}
+		return nil
+
+	case "completion":
+		if len(args.Args) != 1 {
+			usageError("completion requires a shell, e.g. mdd completion bash")
+		}
+		script, err := cli.CompletionScript(args.Args[0])
+		if err != nil {
+			usageError("%v", err)
+			return nil
+		}
+		fmt.Print(script)
 		return nil
 
 	case "add":

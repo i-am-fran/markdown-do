@@ -127,6 +127,7 @@
             <li><a class="sidebar__link" href="#cmd-open" data-heading="cmd-open">open</a></li>
             <li><a class="sidebar__link" href="#cmd-lint" data-heading="cmd-lint">lint</a></li>
             <li><a class="sidebar__link" href="#cmd-config" data-heading="cmd-config">config</a></li>
+            <li><a class="sidebar__link" href="#cmd-completion" data-heading="cmd-completion">completion</a></li>
             <li><a class="sidebar__link" href="#cmd-version" data-heading="cmd-version">version</a></li>
             <li><a class="sidebar__link" href="#cmd-help" data-heading="cmd-help">help</a></li>
           </ul>
@@ -555,6 +556,17 @@ mdd config edit</code></pre>
           <strong>Tip:</strong> <code>-h</code>/<code>--help</code> and <code>-v</code>/<code>--version</code> are recognized anywhere in the arguments and short-circuit immediately, before anything else is parsed — <code>mdd list -h</code> prints the general help, not a <code>list</code>-specific one, since there's no such thing.
         </aside>
 
+        <h3 id="cmd-completion">completion</h3>
+        <p><code>mdd completion bash</code> / <code>mdd completion zsh</code> print a shell completion script to stdout. It tab-completes command verbs (<code>mdd ar</code> → <code>mdd archive</code>) and section tags (<code>@Bu</code> → <code>@Bugs</code>, including your custom aliases and any section already in <code>TODO.md</code>).</p>
+        <div class="code-block">
+          <div class="code-block__header">
+            <span class="code-block__lang">bash</span>
+            <button class="code-block__copy" data-copy-target="completion-cmd" type="button">Copy</button>
+          </div>
+          <pre><code id="completion-cmd">source <(mdd completion bash)   # add to ~/.bashrc
+source <(mdd completion zsh)    # add to ~/.zshrc</code></pre>
+        </div>
+
         <h3 id="cmd-version">version</h3>
         <p><code>mdd version</code> prints the current version. Same as passing <code>-v</code>/<code>--version</code> anywhere in the command.</p>
         <div class="code-block">
@@ -680,6 +692,7 @@ mdd config edit</code></pre>
           <li><a class="toc__link" href="#cmd-open">open</a></li>
           <li><a class="toc__link" href="#cmd-lint">lint</a></li>
           <li><a class="toc__link" href="#cmd-config">config</a></li>
+          <li><a class="toc__link" href="#cmd-completion">completion</a></li>
           <li><a class="toc__link" href="#cmd-version">version</a></li>
           <li><a class="toc__link" href="#cmd-help">help</a></li>
         </ul>

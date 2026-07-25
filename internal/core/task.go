@@ -74,6 +74,16 @@ func SetSectionAliases(overrides map[string]string) {
 	}
 }
 
+// SectionAliases returns a copy of the current `@alias` shortcuts (built-in
+// plus any overrides applied via SetSectionAliases).
+func SectionAliases() map[string]string {
+	out := make(map[string]string, len(sectionAliases))
+	for k, v := range sectionAliases {
+		out[k] = v
+	}
+	return out
+}
+
 var (
 	headerRegex   = regexp.MustCompile(`^##\s+(.+)$`)
 	taskRegex     = regexp.MustCompile(`^(\s*)-\s*\[([ xX/])\]\s*(.*)$`)

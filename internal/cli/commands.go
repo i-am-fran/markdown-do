@@ -12,7 +12,7 @@ import (
 	"github.com/i-am-fran/markdowndo/internal/core"
 )
 
-const Version = "3.0.1"
+const Version = "3.1.0"
 
 var (
 	green         = color.New(color.FgGreen).SprintFunc()
@@ -829,6 +829,7 @@ func ShowHelp() {
   mdd config get k   Show one setting, e.g. mdd config get editor
   mdd config set k v Change a setting, e.g. mdd config set editor vim
   mdd config edit    Open config.json directly in your editor
+  mdd completion bash|zsh  Print a shell completion script (see below)
   mdd version        Show version (also: -v, --version)
   mdd help           Show this help (also: -h, --help)
 
@@ -844,6 +845,13 @@ func ShowHelp() {
 %s
   <id> above accepts either a task's position number, or its ID tag
   once IDs have been assigned with tag (e.g. "mdd complete ABC-001").
+
+%s
+  Tab-complete commands (e.g. "mdd ar" -> "mdd archive") and section
+  tags (e.g. "@Bu" -> "@Bugs"). Add one line to your shell rc file:
+
+    source <(mdd completion bash)   # ~/.bashrc
+    source <(mdd completion zsh)    # ~/.zshrc
 
 %s
   A word like "complete" or "list" is only treated as a command when
@@ -870,5 +878,5 @@ func ShowHelp() {
   mdd tag ABC                  Tag all tasks: [ABC-001], [ABC-002], ...
   mdd complete ABC-001         Complete the task tagged ABC-001
   mdd untag                    Remove all ID tags
-`, bold(cyan("mdd")), bold("Usage:"), bold("Viewing & Finding:"), bold("Managing Tasks:"), bold("Utilities:"), bold("Sections:"), bold("Task IDs:"), bold("A note on task text:"), bold("Examples:"))
+`, bold(cyan("mdd")), bold("Usage:"), bold("Viewing & Finding:"), bold("Managing Tasks:"), bold("Utilities:"), bold("Sections:"), bold("Task IDs:"), bold("Shell Completion:"), bold("A note on task text:"), bold("Examples:"))
 }

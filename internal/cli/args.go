@@ -52,11 +52,12 @@ var zeroArgCommands = map[string]bool{
 // freeTextCommands take arbitrary trailing text, so there's no shape to
 // disambiguate against — they're recognized purely by their first word.
 var freeTextCommands = map[string]bool{
-	"find":   true,
-	"notes":  true,
-	"tag":    true,
-	"add":    true,
-	"config": true,
+	"find":       true,
+	"notes":      true,
+	"tag":        true,
+	"add":        true,
+	"config":     true,
+	"completion": true,
 }
 
 // ParseArgs parses command line arguments into a command and its arguments.
