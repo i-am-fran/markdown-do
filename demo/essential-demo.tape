@@ -31,39 +31,49 @@ Enter
 Show
 
 Type "mdd list"
+Sleep 800ms
 Enter
 Sleep 2s
 
 Type "mdd Ship weekly digest email"
+Sleep 800ms
 Enter
 Sleep 500ms
 Type `mdd "Follow up with design on empty states @bb"`
+Sleep 800ms
 Enter
 Sleep 500ms
 Type "mdd list"
+Sleep 800ms
 Enter
 Sleep 2200ms
 
 Type "mdd toggle 2"
+Sleep 800ms
 Enter
 Sleep 1200ms
 
 Type "mdd complete 1"
+Sleep 800ms
 Enter
 Sleep 1200ms
 
 Type `mdd edit 4 "Dark mode toggle for settings screen"`
+Sleep 800ms
 Enter
 Sleep 1200ms
 
 Type "mdd find login"
+Sleep 800ms
 Enter
 Sleep 1200ms
 
 Type "mdd remove 8"
+Sleep 800ms
 Enter
 Sleep 1200ms
 
 Type "mdd list"
+Sleep 800ms
 Enter
 Sleep 2500ms
