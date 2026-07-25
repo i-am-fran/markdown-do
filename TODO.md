@@ -1,5 +1,6 @@
 # MarkdownDO
 
+- [ ] [MDD26] Wire up PerformMoveTask as mdd move, or delete it if not worth it — currently dead code only reachable by its own tests since the TUI's move-to-section hotkey that used it is gone
 - [ ] [MDD25] rewrite in python? it's now in go (I think) but does it still makes sense since we don't have a tui? will it cause issues if we want  to add a tui later on?
 - [ ] [MDD23] Add a flag to add completed date (only when done via CLI) to completed tasks
 - [ ] [MDD12] Add manual at `man mdd`
