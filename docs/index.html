@@ -8,8 +8,8 @@
   <!-- Primary Meta Tags -->
   <title>MarkdownDO - TODO.md Manager for Your Terminal</title>
   <meta name="title" content="MarkdownDO - TODO.md Manager for Your Terminal">
-  <meta name="description" content="An opinionated CLI/TUI tool for managing TODO.md files using standard markdown syntax. Fast, keyboard-driven, and works anywhere.">
-  <meta name="keywords" content="markdown, productivity, terminal, cli, tui, tasks, todo, markdowndo, markdown-do, task manager">
+  <meta name="description" content="MarkdownDO reads and writes plain markdown TODO.md files from the terminal: checkboxes, sections, task IDs, notes. No database, no daemon, just a file you can commit.">
+  <meta name="keywords" content="markdown, productivity, terminal, cli, tasks, todo, markdowndo, markdown-do, task manager">
   <meta name="author" content="Fran">
   <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)">
@@ -18,17 +18,17 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://i-am-fran.github.io/markdown-do/">
   <meta property="og:title" content="MarkdownDO - TODO.md Manager for Your Terminal">
-  <meta property="og:description" content="An opinionated CLI/TUI tool for managing TODO.md files using standard markdown syntax. Fast, keyboard-driven, and works anywhere.">
-  <meta property="og:image" content="https://i-am-fran.github.io/markdown-do/assets/mdd.png">
-  <meta property="og:image:alt" content="Screenshot of MarkdownDO's terminal interface showing a task list">
+  <meta property="og:description" content="MarkdownDO reads and writes plain markdown TODO.md files from the terminal: checkboxes, sections, task IDs, notes. No database, no daemon, just a file you can commit.">
+  <meta property="og:image" content="https://i-am-fran.github.io/markdown-do/assets/android-chrome-512x512.png">
+  <meta property="og:image:alt" content="MarkdownDO logo">
 
   <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:card" content="summary">
   <meta name="twitter:url" content="https://i-am-fran.github.io/markdown-do/">
   <meta name="twitter:title" content="MarkdownDO - TODO.md Manager for Your Terminal">
-  <meta name="twitter:description" content="An opinionated CLI/TUI tool for managing TODO.md files using standard markdown syntax. Fast, keyboard-driven, and works anywhere.">
-  <meta name="twitter:image" content="https://i-am-fran.github.io/markdown-do/assets/mdd.png">
-  <meta name="twitter:image:alt" content="Screenshot of MarkdownDO's terminal interface showing a task list">
+  <meta name="twitter:description" content="MarkdownDO reads and writes plain markdown TODO.md files from the terminal: checkboxes, sections, task IDs, notes. No database, no daemon, just a file you can commit.">
+  <meta name="twitter:image" content="https://i-am-fran.github.io/markdown-do/assets/android-chrome-512x512.png">
+  <meta name="twitter:image:alt" content="MarkdownDO logo">
 
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
@@ -70,58 +70,47 @@
   <main id="main-content" tabindex="-1">
     <section class="hero">
       <h1 class="hero__title">MarkdownDO</h1>
-      <p class="hero__subtitle">A fast, minimal, opinionated CLI/TUI tool for managing <code>TODO.md</code> files using standard markdown syntax.</p>
+      <p class="hero__subtitle">A CLI for managing <code>TODO.md</code> files as plain markdown checkboxes. Add, complete, and reorganize tasks from the terminal, then commit the file like anything else in your repo.</p>
       <div class="hero__actions">
         <a class="button button--primary" href="docs.html">Read the docs</a>
         <a class="button button--secondary" href="https://github.com/i-am-fran/markdown-do" target="_blank" rel="noopener noreferrer">GitHub</a>
       </div>
     </section>
 
-    <section class="showcase" aria-label="Product screenshot">
-      <img
-        src="assets/mdd.png"
-        alt="MarkdownDO terminal interface showing a task list with sections for Features, Bugs, and Ideas"
-        width="1860"
-        height="1194"
-        loading="eager"
-        decoding="async"
-      >
-    </section>
-
     <section class="features" aria-labelledby="features-heading">
       <h2 id="features-heading">What you get</h2>
       <ul class="features-grid" role="list">
         <li class="feature">
-          <h3>Plain markdown</h3>
-          <p>Tasks are standard <code>- [ ]</code> checkboxes, readable anywhere</p>
+          <h3>Just markdown</h3>
+          <p>Tasks are <code>- [ ]</code> checkboxes. Open the file in any editor, on any machine, and it still makes sense</p>
         </li>
         <li class="feature">
           <h3>Fast CLI</h3>
-          <p>Add, toggle, and manage tasks without leaving your terminal</p>
+          <p>Add, toggle, and complete tasks with one command each, no app to open first</p>
         </li>
         <li class="feature">
-          <h3>Interactive TUI</h3>
-          <p>Full keyboard navigation with hotkeys</p>
+          <h3>Recursive search</h3>
+          <p>Find a task buried in some subdirectory's TODO.md without cd-ing around to look for it</p>
         </li>
         <li class="feature">
           <h3>Sections &amp; inbox</h3>
-          <p>New tasks land in the inbox unless you file them into a section</p>
+          <p>New tasks land in an inbox at the top until you file them under a section yourself</p>
         </li>
         <li class="feature">
           <h3>Auto-sorting</h3>
-          <p>Tasks reorder by status on save, so active work stays on top</p>
+          <p>Pending tasks float to the top of each section on save; completed ones sink but stick around until you clear them</p>
         </li>
         <li class="feature">
           <h3>Lint &amp; fix</h3>
-          <p>Auto-fix common formatting issues in your TODO.md</p>
+          <p>Fixes the stray bullets, mismatched checkboxes, and extra blank lines you didn't mean to introduce</p>
         </li>
       </ul>
     </section>
 
     <section class="cta" aria-labelledby="cta-heading">
       <article class="cta-card">
-        <h2 id="cta-heading">Download MarkdownDO and get started</h2>
-        <p>Start managing your tasks with plain markdown. No databases, no cloud sync, just your TODO.md file.</p>
+        <h2 id="cta-heading">Get started with MarkdownDO</h2>
+        <p>Point it at a directory. It finds your TODO.md, or creates one if there isn't one yet. No config needed to start.</p>
         <a class="button button--primary" href="docs.html">Read the docs</a>
       </article>
     </section>

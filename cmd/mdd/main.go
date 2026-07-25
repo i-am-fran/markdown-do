@@ -5,28 +5,18 @@ import (
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/i-am-fran/markdowndo/internal/cli"
 	"github.com/i-am-fran/markdowndo/internal/config"
 	"github.com/i-am-fran/markdowndo/internal/core"
-	"github.com/i-am-fran/markdowndo/internal/tui"
 )
 
 func main() {
 	settings := config.GetSettings()
 	core.SetSectionAliases(settings.SectionAliases)
 
-	// No arguments at all -> TUI, unless disabled via settings
+	// No arguments at all -> show help
 	if len(os.Args) == 1 {
-		if !settings.EnableTUI {
-			cli.ShowHelp()
-			return
-		}
-		p := tea.NewProgram(tui.New(), tea.WithAltScreen())
-		if _, err := p.Run(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			os.Exit(1)
-		}
+		cli.ShowHelp()
 		return
 	}
 

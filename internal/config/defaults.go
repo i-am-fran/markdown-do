@@ -12,13 +12,8 @@ const (
 
 // Settings represents user configuration
 type Settings struct {
-	Theme              string            `json:"theme"`
-	Fullscreen         bool              `json:"fullscreen"`
 	ShowCompleted      bool              `json:"showCompleted"`
 	Editor             EditorOption      `json:"editor"`
-	ShowStatusBar      bool              `json:"showStatusBar"`
-	EnableAnimations   bool              `json:"enableAnimations"`
-	EnableTUI          bool              `json:"enableTUI"`
 	EnableInProgress   bool              `json:"enableInProgress"`
 	ConfirmDestructive bool              `json:"confirmDestructive"`
 	SectionAliases     map[string]string `json:"sectionAliases"`
@@ -27,13 +22,8 @@ type Settings struct {
 // DefaultSettings returns the default settings
 func DefaultSettings() Settings {
 	return Settings{
-		Theme:              "default",
-		Fullscreen:         true,
 		ShowCompleted:      true,
 		Editor:             EditorSystem,
-		ShowStatusBar:      true,
-		EnableAnimations:   true,
-		EnableTUI:          true,
 		EnableInProgress:   false,
 		ConfirmDestructive: false,
 		SectionAliases:     map[string]string{},

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-07-25
+
+### Removed
+- **Breaking:** the TUI is gone. `internal/tui` (~4,800 lines) is deleted,
+  along with its dependencies (`bubbletea`, `bubbles`, `lipgloss`, `glamour`,
+  `sahilm/fuzzy`). A bare `mdd` invocation now always shows help instead of
+  launching an interactive menu.
+- **Breaking:** the TUI-only settings — `theme`, `fullscreen`,
+  `showStatusBar`, `enableAnimations`, `enableTUI` — are removed from
+  `config.json` handling and from `mdd config list/get/set`. Existing config
+  files with those keys still load fine; the keys are just ignored.
+
 ## [2.2.0] - 2026-07-25
 
 ### Added

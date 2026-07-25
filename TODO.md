@@ -1,9 +1,10 @@
 # MarkdownDO
 
+- [ ] [MDD25] rewrite in python? it's now in go (I think) but does it still makes sense since we don't have a tui? will it cause issues if we want  to add a tui later on?
 - [ ] [MDD23] Add a flag to add completed date (only when done via CLI) to completed tasks
-- [ ] [MDD22] Remove TUI completely
 - [ ] [MDD12] Add manual at `man mdd`
 - [ ] [MDD07] Add some tests
+- [x] [MDD22] Remove TUI completely
 
 ## Bugs
 

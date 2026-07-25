@@ -12,7 +12,7 @@ import (
 	"github.com/i-am-fran/markdowndo/internal/core"
 )
 
-const Version = "2.2.0"
+const Version = "3.0.0"
 
 var (
 	green         = color.New(color.FgGreen).SprintFunc()
@@ -597,13 +597,8 @@ func ArchiveCompletedTasks() error {
 // ConfigList prints every setting, one per line.
 func ConfigList() error {
 	s := config.GetSettings()
-	fmt.Printf("theme: %s\n", s.Theme)
-	fmt.Printf("fullscreen: %t\n", s.Fullscreen)
 	fmt.Printf("showCompleted: %t\n", s.ShowCompleted)
 	fmt.Printf("editor: %s\n", s.Editor)
-	fmt.Printf("showStatusBar: %t\n", s.ShowStatusBar)
-	fmt.Printf("enableAnimations: %t\n", s.EnableAnimations)
-	fmt.Printf("enableTUI: %t\n", s.EnableTUI)
 	fmt.Printf("enableInProgress: %t\n", s.EnableInProgress)
 	fmt.Printf("confirmDestructive: %t\n", s.ConfirmDestructive)
 	for name, section := range s.SectionAliases {
@@ -616,20 +611,10 @@ func ConfigList() error {
 func ConfigGet(key string) error {
 	s := config.GetSettings()
 	switch {
-	case key == "theme":
-		fmt.Println(s.Theme)
-	case key == "fullscreen":
-		fmt.Println(s.Fullscreen)
 	case key == "showCompleted":
 		fmt.Println(s.ShowCompleted)
 	case key == "editor":
 		fmt.Println(s.Editor)
-	case key == "showStatusBar":
-		fmt.Println(s.ShowStatusBar)
-	case key == "enableAnimations":
-		fmt.Println(s.EnableAnimations)
-	case key == "enableTUI":
-		fmt.Println(s.EnableTUI)
 	case key == "enableInProgress":
 		fmt.Println(s.EnableInProgress)
 	case key == "confirmDestructive":
@@ -650,9 +635,6 @@ func ConfigGet(key string) error {
 // ConfigSet updates a single setting and persists it.
 func ConfigSet(key, value string) error {
 	switch {
-	case key == "theme":
-		dieOnErr(config.UpdateSettings(map[string]interface{}{"theme": value}))
-
 	case key == "editor":
 		valid := false
 		for _, opt := range config.EditorOptions() {
@@ -666,8 +648,7 @@ func ConfigSet(key, value string) error {
 		}
 		dieOnErr(config.UpdateSettings(map[string]interface{}{"editor": config.EditorOption(value)}))
 
-	case key == "fullscreen" || key == "showCompleted" || key == "showStatusBar" ||
-		key == "enableAnimations" || key == "enableTUI" || key == "enableInProgress" || key == "confirmDestructive":
+	case key == "showCompleted" || key == "enableInProgress" || key == "confirmDestructive":
 		b, err := strconv.ParseBool(value)
 		if err != nil {
 			return fmt.Errorf("%q must be true or false", key)
@@ -816,7 +797,7 @@ func ShowHelp() {
 %s - MarkdownDO: Manage TODO.md files
 
 %s
-  mdd              Open interactive TUI
+  mdd              Show this help
   mdd <task text>  Add a new task (quotes optional)
   mdd add <text>   Add a new task, explicitly (see "A note on task text" below)
 

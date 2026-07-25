@@ -8,8 +8,8 @@
   <!-- Primary Meta Tags -->
   <title>MarkdownDO — Docs</title>
   <meta name="title" content="MarkdownDO — Docs">
-  <meta name="description" content="Documentation for MarkdownDO: installation, CLI reference, TUI, task format, and configuration.">
-  <meta name="keywords" content="markdown, productivity, terminal, cli, tui, tasks, todo, markdowndo, markdown-do, task manager, docs">
+  <meta name="description" content="Documentation for MarkdownDO: installation, CLI reference, task format, and configuration.">
+  <meta name="keywords" content="markdown, productivity, terminal, cli, tasks, todo, markdowndo, markdown-do, task manager, docs">
   <meta name="author" content="Fran">
   <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)">
@@ -18,17 +18,17 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://i-am-fran.github.io/markdown-do/docs.html">
   <meta property="og:title" content="MarkdownDO — Docs">
-  <meta property="og:description" content="Documentation for MarkdownDO: installation, CLI reference, TUI, task format, and configuration.">
-  <meta property="og:image" content="https://i-am-fran.github.io/markdown-do/assets/mdd.png">
-  <meta property="og:image:alt" content="Screenshot of MarkdownDO's terminal interface showing a task list">
+  <meta property="og:description" content="Documentation for MarkdownDO: installation, CLI reference, task format, and configuration.">
+  <meta property="og:image" content="https://i-am-fran.github.io/markdown-do/assets/android-chrome-512x512.png">
+  <meta property="og:image:alt" content="MarkdownDO logo">
 
   <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:card" content="summary">
   <meta name="twitter:url" content="https://i-am-fran.github.io/markdown-do/docs.html">
   <meta name="twitter:title" content="MarkdownDO — Docs">
-  <meta name="twitter:description" content="Documentation for MarkdownDO: installation, CLI reference, TUI, task format, and configuration.">
-  <meta name="twitter:image" content="https://i-am-fran.github.io/markdown-do/assets/mdd.png">
-  <meta name="twitter:image:alt" content="Screenshot of MarkdownDO's terminal interface showing a task list">
+  <meta name="twitter:description" content="Documentation for MarkdownDO: installation, CLI reference, task format, and configuration.">
+  <meta name="twitter:image" content="https://i-am-fran.github.io/markdown-do/assets/android-chrome-512x512.png">
+  <meta name="twitter:image:alt" content="MarkdownDO logo">
 
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
@@ -96,10 +96,9 @@
           </ul>
         </div>
         <div class="sidebar__group" data-group="config-tui">
-          <span class="sidebar__group-label">Configuration &amp; TUI</span>
+          <span class="sidebar__group-label">Configuration</span>
           <ul class="sidebar__list">
             <li><a class="sidebar__link" href="#settings" data-heading="settings">Settings</a></li>
-            <li><a class="sidebar__link" href="#tui-mode" data-heading="tui-mode">TUI Mode</a></li>
             <li><a class="sidebar__link" href="#file-discovery" data-heading="file-discovery">File Discovery</a></li>
           </ul>
         </div>
@@ -109,7 +108,7 @@
     <main class="content" id="main-content" tabindex="-1">
       <section class="doc-section" id="getting-started" data-section>
         <h2>Getting Started</h2>
-        <p>MarkdownDO (<code>mdd</code>) is a CLI/TUI tool for managing <code>TODO.md</code> files using standard markdown checkbox syntax.</p>
+        <p>MarkdownDO (<code>mdd</code>) is a single Go binary for managing <code>TODO.md</code> files with standard markdown checkbox syntax. No server, no lock-in: the file stays readable in any editor even if you never install <code>mdd</code> again.</p>
 
         <h3 id="installation">Installation</h3>
         <p>Download the latest binary for your platform from the <a href="https://github.com/i-am-fran/markdown-do/releases" target="_blank" rel="noopener noreferrer">releases page</a>, or build from source:</p>
@@ -148,10 +147,7 @@ mdd Buy milk
 mdd list
 
 # Complete task #1
-mdd complete 1
-
-# Open interactive mode
-mdd</code></pre>
+mdd complete 1</code></pre>
         </div>
 
         <h3 id="task-format">Task Format</h3>
@@ -239,43 +235,20 @@ mdd untag                # Remove all ID tags</code></pre>
       <hr class="divider">
 
       <section class="doc-section" id="config-tui" data-section>
-        <h2>Configuration &amp; TUI</h2>
+        <h2>Configuration</h2>
 
         <h3 id="settings">Settings</h3>
-        <p>Settings are stored in <code>~/.config/markdowndo/config.json</code>, editable via <code>mdd config get/set</code>, <code>mdd config edit</code>, or the TUI Settings menu.</p>
+        <p>Settings are stored in <code>~/.config/markdowndo/config.json</code>, editable via <code>mdd config get/set</code> or <code>mdd config edit</code>.</p>
         <table class="spec-table">
           <thead>
             <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>theme</code></td><td><code>"default"</code></td><td>TUI color theme.</td></tr>
-            <tr><td><code>fullscreen</code></td><td><code>true</code></td><td>Use the alternate screen buffer for the TUI.</td></tr>
             <tr><td><code>showCompleted</code></td><td><code>true</code></td><td>Show completed tasks in lists.</td></tr>
             <tr><td><code>editor</code></td><td><code>"system"</code></td><td>Editor used by <code>mdd open</code> — <code>system</code>, <code>vim</code>, <code>nano</code>, or <code>default-app</code>.</td></tr>
-            <tr><td><code>showStatusBar</code></td><td><code>true</code></td><td>Show the TUI status bar.</td></tr>
-            <tr><td><code>enableAnimations</code></td><td><code>true</code></td><td>Enable TUI animations.</td></tr>
-            <tr><td><code>enableTUI</code></td><td><code>true</code></td><td>When false, a bare <code>mdd</code> shows help instead of launching the TUI.</td></tr>
             <tr><td><code>enableInProgress</code></td><td><code>false</code></td><td>Enables the <code>- [/]</code> in-progress checkbox state and the 3-way toggle cycle.</td></tr>
             <tr><td><code>confirmDestructive</code></td><td><code>false</code></td><td>Require a y/n prompt before <code>remove</code>/<code>clear</code> (skip with <code>-y</code>/<code>--yes</code>).</td></tr>
             <tr><td><code>sectionAliases</code></td><td><code>{}</code></td><td>Custom <code>@alias</code> shortcuts layered on top of the built-in ones.</td></tr>
-          </tbody>
-        </table>
-
-        <h3 id="tui-mode">TUI Mode</h3>
-        <p>Run <code>mdd</code> without arguments to enter interactive mode (when <code>enableTUI</code> is true, the default).</p>
-        <table class="spec-table">
-          <thead>
-            <tr><th>Key</th><th>Action</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><code>&uarr;</code> <code>&darr;</code></td><td>Navigate</td></tr>
-            <tr><td><code>Enter</code></td><td>Select task</td></tr>
-            <tr><td><code>c</code></td><td>Toggle complete</td></tr>
-            <tr><td><code>d</code></td><td>Delete task</td></tr>
-            <tr><td><code>e</code></td><td>Edit task</td></tr>
-            <tr><td><code>m</code></td><td>Move to section</td></tr>
-            <tr><td><code>Esc</code></td><td>Go back</td></tr>
-            <tr><td><code>Esc</code> <code>Esc</code></td><td>Quit</td></tr>
           </tbody>
         </table>
 
@@ -311,7 +284,6 @@ mdd untag                # Remove all ID tags</code></pre>
         <span class="toc__title">On this page</span>
         <ul class="toc__list">
           <li><a class="toc__link" href="#settings">Settings</a></li>
-          <li><a class="toc__link" href="#tui-mode">TUI Mode</a></li>
           <li><a class="toc__link" href="#file-discovery">File Discovery</a></li>
         </ul>
       </div>

@@ -27,19 +27,16 @@ func withTempConfig(t *testing.T, content string) {
 }
 
 func TestGetSettingsFillsMissingKeysWithDefaults(t *testing.T) {
-	// Simulates an older config.json written before enableTUI/enableAnimations/
-	// showStatusBar existed: those keys are simply absent from the file.
-	withTempConfig(t, `{"theme":"default","fullscreen":true,"showCompleted":true,"editor":"vim"}`)
+	// Simulates an older config.json written before enableInProgress/
+	// confirmDestructive existed: those keys are simply absent from the file.
+	withTempConfig(t, `{"showCompleted":true,"editor":"vim"}`)
 
 	s := GetSettings()
-	if !s.EnableTUI {
-		t.Error("expected EnableTUI to default to true when absent from config.json")
+	if s.EnableInProgress {
+		t.Error("expected EnableInProgress to default to false when absent from config.json")
 	}
-	if !s.EnableAnimations {
-		t.Error("expected EnableAnimations to default to true when absent from config.json")
-	}
-	if !s.ShowStatusBar {
-		t.Error("expected ShowStatusBar to default to true when absent from config.json")
+	if s.ConfirmDestructive {
+		t.Error("expected ConfirmDestructive to default to false when absent from config.json")
 	}
 	if s.Editor != EditorVim {
 		t.Errorf("expected loaded editor to still apply, got %v", s.Editor)
@@ -47,16 +44,13 @@ func TestGetSettingsFillsMissingKeysWithDefaults(t *testing.T) {
 }
 
 func TestGetSettingsRespectsExplicitFalse(t *testing.T) {
-	withTempConfig(t, `{"enableTUI":false,"enableAnimations":false,"showStatusBar":false}`)
+	withTempConfig(t, `{"showCompleted":false,"enableInProgress":true}`)
 
 	s := GetSettings()
-	if s.EnableTUI {
-		t.Error("expected explicit EnableTUI:false to be respected")
+	if s.ShowCompleted {
+		t.Error("expected explicit showCompleted:false to be respected")
 	}
-	if s.EnableAnimations {
-		t.Error("expected explicit EnableAnimations:false to be respected")
-	}
-	if s.ShowStatusBar {
-		t.Error("expected explicit ShowStatusBar:false to be respected")
+	if !s.EnableInProgress {
+		t.Error("expected explicit enableInProgress:true to be respected")
 	}
 }

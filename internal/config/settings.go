@@ -53,26 +53,11 @@ func GetSettings() Settings {
 			// Only override a default when the key is actually present in the
 			// file — a bool field silently missing from an older config.json
 			// must not be read as an explicit `false`.
-			if loaded.Theme != "" {
-				settings.Theme = loaded.Theme
-			}
-			if _, ok := present["fullscreen"]; ok {
-				settings.Fullscreen = loaded.Fullscreen
-			}
 			if _, ok := present["showCompleted"]; ok {
 				settings.ShowCompleted = loaded.ShowCompleted
 			}
 			if loaded.Editor != "" {
 				settings.Editor = loaded.Editor
-			}
-			if _, ok := present["showStatusBar"]; ok {
-				settings.ShowStatusBar = loaded.ShowStatusBar
-			}
-			if _, ok := present["enableAnimations"]; ok {
-				settings.EnableAnimations = loaded.EnableAnimations
-			}
-			if _, ok := present["enableTUI"]; ok {
-				settings.EnableTUI = loaded.EnableTUI
 			}
 			if _, ok := present["enableInProgress"]; ok {
 				settings.EnableInProgress = loaded.EnableInProgress
@@ -113,26 +98,11 @@ func SaveSettings(settings Settings) error {
 func UpdateSettings(updates map[string]interface{}) error {
 	current := GetSettings()
 
-	if v, ok := updates["fullscreen"].(bool); ok {
-		current.Fullscreen = v
-	}
 	if v, ok := updates["showCompleted"].(bool); ok {
 		current.ShowCompleted = v
 	}
 	if v, ok := updates["editor"].(EditorOption); ok {
 		current.Editor = v
-	}
-	if v, ok := updates["theme"].(string); ok {
-		current.Theme = v
-	}
-	if v, ok := updates["showStatusBar"].(bool); ok {
-		current.ShowStatusBar = v
-	}
-	if v, ok := updates["enableAnimations"].(bool); ok {
-		current.EnableAnimations = v
-	}
-	if v, ok := updates["enableTUI"].(bool); ok {
-		current.EnableTUI = v
 	}
 	if v, ok := updates["enableInProgress"].(bool); ok {
 		current.EnableInProgress = v

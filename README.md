@@ -1,8 +1,6 @@
 # MarkdownDO
 
-A fast, minimal, opinionated CLI/TUI tool for managing TODO.md files using standard markdown syntax.
-
-![tui preview](docs/assets/mdd.png)
+A fast, minimal, opinionated CLI tool for managing TODO.md files using standard markdown syntax.
 
 ## Features
 
@@ -12,7 +10,6 @@ A fast, minimal, opinionated CLI/TUI tool for managing TODO.md files using stand
 - **Inbox workflow** - New tasks go to the top unless you specify a section
 - **Auto-sorting** - Tasks reorder by status on save (pending -> completed)
 - **Fast CLI** - Add, toggle, and manage tasks without leaving your terminal
-- **Interactive TUI** - Full keyboard navigation with hotkeys
 - **Recursive search** - Find tasks across all TODO files in subdirectories
 - **Lint & fix** - Auto-fix common formatting issues
 
@@ -51,9 +48,6 @@ mdd list
 
 # Complete task #1
 mdd complete 1
-
-# Open interactive mode
-mdd
 ```
 
 ## CLI Reference
@@ -126,30 +120,7 @@ next); otherwise it's added as a task, so `mdd Complete the tax return`
 still just adds a task. Use `mdd add "..."` to force add if your task text
 is ever misread as a command.
 
-## Interactive Mode (TUI)
-
-Run `mdd` without arguments to enter interactive mode.
-
-### Main Menu
-
-- **List tasks** - View and manage tasks with keyboard shortcuts
-- **Add new task** - Quick task entry
-- **Open in editor** - Edit TODO.md directly
-- **List subfolders** - Browse TODO files in subdirectories
-- **Settings** - Configure preferences
-
-### Task List Hotkeys
-
-| Key | Action |
-| --- | ------ |
-| `up` `down` | Navigate |
-| `Enter` | Select task |
-| `c` | Toggle complete |
-| `d` | Delete task |
-| `e` | Edit task |
-| `m` | Move to section |
-| `Esc` | Go back |
-| `Esc` `Esc` | Quit |
+Run `mdd` without arguments to show help.
 
 ## Task Format
 
@@ -172,7 +143,7 @@ edit/move/delete/complete.
 
 ### Status Cycle
 
-Toggle (`mdd toggle N` or `c` in TUI) cycles through pending &lt;-&gt;
+Toggle (`mdd toggle N`) cycles through pending &lt;-&gt;
 completed by default, or pending -&gt; in-progress -&gt; completed -&gt;
 pending when the `enableInProgress` setting is on.
 
@@ -189,8 +160,6 @@ mdd "Another task"             # Adds to inbox (top of file)
 
 Section aliases for quick add: `@ff` -> Features, `@bb` -> Bugs, `@ii` -> Ideas, `@ww` -> Warnings (extend with custom ones via `mdd config set alias.<name> <Section>`)
 
-In the TUI, use `m` to move tasks between sections.
-
 ### Auto-Sorting
 
 On save, tasks within each section are automatically reordered:
@@ -206,13 +175,8 @@ Settings are stored in `~/.config/markdowndo/config.json`.
 
 | Setting | Default | Description |
 | ------- | ------- | ----------- |
-| `theme` | `"default"` | TUI color theme |
-| `fullscreen` | `true` | Use alternate screen buffer for TUI |
 | `showCompleted` | `true` | Show completed tasks in lists |
 | `editor` | `"system"` | Editor for the `open` command |
-| `showStatusBar` | `true` | Show the TUI status bar |
-| `enableAnimations` | `true` | Enable TUI animations |
-| `enableTUI` | `true` | When false, a bare `mdd` shows help instead of launching the TUI |
 | `enableInProgress` | `false` | Enables the `- [/]` in-progress checkbox state and 3-way toggle cycle |
 | `confirmDestructive` | `false` | Require a y/n prompt before `remove`/`clear` (skip with `-y`/`--yes`) |
 | `sectionAliases` | `{}` | Custom `@alias` shortcuts layered on top of the built-in ones |
@@ -293,7 +257,6 @@ make build-all   # Cross-compile for all platforms
 
 - **No lock-in** - Your tasks are plain markdown, version-controlled with your code
 - **Fast** - Single binary, instant startup, no daemon or runtime dependencies
-- **Keyboard-first** - CLI for quick actions, TUI for exploration
 - **Minimal** - Does one thing well: manage TODO.md files
 
 ## License
