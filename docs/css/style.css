@@ -469,6 +469,16 @@ code {
   margin: var(--space-4) 0 var(--space-6);
 }
 
+/* ---- Inline doc-section media (screenshot or demo GIF) ---- */
+.doc-section__media {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  margin: var(--space-4) 0 var(--space-6);
+}
+
 .code-block__header {
   display: flex;
   align-items: center;
