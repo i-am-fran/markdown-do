@@ -2,6 +2,18 @@
 
 A fast, minimal, opinionated CLI tool for managing TODO.md files using standard markdown syntax.
 
+## Demo
+
+**Essential workflow** — the everyday add/list/toggle/complete/find loop:
+
+![mdd essential demo](demo/essential-demo.gif)
+
+**Full tour** — every command and flag:
+
+![mdd full demo](demo/full-demo.gif)
+
+See [`demo/`](demo/) for how these were recorded.
+
 ## Features
 
 - **Plain markdown** - Tasks are standard `- [ ]` checkboxes, readable anywhere
