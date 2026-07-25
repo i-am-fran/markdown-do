@@ -5,13 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.1] - 2026-07-25
+
+### Fixed
+- `mdd update` (and the README/docs "Go install" instructions) used
+  `go install .../cmd/mdd@latest`, which silently installed the ancient
+  `v1.0.0` tag instead of the real latest release — this repo's release
+  tags are bare semver (`3.2.0`) and Go's module tooling only recognizes
+  `v`-prefixed tags as valid versions. `mdd update` now looks up the
+  latest release via the GitHub API and installs that exact tag instead
+  of relying on `@latest`.
+
 ## [3.2.0] - 2026-07-25
 
 ### Added
 - `mdd undo` reverts the last change made through `mdd`; running it again
   re-applies the change it just undid (MDD21).
-- `mdd update` looks up the latest GitHub release and installs it via
-  `go install` (MDD30).
+- `mdd update` installs the latest release via `go install` (MDD30).
 
 ### Fixed
 - The Go module path in `go.mod` was `github.com/i-am-fran/markdowndo`
@@ -19,12 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`i-am-fran/markdown-do`) — `go install`/`go get` against the documented
   path has never actually resolved. Corrected the module path and every
   internal import to match the real repo.
-- `go install .../cmd/mdd@latest` silently installed the ancient `v1.0.0`
-  tag instead of the real latest release, because this repo's release tags
-  are bare semver (`3.2.0`) and Go's module tooling only recognizes
-  `v`-prefixed tags as valid versions. `mdd update` and the README/docs
-  install instructions now resolve and pin to the actual latest tag
-  instead of relying on `@latest`.
 
 ### Changed
 - Renamed the project everywhere from "MarkdownDO" to "Markdown-do"
