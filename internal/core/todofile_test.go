@@ -571,6 +571,46 @@ func TestArchiveStaysBeforeNotesAfterSave(t *testing.T) {
 	}
 }
 
+func TestSaveSkipsBackupOnFirstSave(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "TODO.md")
+	tf := NewTodoFile(path, "# TODO\n\n- [ ] Buy milk\n")
+	if err := tf.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	if HasUndo(path) {
+		t.Error("expected no undo backup after the very first save")
+	}
+}
+
+func TestSaveBacksUpPreviousContent(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "TODO.md")
+	tf := NewTodoFile(path, "# TODO\n\n- [ ] Buy milk\n")
+	if err := tf.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	if !tf.DeleteTask(1) {
+		t.Fatal("expected DeleteTask to succeed")
+	}
+	if err := tf.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	if !HasUndo(path) {
+		t.Fatal("expected an undo backup after the second save")
+	}
+	backup, err := LoadUndoBackup(path)
+	if err != nil {
+		t.Fatalf("LoadUndoBackup failed: %v", err)
+	}
+	if !strings.Contains(backup, "Buy milk") {
+		t.Errorf("expected backup to contain pre-delete content, got: %q", backup)
+	}
+}
+
 func TestSetTaskIDsPersistsAcrossLoad(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "TODO.md")

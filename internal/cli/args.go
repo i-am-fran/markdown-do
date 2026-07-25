@@ -47,6 +47,8 @@ var zeroArgCommands = map[string]bool{
 	"untag":   true,
 	"help":    true,
 	"version": true,
+	"undo":    true,
+	"update":  true,
 }
 
 // freeTextCommands take arbitrary trailing text, so there's no shape to

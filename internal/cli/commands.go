@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/i-am-fran/markdowndo/internal/config"
-	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdown-do/internal/config"
+	"github.com/i-am-fran/markdown-do/internal/core"
 )
 
-const Version = "3.1.0"
+const Version = "3.2.0"
 
 var (
 	green         = color.New(color.FgGreen).SprintFunc()
@@ -594,6 +594,48 @@ func ArchiveCompletedTasks() error {
 	return nil
 }
 
+// UndoLastChange reverts the last change made to the TODO file. Because the
+// restore is written through the normal save path, running it again
+// re-applies the change it just undid (toggle behavior).
+func UndoLastChange() error {
+	todoFile, filePath, err := LoadDefaultTodoFile()
+	if err != nil {
+		return err
+	}
+
+	if err := PerformUndo(todoFile, filePath); err != nil {
+		if err == ErrNothingToUndo {
+			fmt.Println("Nothing to undo")
+			return nil
+		}
+		return err
+	}
+
+	fmt.Println(green("Undid last change (run \"mdd undo\" again to redo it)"))
+	return nil
+}
+
+// UpdateBinary installs the latest release of mdd via "go install", the
+// same method already documented in the README's "Go install" section.
+func UpdateBinary() error {
+	if _, err := exec.LookPath("go"); err != nil {
+		return fmt.Errorf("go is not installed or not on PATH — download a binary from " +
+			"https://github.com/i-am-fran/markdown-do/releases or install Go and retry")
+	}
+
+	fmt.Println("Running: go install github.com/i-am-fran/markdown-do/cmd/mdd@latest")
+
+	cmd := exec.Command("go", "install", "github.com/i-am-fran/markdown-do/cmd/mdd@latest")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("update failed: %w", err)
+	}
+
+	fmt.Println(green(fmt.Sprintf("Updated. This process is still v%s — run \"mdd version\" to confirm the new one.", Version)))
+	return nil
+}
+
 // ConfigList prints every setting, one per line.
 func ConfigList() error {
 	s := config.GetSettings()
@@ -794,7 +836,7 @@ func ShowVersion() {
 // ShowHelp prints the help message
 func ShowHelp() {
 	fmt.Printf(`
-%s - MarkdownDO: Manage TODO.md files
+%s - Markdown-do: Manage TODO.md files
 
 %s
   mdd              Show this help
@@ -818,6 +860,7 @@ func ShowHelp() {
                                add -y/--yes to skip the prompt)
   mdd archive                 Move all completed tasks to the ## Archive
                               section, noting where each came from
+  mdd undo                    Revert the last change (run again to redo it)
 
 %s
   mdd notes <text>   Add a note to the ## Notes section
@@ -830,6 +873,7 @@ func ShowHelp() {
   mdd config set k v Change a setting, e.g. mdd config set editor vim
   mdd config edit    Open config.json directly in your editor
   mdd completion bash|zsh  Print a shell completion script (see below)
+  mdd update         Install the latest release (via "go install")
   mdd version        Show version (also: -v, --version)
   mdd help           Show this help (also: -h, --help)
 

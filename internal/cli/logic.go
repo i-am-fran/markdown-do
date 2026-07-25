@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/i-am-fran/markdowndo/internal/config"
-	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdown-do/internal/config"
+	"github.com/i-am-fran/markdown-do/internal/core"
 )
 
 // LoadDefaultTodoFile finds and loads the default TODO file for the current
@@ -132,6 +132,28 @@ func PerformMoveTask(todoFile *core.TodoFile, id int, section *string) (*core.Ta
 // core.TodoFile.Snapshot) and saves.
 func PerformRestore(todoFile *core.TodoFile, snapshot []string) error {
 	todoFile.Restore(snapshot)
+	if err := todoFile.Save(); err != nil {
+		return err
+	}
+
+	clearCacheWithWarning()
+	return nil
+}
+
+// ErrNothingToUndo is returned by PerformUndo when no undo backup exists.
+var ErrNothingToUndo = errors.New("nothing to undo")
+
+// PerformUndo restores todoFile from its on-disk undo backup and saves.
+// Because the restore is written through the normal Save() path, the
+// pre-undo state becomes the new backup — running PerformUndo again
+// re-applies the change it just undid.
+func PerformUndo(todoFile *core.TodoFile, filePath string) error {
+	backup, err := core.LoadUndoBackup(filePath)
+	if err != nil {
+		return ErrNothingToUndo
+	}
+
+	todoFile.Restore(strings.Split(backup, "\n"))
 	if err := todoFile.Save(); err != nil {
 		return err
 	}

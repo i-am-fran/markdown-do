@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -1143,7 +1144,10 @@ func (tf *TodoFile) ensureSectionLast(name string) {
 	tf.parse(strings.Join(tf.lines, "\n"))
 }
 
-// Save saves the file to disk
+// Save saves the file to disk. Before overwriting, it backs up the file's
+// current on-disk content to a sibling ".mdd-undo" file so "mdd undo" can
+// restore it. If the file doesn't exist yet on disk (the very first save),
+// there's nothing to back up.
 func (tf *TodoFile) Save() error {
 	tf.ensureSectionLast("Archive")
 	tf.ensureSectionLast("Notes")
@@ -1153,7 +1157,34 @@ func (tf *TodoFile) Save() error {
 	if !strings.HasSuffix(content, "\n") {
 		content += "\n"
 	}
+
+	if prev, err := os.ReadFile(tf.FilePath); err == nil {
+		_ = os.WriteFile(undoFilePath(tf.FilePath), prev, 0644)
+	}
+
 	return os.WriteFile(tf.FilePath, []byte(content), 0644)
+}
+
+// undoFilePath returns the path to the undo backup file for a given TODO
+// file: a sibling ".mdd-undo" in the same directory.
+func undoFilePath(todoFilePath string) string {
+	return filepath.Join(filepath.Dir(todoFilePath), ".mdd-undo")
+}
+
+// HasUndo reports whether an undo backup exists for filePath.
+func HasUndo(filePath string) bool {
+	_, err := os.Stat(undoFilePath(filePath))
+	return err == nil
+}
+
+// LoadUndoBackup reads the undo backup's content for filePath. It returns
+// an error if no backup exists.
+func LoadUndoBackup(filePath string) (string, error) {
+	data, err := os.ReadFile(undoFilePath(filePath))
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 // Snapshot creates a snapshot of the current file state

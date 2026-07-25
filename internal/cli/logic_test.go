@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdown-do/internal/core"
 )
 
 func newTestTodoFile(t *testing.T, content string) *core.TodoFile {
@@ -193,6 +193,47 @@ func TestPerformRestore(t *testing.T) {
 	}
 	if !strings.Contains(string(content), "Buy milk") {
 		t.Errorf("expected saved file to contain restored task, got: %q", content)
+	}
+}
+
+func TestPerformUndoTogglesLastChange(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "TODO.md")
+	todoFile := core.NewTodoFile(path, "# TODO\n\n- [ ] Buy milk\n")
+	if err := todoFile.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	if _, err := PerformDeleteTask(todoFile, 1); err != nil {
+		t.Fatalf("PerformDeleteTask failed: %v", err)
+	}
+	if len(todoFile.GetTasks()) != 0 {
+		t.Fatalf("expected task deleted before undo, got %d tasks", len(todoFile.GetTasks()))
+	}
+
+	if err := PerformUndo(todoFile, path); err != nil {
+		t.Fatalf("PerformUndo failed: %v", err)
+	}
+	tasks := todoFile.GetTasks()
+	if len(tasks) != 1 || tasks[0].Text != "Buy milk" {
+		t.Fatalf("expected undo to restore the deleted task, got %+v", tasks)
+	}
+
+	// Undo again: because the restore was written through Save(), the
+	// pre-undo (deleted) state became the new backup — this re-applies
+	// the delete.
+	if err := PerformUndo(todoFile, path); err != nil {
+		t.Fatalf("second PerformUndo failed: %v", err)
+	}
+	if len(todoFile.GetTasks()) != 0 {
+		t.Errorf("expected second undo to re-apply the delete, got %d tasks", len(todoFile.GetTasks()))
+	}
+}
+
+func TestPerformUndoNothingToUndo(t *testing.T) {
+	todoFile := newTestTodoFile(t, "# TODO\n\n- [ ] Buy milk\n")
+	if err := PerformUndo(todoFile, todoFile.FilePath); err != ErrNothingToUndo {
+		t.Errorf("expected ErrNothingToUndo, got %v", err)
 	}
 }
 

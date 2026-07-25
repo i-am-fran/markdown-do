@@ -1,4 +1,4 @@
-# MarkdownDO
+# Markdown-do
 
 A fast, minimal, opinionated CLI tool for managing TODO.md files using standard markdown syntax.
 
@@ -34,7 +34,7 @@ make install
 ### Go install
 
 ```bash
-go install github.com/i-am-fran/markdowndo/cmd/mdd@latest
+go install github.com/i-am-fran/markdown-do/cmd/mdd@latest
 ```
 
 ## Quick Start
@@ -124,7 +124,7 @@ Run `mdd` without arguments to show help.
 
 ## Task Format
 
-MarkdownDO uses standard markdown checkbox syntax, plus a non-standard third
+Markdown-do uses standard markdown checkbox syntax, plus a non-standard third
 state:
 
 ```markdown
@@ -190,7 +190,7 @@ Settings are stored in `~/.config/markdowndo/config.json`.
 
 ## File Discovery
 
-MarkdownDO looks for these files (in order):
+Markdown-do looks for these files (in order):
 
 1. `TODO.md` in current directory
 2. `todo.md` in current directory
@@ -253,7 +253,7 @@ make lint        # Lint code (requires golangci-lint)
 make build-all   # Cross-compile for all platforms
 ```
 
-## Why MarkdownDO?
+## Why Markdown-do?
 
 - **No lock-in** - Your tasks are plain markdown, version-controlled with your code
 - **Fast** - Single binary, instant startup, no daemon or runtime dependencies

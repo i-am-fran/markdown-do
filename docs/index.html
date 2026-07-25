@@ -1,156 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="color-scheme" content="light dark">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<meta name="color-scheme" content="light dark">
 
-  <!-- Primary Meta Tags -->
-  <title>MarkdownDO - TODO.md Manager for Your Terminal</title>
-  <meta name="title" content="MarkdownDO - TODO.md Manager for Your Terminal">
-  <meta name="description" content="MarkdownDO reads and writes plain markdown TODO.md files from the terminal: checkboxes, sections, task IDs, notes. No database, no daemon, just a file you can commit.">
-  <meta name="keywords" content="markdown, productivity, terminal, cli, tasks, todo, markdowndo, markdown-do, task manager">
-  <meta name="author" content="Fran">
-  <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)">
+	<!-- Primary Meta Tags -->
+	<title>Markdown-do - TODO.md Manager for Your Terminal</title>
+	<meta name="title" content="Markdown-do - TODO.md Manager for Your Terminal">
+	<meta name="description" content="Markdown-do reads and writes plain markdown TODO.md files from the terminal: checkboxes, sections, task IDs, notes. No database, no daemon, just a file you can commit.">
+	<meta name="keywords" content="markdown, productivity, terminal, cli, tasks, todo, markdowndo, markdown-do, task manager">
+	<meta name="author" content="Fran">
+	<meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+	<meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)">
 
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://i-am-fran.github.io/markdown-do/">
-  <meta property="og:title" content="MarkdownDO - TODO.md Manager for Your Terminal">
-  <meta property="og:description" content="MarkdownDO reads and writes plain markdown TODO.md files from the terminal: checkboxes, sections, task IDs, notes. No database, no daemon, just a file you can commit.">
-  <meta property="og:image" content="https://i-am-fran.github.io/markdown-do/assets/android-chrome-512x512.png">
-  <meta property="og:image:alt" content="MarkdownDO logo">
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="https://i-am-fran.github.io/markdown-do/">
+	<meta property="og:title" content="Markdown-do - TODO.md Manager for Your Terminal">
+	<meta property="og:description" content="Markdown-do reads and writes plain markdown TODO.md files from the terminal: checkboxes, sections, task IDs, notes. No database, no daemon, just a file you can commit.">
+	<meta property="og:image" content="https://i-am-fran.github.io/markdown-do/assets/android-chrome-512x512.png">
+	<meta property="og:image:alt" content="Markdown-do logo">
 
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:url" content="https://i-am-fran.github.io/markdown-do/">
-  <meta name="twitter:title" content="MarkdownDO - TODO.md Manager for Your Terminal">
-  <meta name="twitter:description" content="MarkdownDO reads and writes plain markdown TODO.md files from the terminal: checkboxes, sections, task IDs, notes. No database, no daemon, just a file you can commit.">
-  <meta name="twitter:image" content="https://i-am-fran.github.io/markdown-do/assets/android-chrome-512x512.png">
-  <meta name="twitter:image:alt" content="MarkdownDO logo">
+	<!-- Twitter -->
+	<meta name="twitter:card" content="summary">
+	<meta name="twitter:url" content="https://i-am-fran.github.io/markdown-do/">
+	<meta name="twitter:title" content="Markdown-do - TODO.md Manager for Your Terminal">
+	<meta name="twitter:description" content="Markdown-do reads and writes plain markdown TODO.md files from the terminal: checkboxes, sections, task IDs, notes. No database, no daemon, just a file you can commit.">
+	<meta name="twitter:image" content="https://i-am-fran.github.io/markdown-do/assets/android-chrome-512x512.png">
+	<meta name="twitter:image:alt" content="Markdown-do logo">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/android-chrome-192x192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/android-chrome-512x512.png">
+	<!-- Favicon -->
+	<link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+	<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="192x192" href="assets/android-chrome-192x192.png">
+	<link rel="icon" type="image/png" sizes="512x512" href="assets/android-chrome-512x512.png">
 
-  <!-- Theme detection before any CSS loads — prevents dark mode flash -->
-  <script>
-    (function () {
-      var t = localStorage.getItem("theme");
-      if (t === "dark" || (t !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-        document.documentElement.classList.add("dark");
-      }
-    })();
-  </script>
+	<!-- Theme detection before any CSS loads — prevents dark mode flash -->
+	<script>
+		(function() {
+			var t = localStorage.getItem("theme");
+			if (t === "dark" || (t !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+				document.documentElement.classList.add("dark");
+			}
+		})();
+	</script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Inter:wght@400;500;600&family=Cascadia+Code:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Inter:wght@400;500;600&family=Cascadia+Code:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
-  <a class="skip-link" href="#main-content">Skip to content</a>
+	<a class="skip-link" href="#main-content">Skip to content</a>
 
-  <header class="topnav">
-    <div class="topnav__inner">
-      <a class="topnav__logo" href="index.html">MarkdownDO</a>
-      <nav class="topnav__links" aria-label="Page links">
-        <a href="docs.html">Docs</a>
-        <span class="soft">/</span>
-        <a href="https://github.com/i-am-fran/markdown-do" target="_blank" rel="noopener noreferrer">GitHub</a>
-      </nav>
-    </div>
-  </header>
+	<header class="topnav">
+		<div class="topnav__inner">
+			<a class="topnav__logo" href="index.html">Markdown-do</a>
+			<nav class="topnav__links" aria-label="Page links">
+				<a href="docs.html">Docs</a>
+				<span class="soft">/</span>
+				<a href="https://github.com/i-am-fran/markdown-do" target="_blank" rel="noopener noreferrer">GitHub</a>
+			</nav>
+		</div>
+	</header>
 
-  <main id="main-content" tabindex="-1">
-    <section class="hero">
-      <h1 class="hero__title">MarkdownDO</h1>
-      <p class="hero__subtitle">A CLI for managing <code>TODO.md</code> files as plain markdown checkboxes. Add, complete, and reorganize tasks from the terminal, then commit the file like anything else in your repo.</p>
-      <div class="hero__actions">
-        <a class="button button--primary" href="docs.html">Read the docs</a>
-        <a class="button button--secondary" href="https://github.com/i-am-fran/markdown-do" target="_blank" rel="noopener noreferrer">GitHub</a>
-      </div>
-    </section>
+	<main id="main-content" tabindex="-1">
+		<section class="hero">
+			<h1 class="hero__title">Markdown-do</h1>
+			<p class="hero__subtitle">A CLI for managing <code>TODO.md</code> files as plain markdown checkboxes. Add, complete, and reorganize tasks from the terminal, then commit the file like anything else in your repo.</p>
+			<div class="hero__actions">
+				<a class="button button--primary" href="docs.html">Read the docs</a>
+				<a class="button button--secondary" href="https://github.com/i-am-fran/markdown-do" target="_blank" rel="noopener noreferrer">GitHub</a>
+			</div>
+		</section>
 
-    <section class="features" aria-labelledby="features-heading">
-      <h2 id="features-heading">What you get</h2>
-      <ul class="features-grid" role="list">
-        <li class="feature">
-          <h3>Just markdown</h3>
-          <p>Tasks are <code>- [ ]</code> checkboxes. Open the file in any editor, on any machine, and it still makes sense</p>
-        </li>
-        <li class="feature">
-          <h3>Fast CLI</h3>
-          <p>Add, toggle, and complete tasks with one command each, no app to open first</p>
-        </li>
-        <li class="feature">
-          <h3>Recursive search</h3>
-          <p>Find a task buried in some subdirectory's TODO.md without cd-ing around to look for it</p>
-        </li>
-        <li class="feature">
-          <h3>Sections &amp; inbox</h3>
-          <p>New tasks land in an inbox at the top until you file them under a section yourself</p>
-        </li>
-        <li class="feature">
-          <h3>Auto-sorting</h3>
-          <p>Pending tasks float to the top of each section on save; completed ones sink but stick around until you clear them</p>
-        </li>
-        <li class="feature">
-          <h3>Lint &amp; fix</h3>
-          <p>Fixes the stray bullets, mismatched checkboxes, and extra blank lines you didn't mean to introduce</p>
-        </li>
-      </ul>
-    </section>
+		<section class="features" aria-labelledby="features-heading">
+			<h2 id="features-heading">What you get</h2>
+			<ul class="features-grid" role="list">
+				<li class="feature">
+					<h3>Just markdown</h3>
+					<p>Tasks are <code>- [ ]</code> checkboxes. Open the file in any editor, on any machine, and it still makes sense</p>
+				</li>
+				<li class="feature">
+					<h3>Fast CLI</h3>
+					<p>Add, toggle, and complete tasks with one command each, no app to open first</p>
+				</li>
+				<li class="feature">
+					<h3>Recursive search</h3>
+					<p>Find a task buried in some subdirectory's TODO.md without cd-ing around to look for it</p>
+				</li>
+				<li class="feature">
+					<h3>Sections &amp; inbox</h3>
+					<p>New tasks land in an inbox at the top until you file them under a section yourself</p>
+				</li>
+				<li class="feature">
+					<h3>Auto-sorting</h3>
+					<p>Pending tasks float to the top of each section on save; completed ones sink but stick around until you clear them</p>
+				</li>
+				<li class="feature">
+					<h3>Lint &amp; fix</h3>
+					<p>Fixes the stray bullets, mismatched checkboxes, and extra blank lines you didn't mean to introduce</p>
+				</li>
+			</ul>
+		</section>
 
-    <section class="cta" aria-labelledby="cta-heading">
-      <article class="cta-card">
-        <h2 id="cta-heading">Get started with MarkdownDO</h2>
-        <p>Point it at a directory. It finds your TODO.md, or creates one if there isn't one yet. No config needed to start.</p>
-        <a class="button button--primary" href="docs.html">Read the docs</a>
-      </article>
-    </section>
-  </main>
+		<section class="cta" aria-labelledby="cta-heading">
+			<article class="cta-card">
+				<h2 id="cta-heading">Get started with Markdown-do</h2>
+				<p>Point it at a directory. It finds your TODO.md, or creates one if there isn't one yet. No config needed to start.</p>
+				<a class="button button--primary" href="docs.html">Read the docs</a>
+			</article>
+		</section>
+	</main>
 
-  <footer class="footer">
-    <div class="footer__inner">
-      <div class="footer__copy">
-        &copy; 2026 <span class="soft">/</span> MarkdownDO <span class="soft">/</span> <a href="https://iamfran.com" target="_blank" rel="noopener noreferrer">iamfran.com</a>
-      </div>
-      <div class="theme-toggle">
-        <button id="light-theme-button" class="theme-toggle__btn" aria-label="Light theme" aria-pressed="false" type="button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-          </svg>
-        </button>
-        <button id="dark-theme-button" class="theme-toggle__btn" aria-label="Dark theme" aria-pressed="false" type="button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-          </svg>
-        </button>
-        <button id="system-theme-button" class="theme-toggle__btn" aria-label="System theme" aria-pressed="false" type="button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-            <line x1="8" y1="21" x2="16" y2="21"></line>
-            <line x1="12" y1="17" x2="12" y2="21"></line>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </footer>
+	<footer class="footer">
+		<div class="footer__inner">
+			<div class="footer__copy">
+				&copy; 2026 <span class="soft">/</span> Markdown-do <span class="soft">/</span> <a href="https://iamfran.com" target="_blank" rel="noopener noreferrer">iamfran.com</a>
+			</div>
+			<div class="theme-toggle">
+				<button id="light-theme-button" class="theme-toggle__btn" aria-label="Light theme" aria-pressed="false" type="button">
+					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<circle cx="12" cy="12" r="5"></circle>
+						<line x1="12" y1="1" x2="12" y2="3"></line>
+						<line x1="12" y1="21" x2="12" y2="23"></line>
+						<line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+						<line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+						<line x1="1" y1="12" x2="3" y2="12"></line>
+						<line x1="21" y1="12" x2="23" y2="12"></line>
+						<line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+						<line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+					</svg>
+				</button>
+				<button id="dark-theme-button" class="theme-toggle__btn" aria-label="Dark theme" aria-pressed="false" type="button">
+					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+					</svg>
+				</button>
+				<button id="system-theme-button" class="theme-toggle__btn" aria-label="System theme" aria-pressed="false" type="button">
+					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+						<line x1="8" y1="21" x2="16" y2="21"></line>
+						<line x1="12" y1="17" x2="12" y2="21"></line>
+					</svg>
+				</button>
+			</div>
+		</div>
+	</footer>
 
-  <script src="js/script.js" defer></script>
+	<script src="js/script.js" defer></script>
 </body>
+
 </html>

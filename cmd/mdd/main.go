@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/i-am-fran/markdowndo/internal/cli"
-	"github.com/i-am-fran/markdowndo/internal/config"
-	"github.com/i-am-fran/markdowndo/internal/core"
+	"github.com/i-am-fran/markdown-do/internal/cli"
+	"github.com/i-am-fran/markdown-do/internal/config"
+	"github.com/i-am-fran/markdown-do/internal/core"
 )
 
 func main() {
@@ -102,6 +102,12 @@ func handleCLI(args cli.ParsedArgs) error {
 
 	case "archive":
 		return cli.ArchiveCompletedTasks()
+
+	case "undo":
+		return cli.UndoLastChange()
+
+	case "update":
+		return cli.UpdateBinary()
 
 	case "notes":
 		if len(args.Args) == 0 {
