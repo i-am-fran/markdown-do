@@ -770,15 +770,16 @@ code {
   border-radius: var(--radius-lg);
   padding: var(--space-7);
   text-align: center;
-  overflow: hidden;
 }
 
 .cta-card__banner {
   display: block;
-  width: calc(100% + var(--space-7) * 2);
+  width: 100%;
+  max-width: 320px;
   aspect-ratio: 2 / 1;
   object-fit: cover;
-  margin: calc(var(--space-7) * -1) calc(var(--space-7) * -1) var(--space-6);
+  border-radius: var(--radius-lg);
+  margin: 0 auto var(--space-5);
 }
 
 .cta-card h2 {
