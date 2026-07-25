@@ -1,7 +1,10 @@
 package cli
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -615,24 +618,59 @@ func UndoLastChange() error {
 	return nil
 }
 
-// UpdateBinary installs the latest release of mdd via "go install", the
-// same method already documented in the README's "Go install" section.
+// latestReleaseTag fetches the tag name of the latest GitHub release for
+// this repo. "go install pkg@latest" can't be used for this: this repo's
+// release tags are bare semver (e.g. "3.2.0"), and Go's module tooling only
+// recognizes "v"-prefixed tags (vX.Y.Z) as valid versions, so "@latest"
+// silently resolves to the one legacy "v1.0.0" tag instead of the real
+// latest release.
+func latestReleaseTag() (string, error) {
+	resp, err := http.Get("https://api.github.com/repos/i-am-fran/markdown-do/releases/latest")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("GitHub API returned %s", resp.Status)
+	}
+
+	var release struct {
+		TagName string `json:"tag_name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return "", err
+	}
+	if release.TagName == "" {
+		return "", errors.New("GitHub API response had no tag_name")
+	}
+	return release.TagName, nil
+}
+
+// UpdateBinary installs the latest release of mdd via "go install", pinned
+// to the exact tag returned by the GitHub API (see latestReleaseTag).
 func UpdateBinary() error {
 	if _, err := exec.LookPath("go"); err != nil {
 		return fmt.Errorf("go is not installed or not on PATH — download a binary from " +
 			"https://github.com/i-am-fran/markdown-do/releases or install Go and retry")
 	}
 
-	fmt.Println("Running: go install github.com/i-am-fran/markdown-do/cmd/mdd@latest")
+	tag, err := latestReleaseTag()
+	if err != nil {
+		return fmt.Errorf("could not determine the latest release: %w", err)
+	}
 
-	cmd := exec.Command("go", "install", "github.com/i-am-fran/markdown-do/cmd/mdd@latest")
+	target := fmt.Sprintf("github.com/i-am-fran/markdown-do/cmd/mdd@%s", tag)
+	fmt.Println("Running: go install " + target)
+
+	cmd := exec.Command("go", "install", target)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("update failed: %w", err)
 	}
 
-	fmt.Println(green(fmt.Sprintf("Updated. This process is still v%s — run \"mdd version\" to confirm the new one.", Version)))
+	fmt.Println(green(fmt.Sprintf("Updated to %s. This process is still v%s — run \"mdd version\" to confirm the new one.", tag, Version)))
 	return nil
 }
 

@@ -1,11 +1,8 @@
 # Markdown-do
 
-- [ ] [MDD-032] Build a real `mdd update` (binary download+swap from GitHub releases) — needs a release pipeline first (extend build-all + gh release upload, or GoReleaser) to actually produce and upload OS/arch binaries; the current mdd update just wraps go install
 - [ ] [MDD-028] Add manual at `man mdd`
 - [ ] [MDD-027] Add some tests
 - [ ] [MDD-029] Wire up PerformMoveTask as mdd move, or delete it if not worth it — currently dead code only reachable by its own tests since the TUI's move-to-section hotkey that used it is gone (from AI)
-- [x] [MDD-030] Add `mdd update` to download and install the latest release from git repo
-- [x] [MDD-021] Add UNDO option with `mdd undo`
 
 ## Bugs
 
@@ -15,6 +12,7 @@
 
 ## Ideas
 
+- [ ] [MDD-032] Build a real `mdd update` (binary download+swap from GitHub releases) — needs a release pipeline first (extend build-all + gh release upload, or GoReleaser) to actually produce and upload OS/arch binaries; the current mdd update just wraps go install
 - [ ] [MDD-020] Add a flag to add completed date (only when done via CLI) to completed tasks
 - [ ] [MDD-019] Add an option to sync with Github tasks??
 - [ ] [MDD-018] Allow to filter mdd list archive/all/todo or something like that
@@ -44,3 +42,5 @@
 - [x] [MDD-025] IDs should include a separator, as in ABC-001
 - [x] [MDD-031] Fix brand everywhere, the official name is Markdown-do, capitalised like this
 - [x] [MDD-016] Is it possible to add autocomplete suggestions? I want users to type `mdd ar` and hit `Tab` to get `mdd archive`. This should also find and suggest sections (H2s) in the TODO.md file
+- [x] [MDD-030] Add `mdd update` to download and install the latest release from git repo
+- [x] [MDD-021] Add UNDO option with `mdd undo`
