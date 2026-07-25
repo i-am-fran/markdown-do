@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-07-25
+
+### Added
+- `mdd archive` moves every completed task into a `## Archive` section
+  (created automatically, always kept last, ahead of `## Notes`), appending
+  "(from `<Section>`)" to record where each task came from. Unlike `mdd
+  clear`, this doesn't delete anything and isn't gated by
+  `confirmDestructive`.
+
 ## [2.1.0] - 2026-07-24
 
 ### Added

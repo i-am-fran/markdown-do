@@ -99,6 +99,9 @@ func handleCLI(args cli.ParsedArgs) error {
 	case "clear":
 		return cli.DeleteCompletedTasks(args.Yes)
 
+	case "archive":
+		return cli.ArchiveCompletedTasks()
+
 	case "notes":
 		if len(args.Args) == 0 {
 			usageError("notes requires text, e.g. mdd notes check pantry")

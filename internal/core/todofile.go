@@ -643,6 +643,48 @@ func (tf *TodoFile) DeleteCompletedTasks() int {
 	return len(completed)
 }
 
+// ArchiveCompletedTasks moves all completed tasks (that aren't already in the
+// Archive section) into the Archive section, appending "(from <Section>)" to
+// each task's text to record where it came from. Tasks with no section keep
+// their text unchanged. Returns the number of tasks archived.
+func (tf *TodoFile) ArchiveCompletedTasks() int {
+	var toArchive []Task
+	for _, t := range tf.GetCompletedTasks() {
+		if t.Section != nil && strings.EqualFold(*t.Section, "Archive") {
+			continue
+		}
+		toArchive = append(toArchive, t)
+	}
+	if len(toArchive) == 0 {
+		return 0
+	}
+
+	// Build the archived blocks (in original file order) before mutating lines.
+	var block []string
+	for _, task := range toArchive {
+		archived := task
+		if task.Section != nil {
+			archived.Text = fmt.Sprintf("%s (from %s)", task.Text, *task.Section)
+		}
+		block = append(block, FormatTaskBlock(&archived)...)
+	}
+
+	// Remove the tasks from bottom to top so earlier LineNumbers stay valid.
+	sort.Slice(toArchive, func(i, j int) bool {
+		return toArchive[i].LineNumber > toArchive[j].LineNumber
+	})
+	for _, task := range toArchive {
+		end := task.LineNumber + task.BlockLineCount()
+		tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
+	}
+	tf.parse(strings.Join(tf.lines, "\n"))
+
+	insertLine := tf.findOrCreateSection("Archive")
+	tf.lines = append(tf.lines[:insertLine], append(block, tf.lines[insertLine:]...)...)
+	tf.parse(strings.Join(tf.lines, "\n"))
+	return len(toArchive)
+}
+
 // FindTasks finds tasks matching a keyword
 func (tf *TodoFile) FindTasks(keyword string) []Task {
 	lower := strings.ToLower(keyword)
@@ -1025,38 +1067,40 @@ func (tf *TodoFile) reorderTasks() {
 	}
 }
 
-// ensureNotesLast ensures the Notes section is always at the end
-func (tf *TodoFile) ensureNotesLast() {
-	// Find the Notes section
-	notesLineStart := -1
-	notesLineEnd := -1
+// ensureSectionLast ensures the named section (case-insensitive) is always at
+// the end of the file, moving it there if anything follows it. No-op if the
+// section doesn't exist or is already last.
+func (tf *TodoFile) ensureSectionLast(name string) {
+	// Find the section
+	lineStart := -1
+	lineEnd := -1
 	sectionHeaderRegex := regexp.MustCompile(`^##\s+`)
 
 	for i, line := range tf.lines {
-		if match := ParseHeaderLine(line); match != nil && strings.EqualFold(*match, "Notes") {
-			notesLineStart = i
+		if match := ParseHeaderLine(line); match != nil && strings.EqualFold(*match, name) {
+			lineStart = i
 			// Find where this section ends (next section or end of file)
 			for j := i + 1; j < len(tf.lines); j++ {
 				if sectionHeaderRegex.MatchString(tf.lines[j]) {
-					notesLineEnd = j
+					lineEnd = j
 					break
 				}
 			}
-			if notesLineEnd == -1 {
-				notesLineEnd = len(tf.lines)
+			if lineEnd == -1 {
+				lineEnd = len(tf.lines)
 			}
 			break
 		}
 	}
 
-	// If Notes section doesn't exist or is already at the end, nothing to do
-	if notesLineStart == -1 {
+	// If the section doesn't exist or is already at the end, nothing to do
+	if lineStart == -1 {
 		return
 	}
 
-	// Check if there's content after Notes (excluding trailing blank lines)
+	// Check if there's content after it (excluding trailing blank lines)
 	hasContentAfter := false
-	for i := notesLineEnd; i < len(tf.lines); i++ {
+	for i := lineEnd; i < len(tf.lines); i++ {
 		if strings.TrimSpace(tf.lines[i]) != "" {
 			hasContentAfter = true
 			break
@@ -1064,20 +1108,20 @@ func (tf *TodoFile) ensureNotesLast() {
 	}
 
 	if !hasContentAfter {
-		return // Notes is already at the end
+		return // Already at the end
 	}
 
-	// Extract the Notes section (including preceding blank line if any)
-	startExtract := notesLineStart
+	// Extract the section (including preceding blank line if any)
+	startExtract := lineStart
 	if startExtract > 0 && strings.TrimSpace(tf.lines[startExtract-1]) == "" {
 		startExtract--
 	}
 
-	notesSection := make([]string, notesLineEnd-startExtract)
-	copy(notesSection, tf.lines[startExtract:notesLineEnd])
+	section := make([]string, lineEnd-startExtract)
+	copy(section, tf.lines[startExtract:lineEnd])
 
-	// Remove Notes section from current position
-	tf.lines = append(tf.lines[:startExtract], tf.lines[notesLineEnd:]...)
+	// Remove the section from its current position
+	tf.lines = append(tf.lines[:startExtract], tf.lines[lineEnd:]...)
 
 	// Find insertion point at the end (skip trailing blank lines)
 	insertPos := len(tf.lines)
@@ -1085,13 +1129,13 @@ func (tf *TodoFile) ensureNotesLast() {
 		insertPos--
 	}
 
-	// Add blank line before Notes if there's content
+	// Add blank line before the section if there's content
 	if insertPos > 0 && strings.TrimSpace(tf.lines[insertPos-1]) != "" {
-		notesSection = append([]string{""}, notesSection...)
+		section = append([]string{""}, section...)
 	}
 
-	// Insert Notes section at the end
-	tf.lines = append(tf.lines[:insertPos], append(notesSection, tf.lines[insertPos:]...)...)
+	// Insert the section at the end
+	tf.lines = append(tf.lines[:insertPos], append(section, tf.lines[insertPos:]...)...)
 
 	// Re-parse to update line numbers
 	tf.parse(strings.Join(tf.lines, "\n"))
@@ -1099,7 +1143,8 @@ func (tf *TodoFile) ensureNotesLast() {
 
 // Save saves the file to disk
 func (tf *TodoFile) Save() error {
-	tf.ensureNotesLast()
+	tf.ensureSectionLast("Archive")
+	tf.ensureSectionLast("Notes")
 	tf.reorderTasks()
 	content := tf.Serialize()
 	// Ensure file ends with newline

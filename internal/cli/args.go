@@ -42,6 +42,7 @@ var zeroArgCommands = map[string]bool{
 	"open":    true,
 	"lint":    true,
 	"clear":   true,
+	"archive": true,
 	"untag":   true,
 	"help":    true,
 	"version": true,

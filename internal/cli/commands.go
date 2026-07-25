@@ -12,7 +12,7 @@ import (
 	"github.com/i-am-fran/markdowndo/internal/core"
 )
 
-const Version = "2.1.0"
+const Version = "2.2.0"
 
 var (
 	green         = color.New(color.FgGreen).SprintFunc()
@@ -569,6 +569,31 @@ func DeleteCompletedTasks(yes bool) error {
 	return nil
 }
 
+// ArchiveCompletedTasks moves all completed tasks into the Archive section
+func ArchiveCompletedTasks() error {
+	todoFile, _, err := LoadDefaultTodoFile()
+	if err != nil {
+		return err
+	}
+
+	count, err := PerformArchiveCompletedTasks(todoFile)
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		fmt.Println("No completed tasks to archive")
+		return nil
+	}
+
+	suffix := "s"
+	if count == 1 {
+		suffix = ""
+	}
+	fmt.Println(green(fmt.Sprintf("Archived %d completed task%s", count, suffix)))
+	return nil
+}
+
 // ConfigList prints every setting, one per line.
 func ConfigList() error {
 	s := config.GetSettings()
@@ -810,6 +835,8 @@ func ShowHelp() {
   mdd clear                   Delete all completed tasks
                               (both prompt first if confirmDestructive is on;
                                add -y/--yes to skip the prompt)
+  mdd archive                 Move all completed tasks to the ## Archive
+                              section, noting where each came from
 
 %s
   mdd notes <text>   Add a note to the ## Notes section
@@ -857,6 +884,7 @@ func ShowHelp() {
   mdd edit 1 Fix the bug       Edit task #1
   mdd annotate 1 Needs review  Add a note to task #1
   mdd remove 3                 Delete task #3
+  mdd archive                  Move all completed tasks to ## Archive
   mdd find bug                 Find tasks containing "bug"
   mdd tag ABC                  Tag all tasks: [ABC01], [ABC02], ...
   mdd complete ABC01           Complete the task tagged ABC01

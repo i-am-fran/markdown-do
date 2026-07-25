@@ -284,6 +284,32 @@ func TestPerformDeleteCompletedTasksNoneCompleted(t *testing.T) {
 	}
 }
 
+func TestPerformArchiveCompletedTasks(t *testing.T) {
+	todoFile := newTestTodoFile(t, "# TODO\n\n- [ ] Buy milk\n\n## Bugs\n\n- [x] Fix login bug\n")
+	count, err := PerformArchiveCompletedTasks(todoFile)
+	if err != nil {
+		t.Fatalf("PerformArchiveCompletedTasks failed: %v", err)
+	}
+	if count != 1 {
+		t.Errorf("expected 1 archived task, got %d", count)
+	}
+	archived := todoFile.GetTasksBySection(stringPtr("Archive"))
+	if len(archived) != 1 || archived[0].Text != "Fix login bug (from Bugs)" {
+		t.Errorf("expected task archived with origin noted, got %+v", archived)
+	}
+}
+
+func TestPerformArchiveCompletedTasksNoneCompleted(t *testing.T) {
+	todoFile := newTestTodoFile(t, "# TODO\n\n- [ ] Buy milk\n")
+	count, err := PerformArchiveCompletedTasks(todoFile)
+	if err != nil {
+		t.Fatalf("PerformArchiveCompletedTasks failed: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("expected 0 archived tasks, got %d", count)
+	}
+}
+
 func TestPerformSetTaskIDs(t *testing.T) {
 	todoFile := newTestTodoFile(t, "# TODO\n\n- [ ] Buy milk\n- [ ] Walk dog\n")
 	count, err := PerformSetTaskIDs(todoFile, "abc")

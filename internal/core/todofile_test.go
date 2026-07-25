@@ -440,6 +440,109 @@ func TestDeleteCompletedTasksRemovesNotes(t *testing.T) {
 
 func stringPtrCore(s string) *string { return &s }
 
+func TestArchiveCompletedTasksMovesToArchiveSection(t *testing.T) {
+	content := "# TODO\n\n- [ ] Pending task\n\n## Bugs\n\n- [x] Fix login bug\n- [ ] Another bug\n"
+	tf := NewTodoFile("TODO.md", content)
+	count := tf.ArchiveCompletedTasks()
+	if count != 1 {
+		t.Fatalf("expected 1 archived task, got %d", count)
+	}
+
+	archived := tf.GetTasksBySection(stringPtrCore("Archive"))
+	if len(archived) != 1 {
+		t.Fatalf("expected 1 task in Archive section, got %d", len(archived))
+	}
+	if archived[0].Text != "Fix login bug (from Bugs)" {
+		t.Errorf("expected origin section noted in text, got %q", archived[0].Text)
+	}
+	if archived[0].Status != TaskCompleted {
+		t.Errorf("expected archived task to stay completed, got %v", archived[0].Status)
+	}
+
+	bugs := tf.GetTasksBySection(stringPtrCore("Bugs"))
+	if len(bugs) != 1 || bugs[0].Text != "Another bug" {
+		t.Errorf("expected Bugs section to keep only the pending task, got %+v", bugs)
+	}
+}
+
+func TestArchiveCompletedTasksNoneCompleted(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Buy milk\n")
+	count := tf.ArchiveCompletedTasks()
+	if count != 0 {
+		t.Errorf("expected 0 archived tasks, got %d", count)
+	}
+	if strings.Contains(tf.Serialize(), "Archive") {
+		t.Errorf("expected no Archive section created, got: %q", tf.Serialize())
+	}
+}
+
+func TestArchiveCompletedTasksPreservesNotes(t *testing.T) {
+	content := "# TODO\n\n## Bugs\n\n- [x] Fix login bug\n  - root caused by cache\n"
+	tf := NewTodoFile("TODO.md", content)
+	count := tf.ArchiveCompletedTasks()
+	if count != 1 {
+		t.Fatalf("expected 1 archived task, got %d", count)
+	}
+	if !strings.Contains(tf.Serialize(), "root caused by cache") {
+		t.Errorf("expected note to travel with archived task, got: %q", tf.Serialize())
+	}
+}
+
+func TestArchiveCompletedTasksNoOriginSectionOmitsSuffix(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [x] Done already\n")
+	tf.ArchiveCompletedTasks()
+	archived := tf.GetTasksBySection(stringPtrCore("Archive"))
+	if len(archived) != 1 || archived[0].Text != "Done already" {
+		t.Errorf("expected task text unchanged when there's no origin section, got %+v", archived)
+	}
+}
+
+func TestArchiveCompletedTasksSkipsAlreadyArchived(t *testing.T) {
+	content := "# TODO\n\n## Bugs\n\n- [x] Fix login bug\n"
+	tf := NewTodoFile("TODO.md", content)
+	tf.ArchiveCompletedTasks()
+
+	count := tf.ArchiveCompletedTasks()
+	if count != 0 {
+		t.Errorf("expected 0 tasks archived on second pass, got %d", count)
+	}
+	if strings.Count(tf.Serialize(), "(from Bugs)") != 1 {
+		t.Errorf("expected origin annotated exactly once, got: %q", tf.Serialize())
+	}
+}
+
+func TestArchiveStaysBeforeNotesAfterSave(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "TODO.md")
+	content := "# TODO\n\n## Bugs\n\n- [x] Fix login bug\n\n## Notes\n\n- remember to floss\n"
+	tf := NewTodoFile(path, content)
+	tf.ArchiveCompletedTasks()
+	if err := tf.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	if _, err := tf.AddTask("New bug @Bugs"); err != nil {
+		t.Fatalf("AddTask failed: %v", err)
+	}
+	if err := tf.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	names := tf.GetSectionNames()
+	archiveIdx, notesIdx := -1, -1
+	for i, n := range names {
+		if n == "Archive" {
+			archiveIdx = i
+		}
+		if n == "Notes" {
+			notesIdx = i
+		}
+	}
+	if archiveIdx == -1 || notesIdx == -1 || archiveIdx >= notesIdx {
+		t.Errorf("expected Archive before Notes at the end, got sections: %v", names)
+	}
+}
+
 func TestSetTaskIDsPersistsAcrossLoad(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "TODO.md")

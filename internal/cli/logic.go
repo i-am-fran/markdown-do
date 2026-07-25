@@ -237,6 +237,22 @@ func PerformDeleteCompletedTasks(todoFile *core.TodoFile) (int, error) {
 	return count, nil
 }
 
+// PerformArchiveCompletedTasks moves all completed tasks into the Archive
+// section and saves if any were archived.
+func PerformArchiveCompletedTasks(todoFile *core.TodoFile) (int, error) {
+	count := todoFile.ArchiveCompletedTasks()
+	if count == 0 {
+		return 0, nil
+	}
+
+	if err := todoFile.Save(); err != nil {
+		return 0, err
+	}
+
+	clearCacheWithWarning()
+	return count, nil
+}
+
 // PerformSetTaskIDs tags every task in todoFile with sequential IDs and saves.
 func PerformSetTaskIDs(todoFile *core.TodoFile, prefix string) (int, error) {
 	if err := todoFile.SetTaskIDs(prefix); err != nil {
