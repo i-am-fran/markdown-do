@@ -12,7 +12,7 @@ import (
 	"github.com/i-am-fran/markdowndo/internal/core"
 )
 
-const Version = "3.0.0"
+const Version = "3.0.1"
 
 var (
 	green         = color.New(color.FgGreen).SprintFunc()
@@ -670,7 +670,7 @@ func ConfigSet(key, value string) error {
 	return nil
 }
 
-// SetTaskIDs tags every task in the file with sequential IDs like ABC01, ABC02, ...
+// SetTaskIDs tags every task in the file with sequential IDs like ABC-001, ABC-002, ...
 func SetTaskIDs(prefix string) error {
 	todoFile, _, err := LoadDefaultTodoFile()
 	if err != nil {
@@ -843,7 +843,7 @@ func ShowHelp() {
 
 %s
   <id> above accepts either a task's position number, or its ID tag
-  once IDs have been assigned with tag (e.g. "mdd complete ABC01").
+  once IDs have been assigned with tag (e.g. "mdd complete ABC-001").
 
 %s
   A word like "complete" or "list" is only treated as a command when
@@ -867,8 +867,8 @@ func ShowHelp() {
   mdd remove 3                 Delete task #3
   mdd archive                  Move all completed tasks to ## Archive
   mdd find bug                 Find tasks containing "bug"
-  mdd tag ABC                  Tag all tasks: [ABC01], [ABC02], ...
-  mdd complete ABC01           Complete the task tagged ABC01
+  mdd tag ABC                  Tag all tasks: [ABC-001], [ABC-002], ...
+  mdd complete ABC-001         Complete the task tagged ABC-001
   mdd untag                    Remove all ID tags
 `, bold(cyan("mdd")), bold("Usage:"), bold("Viewing & Finding:"), bold("Managing Tasks:"), bold("Utilities:"), bold("Sections:"), bold("Task IDs:"), bold("A note on task text:"), bold("Examples:"))
 }

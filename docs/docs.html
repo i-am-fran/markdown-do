@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -40,7 +41,7 @@
 
   <!-- Theme detection before any CSS loads — prevents dark mode flash -->
   <script>
-    (function () {
+    (function() {
       var t = localStorage.getItem("theme");
       if (t === "dark" || (t !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
         document.documentElement.classList.add("dark");
@@ -53,14 +54,13 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Inter:wght@400;500;600&family=Cascadia+Code:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
 
   <header class="topnav">
     <div class="topnav__inner">
-      <button class="sidebar-toggle" id="sidebarToggle" type="button"
-              aria-expanded="false" aria-controls="sidebar"
-              aria-label="Toggle navigation menu">
+      <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Toggle navigation menu">
         <span class="sidebar-toggle__bar"></span>
         <span class="sidebar-toggle__bar"></span>
         <span class="sidebar-toggle__bar"></span>
@@ -88,7 +88,7 @@
           </ul>
         </div>
         <div class="sidebar__group" data-group="adding">
-          <span class="sidebar__group-label">Adding Tasks</span>
+          <span class="sidebar__group-label">Adding Items</span>
           <ul class="sidebar__list">
             <li><a class="sidebar__link" href="#cmd-add" data-heading="cmd-add">add</a></li>
             <li><a class="sidebar__link" href="#cmd-notes" data-heading="cmd-notes">notes</a></li>
@@ -259,10 +259,16 @@ mdd "Another task"             # Adds to the inbox (top of file)</code></pre>
         <p><code>mdd list</code> prints every task grouped by section in file order, with the inbox shown first. Add <code>-r</code>/<code>--recursive</code> to walk every subdirectory instead of just the current one — in that mode, task numbers become temporary global IDs cached to disk, so a follow-up like <code>mdd complete 14</code> still resolves to the right task even though it lives in a different file than task 1.</p>
         <table class="spec-table">
           <thead>
-            <tr><th>Flag</th><th>Description</th></tr>
+            <tr>
+              <th>Flag</th>
+              <th>Description</th>
+            </tr>
           </thead>
           <tbody>
-            <tr><td><code>-r</code>, <code>--recursive</code></td><td>List tasks from every <code>TODO.md</code>/<code>todo.md</code> found in subdirectories, grouped by directory</td></tr>
+            <tr>
+              <td><code>-r</code>, <code>--recursive</code></td>
+              <td>List tasks from every <code>TODO.md</code>/<code>todo.md</code> found in subdirectories, grouped by directory</td>
+            </tr>
           </tbody>
         </table>
         <div class="code-block">
@@ -278,10 +284,16 @@ mdd list -r</code></pre>
         <p><code>mdd find &lt;keyword&gt;</code> searches every task's text for a case-insensitive substring match, in the current file by default. Add <code>-r</code> to search every <code>TODO.md</code> in subdirectories too.</p>
         <table class="spec-table">
           <thead>
-            <tr><th>Flag</th><th>Description</th></tr>
+            <tr>
+              <th>Flag</th>
+              <th>Description</th>
+            </tr>
           </thead>
           <tbody>
-            <tr><td><code>-r</code>, <code>--recursive</code></td><td>Search every <code>TODO.md</code>/<code>todo.md</code> found in subdirectories</td></tr>
+            <tr>
+              <td><code>-r</code>, <code>--recursive</code></td>
+              <td>Search every <code>TODO.md</code>/<code>todo.md</code> found in subdirectories</td>
+            </tr>
           </tbody>
         </table>
         <div class="code-block">
@@ -345,10 +357,16 @@ mdd complete 1 2 3</code></pre>
         <p><code>mdd remove &lt;id&gt;</code> deletes one task. Prompts for a y/n confirmation first if the <code>confirmDestructive</code> setting is on; add <code>-y</code>/<code>--yes</code> to skip it, which is also handy when calling <code>mdd</code> from a script.</p>
         <table class="spec-table">
           <thead>
-            <tr><th>Flag</th><th>Description</th></tr>
+            <tr>
+              <th>Flag</th>
+              <th>Description</th>
+            </tr>
           </thead>
           <tbody>
-            <tr><td><code>-y</code>, <code>--yes</code></td><td>Skip the confirmation prompt (only matters when <code>confirmDestructive</code> is on)</td></tr>
+            <tr>
+              <td><code>-y</code>, <code>--yes</code></td>
+              <td>Skip the confirmation prompt (only matters when <code>confirmDestructive</code> is on)</td>
+            </tr>
           </tbody>
         </table>
         <div class="code-block">
@@ -364,10 +382,16 @@ mdd remove 3 -y</code></pre>
         <p><code>mdd clear</code> deletes every completed task in the file at once. Same confirmation behavior as <code>remove</code>.</p>
         <table class="spec-table">
           <thead>
-            <tr><th>Flag</th><th>Description</th></tr>
+            <tr>
+              <th>Flag</th>
+              <th>Description</th>
+            </tr>
           </thead>
           <tbody>
-            <tr><td><code>-y</code>, <code>--yes</code></td><td>Skip the confirmation prompt (only matters when <code>confirmDestructive</code> is on)</td></tr>
+            <tr>
+              <td><code>-y</code>, <code>--yes</code></td>
+              <td>Skip the confirmation prompt (only matters when <code>confirmDestructive</code> is on)</td>
+            </tr>
           </tbody>
         </table>
         <div class="code-block">
@@ -397,14 +421,14 @@ mdd clear -y</code></pre>
         <p>A task's position number shifts every time the file is re-sorted or a task above it is removed — fine for a quick <code>mdd complete 1</code> right after <code>mdd list</code>, less fine if you want to refer back to the same task tomorrow, or hand a task reference to an LLM across a session boundary. Tag the file once and you get a stable ID that survives all of that.</p>
 
         <h3 id="cmd-tag">tag</h3>
-        <p><code>mdd tag &lt;PREFIX&gt;</code> tags every task in the file with sequential IDs: <code>PREFIX01</code>, <code>PREFIX02</code>, and so on. <code>PREFIX</code> must be exactly 3 letters (case-insensitive — <code>abc</code> is normalized to <code>ABC</code>). Once a sequence is active, any task you add afterward automatically picks up the next ID in it.</p>
+        <p><code>mdd tag &lt;PREFIX&gt;</code> tags every task in the file with sequential IDs: <code>PREFIX-001</code>, <code>PREFIX-002</code>, and so on. <code>PREFIX</code> must be exactly 3 letters (case-insensitive — <code>abc</code> is normalized to <code>ABC</code>). Once a sequence is active, any task you add afterward automatically picks up the next ID in it.</p>
         <div class="code-block">
           <div class="code-block__header">
             <span class="code-block__lang">bash</span>
             <button class="code-block__copy" data-copy-target="tag-cmd" type="button">Copy</button>
           </div>
-          <pre><code id="tag-cmd">mdd tag ABC             # Tags all tasks: [ABC01], [ABC02], ...
-mdd complete ABC01       # Reference a task by its stable ID</code></pre>
+          <pre><code id="tag-cmd">mdd tag ABC             # Tags all tasks: [ABC-001], [ABC-002], ...
+mdd complete ABC-001     # Reference a task by its stable ID</code></pre>
         </div>
 
         <h3 id="cmd-untag">untag</h3>
@@ -439,17 +463,44 @@ mdd complete ABC01       # Reference a task by its stable ID</code></pre>
         <p><code>mdd lint</code> checks the file for formatting issues and fixes what it can safely fix automatically, printing a line number, description, and status (<code>found</code> or <code>fixed</code>) for everything it touched.</p>
         <table class="spec-table">
           <thead>
-            <tr><th>Check</th><th>Behaviour</th></tr>
+            <tr>
+              <th>Check</th>
+              <th>Behaviour</th>
+            </tr>
           </thead>
           <tbody>
-            <tr><td>Empty sections</td><td>A <code>## Header</code> followed by nothing but blank lines is removed entirely</td></tr>
-            <tr><td>Heading spacing</td><td>Exactly one blank line enforced above and below every <code>## Header</code></td></tr>
-            <tr><td>Blank lines</td><td>Runs of 2+ blank lines, including trailing ones at end of file, collapsed to one</td></tr>
-            <tr><td>Empty tasks</td><td>A <code>- [ ]</code> with no text after it is removed</td></tr>
-            <tr><td>Tasks under <code>## Notes</code></td><td>Converted to plain <code>-</code> list items — checkboxes don't belong in a notes section</td></tr>
-            <tr><td>Empty checkbox</td><td><code>- []</code> becomes <code>- [ ]</code></td></tr>
-            <tr><td>Uppercase <code>X</code></td><td><code>- [X]</code> becomes <code>- [x]</code></td></tr>
-            <tr><td>Malformed checkbox content</td><td>Anything else inside the brackets is normalized to whichever of <code>[ ]</code>/<code>[x]</code> it most resembles</td></tr>
+            <tr>
+              <td>Empty sections</td>
+              <td>A <code>## Header</code> followed by nothing but blank lines is removed entirely</td>
+            </tr>
+            <tr>
+              <td>Heading spacing</td>
+              <td>Exactly one blank line enforced above and below every <code>## Header</code></td>
+            </tr>
+            <tr>
+              <td>Blank lines</td>
+              <td>Runs of 2+ blank lines, including trailing ones at end of file, collapsed to one</td>
+            </tr>
+            <tr>
+              <td>Empty tasks</td>
+              <td>A <code>- [ ]</code> with no text after it is removed</td>
+            </tr>
+            <tr>
+              <td>Tasks under <code>## Notes</code></td>
+              <td>Converted to plain <code>-</code> list items — checkboxes don't belong in a notes section</td>
+            </tr>
+            <tr>
+              <td>Empty checkbox</td>
+              <td><code>- []</code> becomes <code>- [ ]</code></td>
+            </tr>
+            <tr>
+              <td>Uppercase <code>X</code></td>
+              <td><code>- [X]</code> becomes <code>- [x]</code></td>
+            </tr>
+            <tr>
+              <td>Malformed checkbox content</td>
+              <td>Anything else inside the brackets is normalized to whichever of <code>[ ]</code>/<code>[x]</code> it most resembles</td>
+            </tr>
           </tbody>
         </table>
         <div class="code-block">
@@ -464,13 +515,28 @@ mdd complete ABC01       # Reference a task by its stable ID</code></pre>
         <p><code>mdd config</code> reads and changes settings without hand-editing <code>config.json</code> — see Configuration below for the full settings table.</p>
         <table class="spec-table">
           <thead>
-            <tr><th>Subcommand</th><th>Description</th></tr>
+            <tr>
+              <th>Subcommand</th>
+              <th>Description</th>
+            </tr>
           </thead>
           <tbody>
-            <tr><td><code>list</code></td><td>Print every setting and its current value</td></tr>
-            <tr><td><code>get &lt;key&gt;</code></td><td>Print one setting's value</td></tr>
-            <tr><td><code>set &lt;key&gt; &lt;value&gt;</code></td><td>Change a setting and persist it</td></tr>
-            <tr><td><code>edit</code></td><td>Open <code>config.json</code> directly in your configured editor, for changes the other three don't cover (e.g. hand-editing <code>sectionAliases</code> as JSON)</td></tr>
+            <tr>
+              <td><code>list</code></td>
+              <td>Print every setting and its current value</td>
+            </tr>
+            <tr>
+              <td><code>get &lt;key&gt;</code></td>
+              <td>Print one setting's value</td>
+            </tr>
+            <tr>
+              <td><code>set &lt;key&gt; &lt;value&gt;</code></td>
+              <td>Change a setting and persist it</td>
+            </tr>
+            <tr>
+              <td><code>edit</code></td>
+              <td>Open <code>config.json</code> directly in your configured editor, for changes the other three don't cover (e.g. hand-editing <code>sectionAliases</code> as JSON)</td>
+            </tr>
           </tbody>
         </table>
         <div class="code-block">
@@ -519,14 +585,38 @@ mdd config edit</code></pre>
         <p>Settings are stored in <code>~/.config/markdowndo/config.json</code>, editable via <code>mdd config get/set</code> or <code>mdd config edit</code>.</p>
         <table class="spec-table">
           <thead>
-            <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+            <tr>
+              <th>Setting</th>
+              <th>Default</th>
+              <th>Description</th>
+            </tr>
           </thead>
           <tbody>
-            <tr><td><code>showCompleted</code></td><td><code>true</code></td><td>Show completed tasks in lists.</td></tr>
-            <tr><td><code>editor</code></td><td><code>"system"</code></td><td>Editor used by <code>mdd open</code> — <code>system</code>, <code>vim</code>, <code>nano</code>, or <code>default-app</code>.</td></tr>
-            <tr><td><code>enableInProgress</code></td><td><code>false</code></td><td>Enables the <code>- [/]</code> in-progress checkbox state and the 3-way toggle cycle.</td></tr>
-            <tr><td><code>confirmDestructive</code></td><td><code>false</code></td><td>Require a y/n prompt before <code>remove</code>/<code>clear</code> (skip with <code>-y</code>/<code>--yes</code>).</td></tr>
-            <tr><td><code>sectionAliases</code></td><td><code>{}</code></td><td>Custom <code>@alias</code> shortcuts layered on top of the built-in ones.</td></tr>
+            <tr>
+              <td><code>showCompleted</code></td>
+              <td><code>true</code></td>
+              <td>Show completed tasks in lists.</td>
+            </tr>
+            <tr>
+              <td><code>editor</code></td>
+              <td><code>"system"</code></td>
+              <td>Editor used by <code>mdd open</code> — <code>system</code>, <code>vim</code>, <code>nano</code>, or <code>default-app</code>.</td>
+            </tr>
+            <tr>
+              <td><code>enableInProgress</code></td>
+              <td><code>false</code></td>
+              <td>Enables the <code>- [/]</code> in-progress checkbox state and the 3-way toggle cycle.</td>
+            </tr>
+            <tr>
+              <td><code>confirmDestructive</code></td>
+              <td><code>false</code></td>
+              <td>Require a y/n prompt before <code>remove</code>/<code>clear</code> (skip with <code>-y</code>/<code>--yes</code>).</td>
+            </tr>
+            <tr>
+              <td><code>sectionAliases</code></td>
+              <td><code>{}</code></td>
+              <td>Custom <code>@alias</code> shortcuts layered on top of the built-in ones.</td>
+            </tr>
           </tbody>
         </table>
 
@@ -641,4 +731,5 @@ mdd config edit</code></pre>
 
   <script src="js/script.js" defer></script>
 </body>
+
 </html>

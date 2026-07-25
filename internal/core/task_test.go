@@ -3,12 +3,25 @@ package core
 import "testing"
 
 func TestParseTaskLineExtractsStableID(t *testing.T) {
+	task := ParseTaskLine("- [ ] [ABC-001] Buy milk", 0, 1, nil)
+	if task == nil {
+		t.Fatal("expected task to parse, got nil")
+	}
+	if task.StableID != "ABC-001" {
+		t.Errorf("expected StableID %q, got %q", "ABC-001", task.StableID)
+	}
+	if task.Text != "Buy milk" {
+		t.Errorf("expected Text %q (tag stripped), got %q", "Buy milk", task.Text)
+	}
+}
+
+func TestParseTaskLineExtractsOldFormatStableID(t *testing.T) {
 	task := ParseTaskLine("- [ ] [ABC01] Buy milk", 0, 1, nil)
 	if task == nil {
 		t.Fatal("expected task to parse, got nil")
 	}
 	if task.StableID != "ABC01" {
-		t.Errorf("expected StableID %q, got %q", "ABC01", task.StableID)
+		t.Errorf("expected old-format StableID %q to still parse, got %q", "ABC01", task.StableID)
 	}
 	if task.Text != "Buy milk" {
 		t.Errorf("expected Text %q (tag stripped), got %q", "Buy milk", task.Text)
@@ -29,7 +42,7 @@ func TestParseTaskLineWithoutStableID(t *testing.T) {
 }
 
 func TestFormatTaskRoundTrip(t *testing.T) {
-	original := "- [ ] [ABC01] Buy milk"
+	original := "- [ ] [ABC-001] Buy milk"
 	task := ParseTaskLine(original, 0, 1, nil)
 	if task == nil {
 		t.Fatal("expected task to parse, got nil")
@@ -40,7 +53,7 @@ func TestFormatTaskRoundTrip(t *testing.T) {
 }
 
 func TestFormatTaskCompletedRoundTrip(t *testing.T) {
-	original := "- [x] [ABC01] Buy milk"
+	original := "- [x] [ABC-001] Buy milk"
 	task := ParseTaskLine(original, 0, 1, nil)
 	if task == nil {
 		t.Fatal("expected task to parse, got nil")
@@ -51,7 +64,7 @@ func TestFormatTaskCompletedRoundTrip(t *testing.T) {
 }
 
 func TestFormatTaskInProgressRoundTrip(t *testing.T) {
-	original := "- [/] [ABC01] Buy milk"
+	original := "- [/] [ABC-001] Buy milk"
 	task := ParseTaskLine(original, 0, 1, nil)
 	if task == nil {
 		t.Fatal("expected task to parse, got nil")

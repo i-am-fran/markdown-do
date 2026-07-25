@@ -18,7 +18,7 @@ const (
 // Task represents a single task item
 type Task struct {
 	ID         int
-	StableID   string // persistent, user-visible ID tag, e.g. "ABC01"; empty unless assigned via -id
+	StableID   string // persistent, user-visible ID tag, e.g. "ABC-001"; empty unless assigned via -id
 	Text       string
 	Status     TaskStatus
 	LineNumber int
@@ -78,7 +78,7 @@ var (
 	headerRegex   = regexp.MustCompile(`^##\s+(.+)$`)
 	taskRegex     = regexp.MustCompile(`^(\s*)-\s*\[([ xX/])\]\s*(.*)$`)
 	sectionRegex  = regexp.MustCompile(`(?:^|\s)@(\w+)\s*$`)
-	stableIDRegex = regexp.MustCompile(`^\[([A-Z]{3}\d+)\]\s*`)
+	stableIDRegex = regexp.MustCompile(`^\[([A-Z]{3}-?\d+)\]\s*`)
 	idPrefixRegex = regexp.MustCompile(`^[A-Za-z]{3}$`)
 	noteRegex     = regexp.MustCompile(`^\s+-\s+(\S.*)$`)
 )

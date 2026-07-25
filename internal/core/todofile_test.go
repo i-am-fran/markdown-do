@@ -14,7 +14,7 @@ func TestSetTaskIDsAssignsSequentialTags(t *testing.T) {
 		t.Fatalf("SetTaskIDs failed: %v", err)
 	}
 
-	want := []string{"ABC03", "ABC02", "ABC01"}
+	want := []string{"ABC-003", "ABC-002", "ABC-001"}
 	tasks := tf.GetTasks()
 	if len(tasks) != len(want) {
 		t.Fatalf("expected %d tasks, got %d", len(want), len(tasks))
@@ -42,8 +42,8 @@ func TestSetTaskIDsOverwritesExisting(t *testing.T) {
 		t.Fatalf("SetTaskIDs failed: %v", err)
 	}
 	task := tf.GetTasks()[0]
-	if task.StableID != "ABC01" {
-		t.Errorf("expected overwritten StableID %q, got %q", "ABC01", task.StableID)
+	if task.StableID != "ABC-001" {
+		t.Errorf("expected overwritten StableID %q, got %q", "ABC-001", task.StableID)
 	}
 }
 
@@ -77,8 +77,36 @@ func TestAddTaskContinuesActiveSequence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddTask failed: %v", err)
 	}
-	if task.StableID != "ABC03" {
-		t.Errorf("expected new task to continue sequence with %q, got %q", "ABC03", task.StableID)
+	if task.StableID != "ABC-003" {
+		t.Errorf("expected new task to continue sequence with %q, got %q", "ABC-003", task.StableID)
+	}
+}
+
+func TestAddTaskContinuesSequencePastThreeDigits(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] [ABC-999] Buy milk\n")
+
+	task, err := tf.AddTask("Call mom")
+	if err != nil {
+		t.Fatalf("AddTask failed: %v", err)
+	}
+	if task.StableID != "ABC-1000" {
+		t.Errorf("expected sequence to grow past 3 digits instead of truncating, got %q", task.StableID)
+	}
+}
+
+func TestSetTaskIDsAcceptsOldTwoDigitFormat(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] [XYZ29] Buy milk\n")
+
+	if tf.GetTaskByStableID("XYZ29") == nil {
+		t.Error("expected old-format (no separator) StableID to still parse and be found")
+	}
+
+	task, err := tf.AddTask("Call mom")
+	if err != nil {
+		t.Fatalf("AddTask failed: %v", err)
+	}
+	if task.StableID != "XYZ-030" {
+		t.Errorf("expected new task tagged from an old-format sequence to use the new 3-digit dashed format, got %q", task.StableID)
 	}
 }
 
@@ -99,10 +127,10 @@ func TestGetTaskByStableIDCaseInsensitive(t *testing.T) {
 		t.Fatalf("SetTaskIDs failed: %v", err)
 	}
 
-	if tf.GetTaskByStableID("abc01") == nil {
+	if tf.GetTaskByStableID("abc-001") == nil {
 		t.Error("expected case-insensitive lookup to find task")
 	}
-	if tf.GetTaskByStableID("ABC01") == nil {
+	if tf.GetTaskByStableID("ABC-001") == nil {
 		t.Error("expected uppercase lookup to find task")
 	}
 	if tf.GetTaskByStableID("nonexistent") != nil {
@@ -560,7 +588,7 @@ func TestSetTaskIDsPersistsAcrossLoad(t *testing.T) {
 		t.Fatalf("Load failed: %v", err)
 	}
 	tasks := reloaded.GetTasks()
-	if tasks[0].StableID != "ABC02" || tasks[1].StableID != "ABC01" {
+	if tasks[0].StableID != "ABC-002" || tasks[1].StableID != "ABC-001" {
 		t.Errorf("expected tags to persist across Load, got %q, %q", tasks[0].StableID, tasks[1].StableID)
 	}
 }

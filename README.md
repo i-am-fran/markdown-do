@@ -93,8 +93,8 @@ reference — useful when working with LLMs or across sessions where position
 numbers can shift.
 
 ```bash
-mdd tag ABC                    # Tag all tasks: [ABC01], [ABC02], ...
-mdd complete ABC01             # Reference a task by its stable ID
+mdd tag ABC                    # Tag all tasks: [ABC-001], [ABC-002], ...
+mdd complete ABC-001           # Reference a task by its stable ID
 mdd untag                      # Remove all ID tags
 ```
 

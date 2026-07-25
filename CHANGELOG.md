@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2026-07-25
+
+### Changed
+- `mdd tag` now generates IDs with a separator and 3-digit padding from the
+  start, e.g. `ABC-001` instead of `ABC01` (MDD29, MDD28). This keeps the
+  format visually aligned past 99 items instead of drifting from 2 to 3
+  digits mid-sequence; numbers still grow past 999 without truncating.
+  IDs already tagged in the old `ABC01` format continue to be read and
+  referenced correctly — only newly generated IDs use the new format.
+
 ## [3.0.0] - 2026-07-25
 
 ### Removed

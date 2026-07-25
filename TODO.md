@@ -1,11 +1,10 @@
 # MarkdownDO
 
-- [ ] [MDD26] Wire up PerformMoveTask as mdd move, or delete it if not worth it — currently dead code only reachable by its own tests since the TUI's move-to-section hotkey that used it is gone
-- [ ] [MDD25] rewrite in python? it's now in go (I think) but does it still makes sense since we don't have a tui? will it cause issues if we want  to add a tui later on?
-- [ ] [MDD23] Add a flag to add completed date (only when done via CLI) to completed tasks
+- [ ] [MDD26] Wire up PerformMoveTask as mdd move, or delete it if not worth it — currently dead code only reachable by its own tests since the TUI's move-to-section hotkey that used it is gone (from AI)
 - [ ] [MDD12] Add manual at `man mdd`
 - [ ] [MDD07] Add some tests
-- [x] [MDD22] Remove TUI completely
+- [x] [MDD28] What happens when issues go over 99? Should we have 3 digits from the beginning, starting with 001?
+- [x] [MDD29] IDs should include a separator, as in ABC-001
 
 ## Bugs
 
@@ -13,18 +12,17 @@
 - [ ] [MDD03] If a task ends with `?` I get an error, unless I use quote marks
 - [ ] [MDD18] Complete/edit/toggle can print the wrong task in their confirmation message when Save() reorders tasks (PerformCompleteTask/PerformEditTask/PerformToggleTask in logic.go call GetTask(id) after Save(), which can now belong to a different task)
 
-## In Review / Ideas
+## Ideas
 
+- [ ] [MDD23] Add a flag to add completed date (only when done via CLI) to completed tasks
+- [ ] [MDD27] Add an option to sync with Github tasks??
+- [ ] [MDD24] Allow to filter mdd list archive/all/todo or something like that
 - [ ] [MDD16] Allow to add tasks to todo files in subfolders
 - [ ] [MDD05] Is it possible to add autocomplete suggestions? I want users to type `mdd -c ta` and hit `Tab` to get `mdd -c task`
 
 ## Admin
 
 - [ ] [MDD01] Record intro video/demo
-## Ideas
-
-- [ ] [MDD24] Allow to filter mdd list archive/all/todo or something like that
-
 
 ## Archive
 
@@ -41,4 +39,4 @@
 - [x] [MDD20] Add an option to archive tasks (move them at the bottom of the file). Still use sections? Maybe as H3s? (from In Review / Ideas)
 - [x] [MDD02] Use `- [/]` to mark tasks as in progress (from In Review / Ideas)
 - [x] [MDD13] Add config options, for example to enable in-progress tasks, which is not default markdown. How? (from In Review / Ideas)
-
+- [x] [MDD22] Remove TUI completely

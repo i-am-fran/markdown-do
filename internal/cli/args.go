@@ -17,9 +17,10 @@ type ParsedArgs struct {
 }
 
 // idShapeRegex matches tokens that look like a task reference: a position
-// number, or a stable ID tag (e.g. "ABC01", matching the pattern used by
-// core.idTagRegex/stableIDRegex).
-var idShapeRegex = regexp.MustCompile(`^(?:\d+|[A-Za-z]{3}\d+)$`)
+// number, or a stable ID tag (e.g. "ABC-001", matching the pattern used by
+// core.idTagRegex/stableIDRegex). The dash is optional to also match IDs
+// tagged before MDD29 (e.g. "ABC01").
+var idShapeRegex = regexp.MustCompile(`^(?:\d+|[A-Za-z]{3}-?\d+)$`)
 
 // idArgCommands are only recognized as that command when their first
 // argument is ID-shaped; otherwise the whole input falls through to an

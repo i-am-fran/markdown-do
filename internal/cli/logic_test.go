@@ -233,7 +233,7 @@ func TestPerformCompleteTasks(t *testing.T) {
 		t.Fatalf("PerformSetTaskIDs failed: %v", err)
 	}
 
-	completed, failed, err := PerformCompleteTasks(todoFile, []string{"1", "ABC02", "99"})
+	completed, failed, err := PerformCompleteTasks(todoFile, []string{"1", "ABC-002", "99"})
 	if err != nil {
 		t.Fatalf("PerformCompleteTasks failed: %v", err)
 	}

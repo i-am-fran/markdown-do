@@ -10,7 +10,9 @@ import (
 	"strings"
 )
 
-var idTagRegex = regexp.MustCompile(`^([A-Z]{3})(\d+)$`)
+// idTagRegex matches a stable ID tag's prefix and number. The dash is
+// optional so IDs tagged before MDD29 (e.g. "ABC01") still parse.
+var idTagRegex = regexp.MustCompile(`^([A-Z]{3})-?(\d+)$`)
 
 // TodoFile manages a TODO.md file
 type TodoFile struct {
@@ -137,10 +139,10 @@ func (tf *TodoFile) GetTaskByStableID(id string) *Task {
 	return nil
 }
 
-// SetTaskIDs assigns sequential IDs (e.g. ABC01, ABC02, ...) to every task in
-// the file, overwriting any IDs already present. Numbering starts at the
-// bottom of the file (the oldest task, since new tasks are inserted at the
-// top) and increases moving upward.
+// SetTaskIDs assigns sequential IDs (e.g. ABC-001, ABC-002, ...) to every
+// task in the file, overwriting any IDs already present. Numbering starts at
+// the bottom of the file (the oldest task, since new tasks are inserted at
+// the top) and increases moving upward.
 func (tf *TodoFile) SetTaskIDs(prefix string) error {
 	normalizedPrefix, err := ValidateIDPrefix(prefix)
 	if err != nil {
@@ -149,7 +151,7 @@ func (tf *TodoFile) SetTaskIDs(prefix string) error {
 
 	total := len(tf.tasks)
 	for i, task := range tf.tasks {
-		task.StableID = normalizedPrefix + idSuffix(total-i)
+		task.StableID = normalizedPrefix + "-" + idSuffix(total-i)
 		tf.lines[task.LineNumber] = FormatTask(&task)
 	}
 
@@ -195,7 +197,7 @@ func (tf *TodoFile) activeIDSequence() (prefix string, nextNum int, ok bool) {
 }
 
 func idSuffix(n int) string {
-	return fmt.Sprintf("%02d", n)
+	return fmt.Sprintf("%03d", n)
 }
 
 // GetPendingTasks returns all pending tasks
@@ -322,7 +324,7 @@ func (tf *TodoFile) AddTask(text string) (*Task, error) {
 
 	newTaskLine := "- [ ] " + taskText
 	if prefix, nextNum, ok := tf.activeIDSequence(); ok {
-		newTaskLine = "- [ ] [" + prefix + idSuffix(nextNum) + "] " + taskText
+		newTaskLine = "- [ ] [" + prefix + "-" + idSuffix(nextNum) + "] " + taskText
 	}
 
 	var lineNumber int
