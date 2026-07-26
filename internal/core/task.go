@@ -170,18 +170,57 @@ func ValidateIDPrefix(prefix string) (string, error) {
 	return strings.ToUpper(prefix), nil
 }
 
-// ParseTaskInput parses user input to extract task text and optional section tag
+// escapeMarker is a NUL sentinel inserted after an escaped character by
+// applyEscapes so later parsing (sectionRegex) treats it as ordinary text
+// rather than a special character. NUL can never appear in a real CLI
+// argument (os.Args values are NUL-terminated C strings), so it can't
+// collide with user input.
+const escapeMarker = '\x00'
+
+// applyEscapes replaces every `\X` (backslash followed by any rune) with
+// escapeMarker+X, hiding X from special-character parsing until unescape
+// reveals it again. A trailing lone backslash (no following rune) is left
+// as-is.
+func applyEscapes(s string) string {
+	if !strings.ContainsRune(s, '\\') {
+		return s
+	}
+	var b strings.Builder
+	runes := []rune(s)
+	for i := 0; i < len(runes); i++ {
+		if runes[i] == '\\' && i+1 < len(runes) {
+			b.WriteRune(escapeMarker)
+			b.WriteRune(runes[i+1])
+			i++
+			continue
+		}
+		b.WriteRune(runes[i])
+	}
+	return b.String()
+}
+
+// unescape strips escapeMarker sentinels left by applyEscapes, revealing
+// the literal characters they protected.
+func unescape(s string) string {
+	return strings.ReplaceAll(s, string(escapeMarker), "")
+}
+
+// ParseTaskInput parses user input to extract task text and optional
+// section tag. A character can be escaped with a backslash (e.g. `\@`,
+// `\\`) to keep it literal instead of being read as special syntax.
 func ParseTaskInput(input string) ParsedTaskInput {
-	match := sectionRegex.FindStringSubmatchIndex(input)
+	escaped := applyEscapes(input)
+
+	match := sectionRegex.FindStringSubmatchIndex(escaped)
 	if match == nil {
 		return ParsedTaskInput{
-			Text:       strings.TrimSpace(input),
+			Text:       strings.TrimSpace(unescape(escaped)),
 			SectionTag: nil,
 		}
 	}
 
 	// Extract the tag (group 1)
-	rawTag := input[match[2]:match[3]]
+	rawTag := unescape(escaped[match[2]:match[3]])
 
 	// Check for alias
 	sectionTag := rawTag
@@ -189,7 +228,7 @@ func ParseTaskInput(input string) ParsedTaskInput {
 		sectionTag = alias
 	}
 
-	text := strings.TrimSpace(input[:match[0]])
+	text := strings.TrimSpace(unescape(escaped[:match[0]]))
 
 	return ParsedTaskInput{
 		Text:       text,

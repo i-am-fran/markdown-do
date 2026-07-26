@@ -129,6 +129,43 @@ func TestSetSectionAliasesAddsCustomAlias(t *testing.T) {
 	}
 }
 
+func TestParseTaskInputUnescapedAtSignStillTagsSection(t *testing.T) {
+	parsed := ParseTaskInput("Fix bug @bb")
+	if parsed.SectionTag == nil || *parsed.SectionTag != "Bugs" {
+		t.Fatalf("expected unescaped @bb to still resolve to Bugs, got %v", parsed.SectionTag)
+	}
+	if parsed.Text != "Fix bug" {
+		t.Errorf("expected text %q, got %q", "Fix bug", parsed.Text)
+	}
+}
+
+func TestParseTaskInputEscapedAtSignIsLiteral(t *testing.T) {
+	parsed := ParseTaskInput(`Meet Bob \@bb`)
+	if parsed.SectionTag != nil {
+		t.Fatalf("expected no section tag for escaped @, got %v", *parsed.SectionTag)
+	}
+	if parsed.Text != "Meet Bob @bb" {
+		t.Errorf("expected literal text %q, got %q", "Meet Bob @bb", parsed.Text)
+	}
+}
+
+func TestParseTaskInputEscapedBraces(t *testing.T) {
+	parsed := ParseTaskInput(`Do \{a thing\}`)
+	if parsed.SectionTag != nil {
+		t.Fatalf("expected no section tag, got %v", *parsed.SectionTag)
+	}
+	if parsed.Text != "Do {a thing}" {
+		t.Errorf("expected literal text %q, got %q", "Do {a thing}", parsed.Text)
+	}
+}
+
+func TestParseTaskInputDoubleBackslashIsLiteralBackslash(t *testing.T) {
+	parsed := ParseTaskInput(`Path C:\\Users`)
+	if parsed.Text != `Path C:\Users` {
+		t.Errorf("expected literal text %q, got %q", `Path C:\Users`, parsed.Text)
+	}
+}
+
 func TestValidateIDPrefix(t *testing.T) {
 	cases := []struct {
 		in      string

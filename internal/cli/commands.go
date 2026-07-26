@@ -958,6 +958,15 @@ func ShowHelp() {
   Any other @name creates/uses a custom section, e.g. @Admin.
 
 %s
+  Prefix a character with \ to keep it literal instead of special, e.g.
+  "mdd 'Meet Bob \@bb'" adds a task ending in a literal @bb instead of
+  filing it under Bugs. Use \\ for a literal backslash.
+
+  Some shells treat unquoted ?/* as glob patterns and will error ("no
+  matches found") instead of passing them to mdd — quote task text that
+  contains them, e.g. mdd "Ping the vendor?".
+
+%s
   <id> above accepts either a task's position number, or its ID tag
   once IDs have been assigned with tag (e.g. "mdd complete ABC-001").
 
@@ -993,5 +1002,5 @@ func ShowHelp() {
   mdd tag ABC                  Tag all tasks: [ABC-001], [ABC-002], ...
   mdd complete ABC-001         Complete the task tagged ABC-001
   mdd untag                    Remove all ID tags
-`, bold(cyan("mdd")), bold("Usage:"), bold("Viewing & Finding:"), bold("Managing Tasks:"), bold("Utilities:"), bold("Sections:"), bold("Task IDs:"), bold("Shell Completion:"), bold("A note on task text:"), bold("Examples:"))
+`, bold(cyan("mdd")), bold("Usage:"), bold("Viewing & Finding:"), bold("Managing Tasks:"), bold("Utilities:"), bold("Sections:"), bold("Escaping & quoting:"), bold("Task IDs:"), bold("Shell Completion:"), bold("A note on task text:"), bold("Examples:"))
 }

@@ -121,6 +121,20 @@ func TestAddTaskNoIDWhenSequenceInactive(t *testing.T) {
 	}
 }
 
+func TestAddTaskEscapedAtSignStaysInInbox(t *testing.T) {
+	tf := NewTodoFile("TODO.md", "# TODO\n\n")
+	task, err := tf.AddTask(`Meet Bob \@bb`)
+	if err != nil {
+		t.Fatalf("AddTask failed: %v", err)
+	}
+	if task.Section != nil {
+		t.Errorf("expected escaped @ to not be read as a section tag, got section %q", *task.Section)
+	}
+	if task.Text != "Meet Bob @bb" {
+		t.Errorf("expected literal text %q, got %q", "Meet Bob @bb", task.Text)
+	}
+}
+
 func TestGetTaskByStableIDCaseInsensitive(t *testing.T) {
 	tf := NewTodoFile("TODO.md", "# TODO\n\n- [ ] Buy milk\n")
 	if err := tf.SetTaskIDs("abc"); err != nil {
