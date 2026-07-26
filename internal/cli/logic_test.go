@@ -268,6 +268,70 @@ func TestPerformCompleteTask(t *testing.T) {
 	}
 }
 
+// Save() reorders each section's tasks pending-before-completed, which
+// reassigns positional IDs. PerformCompleteTask must return the task it just
+// completed, not whatever task the old ID now points to post-reorder.
+func TestPerformCompleteTaskReturnsCompletedTaskAfterReorder(t *testing.T) {
+	todoFile := newTestTodoFile(t, "# TODO\n\n- [ ] Task A\n- [ ] Task B\n")
+	task, err := PerformCompleteTask(todoFile, 1)
+	if err != nil {
+		t.Fatalf("PerformCompleteTask failed: %v", err)
+	}
+	if task.Text != "Task A" {
+		t.Errorf("expected the completed task to be %q, got %q", "Task A", task.Text)
+	}
+	if task.Status != core.TaskCompleted {
+		t.Errorf("expected task to be completed, got %v", task.Status)
+	}
+}
+
+// Same reorder hazard for toggle: toggling a task to completed can move it
+// past a still-pending task in the same section, shifting IDs. Starts from
+// in-progress rather than pending: toggling an in-progress task always
+// drives to completed regardless of the enableInProgress setting (see
+// ToggleTask), so this test doesn't depend on the user's local config.
+func TestPerformToggleTaskReturnsToggledTaskAfterReorder(t *testing.T) {
+	todoFile := newTestTodoFile(t, "# TODO\n\n- [/] Task A\n- [ ] Task B\n")
+	task, err := PerformToggleTask(todoFile, 1)
+	if err != nil {
+		t.Fatalf("PerformToggleTask failed: %v", err)
+	}
+	if task.Text != "Task A" {
+		t.Errorf("expected the toggled task to be %q, got %q", "Task A", task.Text)
+	}
+	if task.Status != core.TaskCompleted {
+		t.Errorf("expected task to be completed, got %v", task.Status)
+	}
+}
+
+// If a section is already out of pending/completed order (e.g. a
+// hand-edited file), editing or annotating the first task triggers Save()'s
+// reorder, which must not cause the wrong task to be reported as updated.
+func TestPerformEditTaskReturnsEditedTaskAfterReorder(t *testing.T) {
+	todoFile := newTestTodoFile(t, "# TODO\n\n- [x] Task A\n- [ ] Task B\n")
+	task, err := PerformEditTask(todoFile, 1, "Task A revised")
+	if err != nil {
+		t.Fatalf("PerformEditTask failed: %v", err)
+	}
+	if task.Text != "Task A revised" {
+		t.Errorf("expected the edited task to be %q, got %q", "Task A revised", task.Text)
+	}
+}
+
+func TestPerformAddTaskNoteReturnsAnnotatedTaskAfterReorder(t *testing.T) {
+	todoFile := newTestTodoFile(t, "# TODO\n\n- [x] Task A\n- [ ] Task B\n")
+	task, err := PerformAddTaskNote(todoFile, 1, "a note for Task A")
+	if err != nil {
+		t.Fatalf("PerformAddTaskNote failed: %v", err)
+	}
+	if task.Text != "Task A" {
+		t.Errorf("expected the annotated task to be %q, got %q", "Task A", task.Text)
+	}
+	if len(task.Notes) != 1 || task.Notes[0] != "a note for Task A" {
+		t.Errorf("expected note attached to Task A, got %+v", task.Notes)
+	}
+}
+
 func TestPerformCompleteTasks(t *testing.T) {
 	todoFile := newTestTodoFile(t, "# TODO\n\n- [ ] Buy milk\n- [ ] Walk dog\n- [ ] Call mom\n")
 	if _, err := PerformSetTaskIDs(todoFile, "abc"); err != nil {

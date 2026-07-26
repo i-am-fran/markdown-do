@@ -83,13 +83,17 @@ func PerformToggleTask(todoFile *core.TodoFile, id int) (*core.Task, error) {
 	if !todoFile.ToggleTask(id, config.GetSettings().EnableInProgress) {
 		return nil, fmt.Errorf("task %d not found", id)
 	}
+	// Capture before Save(): it reorders pending/completed tasks within a
+	// section, which can reassign positional IDs, so id may point at a
+	// different task afterward.
+	updated := *todoFile.GetTask(id)
 
 	if err := todoFile.Save(); err != nil {
 		return nil, err
 	}
 
 	clearCacheWithWarning()
-	return todoFile.GetTask(id), nil
+	return &updated, nil
 }
 
 // PerformDeleteTask deletes a task and saves, returning the task as it was
@@ -167,13 +171,15 @@ func PerformEditTask(todoFile *core.TodoFile, id int, newText string) (*core.Tas
 	if !todoFile.UpdateTask(id, newText) {
 		return nil, fmt.Errorf("task %d not found", id)
 	}
+	// Capture before Save(): see PerformToggleTask.
+	updated := *todoFile.GetTask(id)
 
 	if err := todoFile.Save(); err != nil {
 		return nil, err
 	}
 
 	clearCacheWithWarning()
-	return todoFile.GetTask(id), nil
+	return &updated, nil
 }
 
 // PerformAddTaskNote appends a note to a task's block and saves.
@@ -185,13 +191,15 @@ func PerformAddTaskNote(todoFile *core.TodoFile, id int, text string) (*core.Tas
 	if !todoFile.AddTaskNote(id, text) {
 		return nil, fmt.Errorf("task %d not found", id)
 	}
+	// Capture before Save(): see PerformToggleTask.
+	updated := *todoFile.GetTask(id)
 
 	if err := todoFile.Save(); err != nil {
 		return nil, err
 	}
 
 	clearCacheWithWarning()
-	return todoFile.GetTask(id), nil
+	return &updated, nil
 }
 
 // PerformCompleteTask marks a task completed and saves.
@@ -199,13 +207,15 @@ func PerformCompleteTask(todoFile *core.TodoFile, id int) (*core.Task, error) {
 	if !todoFile.SetTaskStatus(id, core.TaskCompleted) {
 		return nil, fmt.Errorf("task %d not found", id)
 	}
+	// Capture before Save(): see PerformToggleTask.
+	updated := *todoFile.GetTask(id)
 
 	if err := todoFile.Save(); err != nil {
 		return nil, err
 	}
 
 	clearCacheWithWarning()
-	return todoFile.GetTask(id), nil
+	return &updated, nil
 }
 
 // PerformCompleteTasks marks multiple tasks (by numeric ID or stable ID) as

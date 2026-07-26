@@ -1,5 +1,7 @@
 # Markdown-do
 
+- [ ] [MDD-035] What should we about mdd-cache file
+- [ ] [MDD-033] Run a code review
 - [ ] [MDD-028] Add manual at `man mdd`
 - [ ] [MDD-027] Add some tests
 - [ ] [MDD-029] Wire up PerformMoveTask as mdd move, or delete it if not worth it — currently dead code only reachable by its own tests since the TUI's move-to-section hotkey that used it is gone (from AI)
@@ -8,7 +10,7 @@
 
 - [ ] [MDD-024] Allow to escape special characters i.e. `{` by typing `\{`
 - [ ] [MDD-023] If a task ends with `?` I get an error, unless I use quote marks
-- [ ] [MDD-022] Complete/edit/toggle can print the wrong task in their confirmation message when Save() reorders tasks (PerformCompleteTask/PerformEditTask/PerformToggleTask in logic.go call GetTask(id) after Save(), which can now belong to a different task)
+- [ ] [MDD-036] TestPerformToggleTask (internal/cli/logic_test.go) reads the real ~/.config/markdowndo/config.json with no test isolation, so it fails whenever enableInProgress is true on the machine running `go test` (from AI)
 
 ## Ideas
 
@@ -44,3 +46,5 @@
 - [x] [MDD-016] Is it possible to add autocomplete suggestions? I want users to type `mdd ar` and hit `Tab` to get `mdd archive`. This should also find and suggest sections (H2s) in the TODO.md file
 - [x] [MDD-030] Add `mdd update` to download and install the latest release from git repo
 - [x] [MDD-021] Add UNDO option with `mdd undo`
+- [x] [MDD-022] Complete/edit/toggle can print the wrong task in their confirmation message when Save() reorders tasks (PerformCompleteTask/PerformEditTask/PerformToggleTask in logic.go call GetTask(id) after Save(), which can now belong to a different task)
+- [x] [MDD-034] complete/toggle can reorder tasks mid-command, causing the printed confirmation to name the wrong task and multi-id 'complete N1 N2' to silently skip completing later IDs

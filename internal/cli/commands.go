@@ -355,21 +355,54 @@ func ToggleTask(idStr string) error {
 }
 
 // CompleteTask marks one or more tasks as completed, by position or stable
-// ID. Each ID is resolved independently through the cache-aware
-// loadTaskFile, so (unlike the old flag-split -c/-cm pair) multi-ID
-// completion also works across the recursive-listing task cache.
+// ID. IDs that resolve against the local default TODO file are completed
+// together through PerformCompleteTasks, which saves once for the whole
+// batch — completing one local ID must not reorder the file (and shift
+// everyone else's positional IDs) before the rest of the batch is resolved.
+// IDs only found via the recursive-listing task cache (i.e. belonging to a
+// different file) fall back to the old one-file-load-and-save-per-ID path,
+// since those files don't share position numbering with each other.
 func CompleteTask(idsStr []string) error {
+	todoFile, _, err := LoadDefaultTodoFile()
+	if err != nil {
+		return err
+	}
+
+	var localIDs, remoteIDs []string
+	for _, idStr := range idsStr {
+		if n, convErr := strconv.Atoi(idStr); convErr == nil {
+			if todoFile.GetTask(n) != nil {
+				localIDs = append(localIDs, idStr)
+			} else {
+				remoteIDs = append(remoteIDs, idStr)
+			}
+		} else if todoFile.GetTaskByStableID(idStr) != nil {
+			localIDs = append(localIDs, idStr)
+		} else {
+			remoteIDs = append(remoteIDs, idStr)
+		}
+	}
+
 	var completed []core.Task
 	var failedIDs []string
 
-	for _, idStr := range idsStr {
-		todoFile, _, localID, _, err := loadTaskFile(idStr)
+	if len(localIDs) > 0 {
+		localCompleted, localFailed, err := PerformCompleteTasks(todoFile, localIDs)
+		if err != nil {
+			return err
+		}
+		completed = append(completed, localCompleted...)
+		failedIDs = append(failedIDs, localFailed...)
+	}
+
+	for _, idStr := range remoteIDs {
+		remoteTodoFile, _, localID, _, err := loadTaskFile(idStr)
 		if err != nil {
 			failedIDs = append(failedIDs, idStr)
 			continue
 		}
 
-		updated, err := PerformCompleteTask(todoFile, localID)
+		updated, err := PerformCompleteTask(remoteTodoFile, localID)
 		if err != nil {
 			failedIDs = append(failedIDs, idStr)
 			continue
