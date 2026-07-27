@@ -893,27 +893,33 @@ func ShowVersion() {
 	fmt.Printf("markdown-do v%s\n", Version)
 }
 
-// ShowHelp prints the help message
+// ShowHelp prints the help message. Each section is its own heading +
+// body print (rather than one big positionally-interpolated template) so
+// adding, removing, or reordering a section doesn't require recounting
+// %s placeholders against a trailing argument list.
 func ShowHelp() {
-	fmt.Printf(`
-%s - Markdown-do: Manage TODO.md files
+	fmt.Printf("\n%s - Markdown-do: Manage TODO.md files\n\n", bold(cyan("mdd")))
 
-%s
-  mdd              Show this help
+	fmt.Printf("%s\n", bold("Usage:"))
+	fmt.Print(`  mdd              Show this help
   mdd <task text>  Add a new task (quotes optional)
   mdd add <text>   Add a new task, explicitly (see "A note on task text" below)
   mdd add <text> --path <dir>  Add to the TODO file in <dir> instead of cwd
 
-%s
-  mdd list             List tasks
+`)
+
+	fmt.Printf("%s\n", bold("Viewing & Finding:"))
+	fmt.Print(`  mdd list             List tasks
   mdd list -r          List tasks recursively (subdirectories)
   mdd list -a          List only active tasks (pending + in-progress)
   mdd list --done      List only completed tasks
   mdd find <keyword>   Find tasks by keyword
   mdd find <kw> -r     Find tasks by keyword, recursively
 
-%s
-  mdd toggle <id>             Toggle task status (pending <-> completed)
+`)
+
+	fmt.Printf("%s\n", bold("Managing Tasks:"))
+	fmt.Print(`  mdd toggle <id>             Toggle task status (pending <-> completed)
   mdd complete <id> [id2...]  Complete one or more tasks by ID
   mdd edit <id> <text>        Edit task text
   mdd annotate <id> <text>    Add a note to a task (shown inline wherever it's listed)
@@ -925,8 +931,10 @@ func ShowHelp() {
                               section, noting where each came from
   mdd undo                    Revert the last change (run again to redo it)
 
-%s
-  mdd notes <text>   Add a note to the ## Notes section
+`)
+
+	fmt.Printf("%s\n", bold("Utilities:"))
+	fmt.Print(`  mdd notes <text>   Add a note to the ## Notes section
   mdd open           Open TODO file in editor
   mdd lint           Lint and fix TODO file formatting
   mdd tag <PREFIX>   Tag every task with sequential IDs (PREFIX01, PREFIX02, ...)
@@ -940,8 +948,10 @@ func ShowHelp() {
   mdd version        Show version (also: -v, --version)
   mdd help           Show this help (also: -h, --help)
 
-%s
-  End a task with "@Section" to file it there (created automatically
+`)
+
+	fmt.Printf("%s\n", bold("Sections:"))
+	fmt.Print(`  End a task with "@Section" to file it there (created automatically
   if it doesn't exist yet). Built-in shortcuts, case-insensitive:
 
     @ff  -> Features        @ii  -> Ideas
@@ -949,8 +959,10 @@ func ShowHelp() {
 
   Any other @name creates/uses a custom section, e.g. @Admin.
 
-%s
-  Prefix a character with \ to keep it literal instead of special, e.g.
+`)
+
+	fmt.Printf("%s\n", bold("Escaping & quoting:"))
+	fmt.Print(`  Prefix a character with \ to keep it literal instead of special, e.g.
   "mdd 'Meet Bob \@bb'" adds a task ending in a literal @bb instead of
   filing it under Bugs. Use \\ for a literal backslash.
 
@@ -958,19 +970,25 @@ func ShowHelp() {
   matches found") instead of passing them to mdd — quote task text that
   contains them, e.g. mdd "Ping the vendor?".
 
-%s
-  <id> above accepts either a task's position number, or its ID tag
+`)
+
+	fmt.Printf("%s\n", bold("Task IDs:"))
+	fmt.Print(`  <id> above accepts either a task's position number, or its ID tag
   once IDs have been assigned with tag (e.g. "mdd complete ABC-001").
 
-%s
-  Tab-complete commands (e.g. "mdd ar" -> "mdd archive") and section
+`)
+
+	fmt.Printf("%s\n", bold("Shell Completion:"))
+	fmt.Print(`  Tab-complete commands (e.g. "mdd ar" -> "mdd archive") and section
   tags (e.g. "@Bu" -> "@Bugs"). Add one line to your shell rc file:
 
     source <(mdd completion bash)   # ~/.bashrc
     source <(mdd completion zsh)    # ~/.zshrc
 
-%s
-  A word like "complete" or "list" is only treated as a command when
+`)
+
+	fmt.Printf("%s\n", bold("A note on task text:"))
+	fmt.Print(`  A word like "complete" or "list" is only treated as a command when
   what follows it looks like that command's arguments (e.g. "complete"
   needs a task ID next). Otherwise it's added as a task, so
   "mdd Complete the tax return" still just adds a task. If your task
@@ -978,8 +996,10 @@ func ShowHelp() {
 
     mdd add "Find a good plumber"
 
-%s
-  mdd Buy groceries            Add a task to the inbox
+`)
+
+	fmt.Printf("%s\n", bold("Examples:"))
+	fmt.Print(`  mdd Buy groceries            Add a task to the inbox
   mdd "Fix login bug @bb"      Add a task to the Bugs section
   mdd "Dark mode @Features"    Add a task to the Features section
   mdd list                     Show all tasks
@@ -994,5 +1014,5 @@ func ShowHelp() {
   mdd tag ABC                  Tag all tasks: [ABC-001], [ABC-002], ...
   mdd complete ABC-001         Complete the task tagged ABC-001
   mdd untag                    Remove all ID tags
-`, bold(cyan("mdd")), bold("Usage:"), bold("Viewing & Finding:"), bold("Managing Tasks:"), bold("Utilities:"), bold("Sections:"), bold("Escaping & quoting:"), bold("Task IDs:"), bold("Shell Completion:"), bold("A note on task text:"), bold("Examples:"))
+`)
 }

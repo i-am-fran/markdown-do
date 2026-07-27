@@ -3,6 +3,7 @@ package core
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -14,6 +15,7 @@ var stateDir string
 func init() {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not determine home directory (%v); storing mdd state under the current directory\n", err)
 		homeDir = "."
 	}
 	stateDir = filepath.Join(homeDir, ".config", "markdowndo")

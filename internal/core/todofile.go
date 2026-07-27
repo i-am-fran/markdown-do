@@ -13,7 +13,7 @@ import (
 
 // idTagRegex matches a stable ID tag's prefix and number. The dash is
 // optional so IDs tagged before MDD29 (e.g. "ABC01") still parse.
-var idTagRegex = regexp.MustCompile(`^([A-Z]{3})-?(\d+)$`)
+var idTagRegex = regexp.MustCompile(`^(` + idTagPrefixPattern + `)-?(` + idTagNumberPattern + `)$`)
 
 // TodoFile manages a TODO.md file
 type TodoFile struct {
@@ -253,44 +253,6 @@ func (tf *TodoFile) GetTasksBySection(sectionName *string) []Task {
 	return result
 }
 
-// GetTasksGroupedBySection returns tasks grouped by section
-func (tf *TodoFile) GetTasksGroupedBySection() map[*string][]Task {
-	groups := make(map[*string][]Task)
-
-	// nil key for tasks without section
-	var nilKey *string
-	groups[nilKey] = nil
-
-	// Create entries for all sections in order
-	for i := range tf.sections {
-		groups[&tf.sections[i].Name] = nil
-	}
-
-	// Group tasks
-	for _, task := range tf.tasks {
-		if task.Section == nil {
-			groups[nilKey] = append(groups[nilKey], task)
-		} else {
-			// Find the matching section key
-			for i := range tf.sections {
-				if tf.sections[i].Name == *task.Section {
-					groups[&tf.sections[i].Name] = append(groups[&tf.sections[i].Name], task)
-					break
-				}
-			}
-		}
-	}
-
-	// Remove empty groups
-	for key, tasks := range groups {
-		if len(tasks) == 0 {
-			delete(groups, key)
-		}
-	}
-
-	return groups
-}
-
 // GetTasksGroupedBySectionOrdered returns tasks grouped by section in order
 func (tf *TodoFile) GetTasksGroupedBySectionOrdered() []struct {
 	Section *string
@@ -452,8 +414,6 @@ func (tf *TodoFile) findOrCreateSection(sectionTag string) int {
 func (tf *TodoFile) findInsertPosition() int {
 	// Insert at the top (inbox behavior) - after the main header but before existing tasks
 	// Find the first # header (main title like "# TODO")
-	mainHeaderRegex := regexp.MustCompile(`^#\s+`)
-
 	for i, line := range tf.lines {
 		// Found main header (single #, not ## section)
 		if mainHeaderRegex.MatchString(line) && !strings.HasPrefix(line, "##") {
@@ -575,6 +535,22 @@ func formatNoteLines(notes []string) []string {
 	return lines
 }
 
+// removeTaskBlocks deletes every task in tasks (and its notes) from
+// tf.lines, always processing bottom-to-top (highest LineNumber first) so
+// removing one task's block never shifts the LineNumbers of tasks still to
+// be removed. tasks is not mutated. Callers must re-parse afterward.
+func (tf *TodoFile) removeTaskBlocks(tasks []Task) {
+	sorted := make([]Task, len(tasks))
+	copy(sorted, tasks)
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].LineNumber > sorted[j].LineNumber
+	})
+	for _, task := range sorted {
+		end := task.LineNumber + task.BlockLineCount()
+		tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
+	}
+}
+
 // MoveTask moves a task to a different section
 func (tf *TodoFile) MoveTask(taskID int, targetSection *string) bool {
 	task := tf.GetTask(taskID)
@@ -583,8 +559,7 @@ func (tf *TodoFile) MoveTask(taskID int, targetSection *string) bool {
 	}
 
 	// Remove block (task line + notes) from current location
-	end := task.LineNumber + task.BlockLineCount()
-	tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
+	tf.removeTaskBlocks([]Task{*task})
 	tf.parse(strings.Join(tf.lines, "\n"))
 
 	// Find new position
@@ -616,8 +591,7 @@ func (tf *TodoFile) DeleteTask(id int) bool {
 		return false
 	}
 
-	end := task.LineNumber + task.BlockLineCount()
-	tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
+	tf.removeTaskBlocks([]Task{*task})
 	tf.parse(strings.Join(tf.lines, "\n"))
 	return true
 }
@@ -643,16 +617,7 @@ func (tf *TodoFile) DeleteCompletedTasks() int {
 		return 0
 	}
 
-	// Delete from bottom to top to preserve line numbers
-	sort.Slice(completed, func(i, j int) bool {
-		return completed[i].LineNumber > completed[j].LineNumber
-	})
-
-	for _, task := range completed {
-		end := task.LineNumber + task.BlockLineCount()
-		tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
-	}
-
+	tf.removeTaskBlocks(completed)
 	tf.parse(strings.Join(tf.lines, "\n"))
 	return len(completed)
 }
@@ -684,13 +649,7 @@ func (tf *TodoFile) ArchiveCompletedTasks() int {
 	}
 
 	// Remove the tasks from bottom to top so earlier LineNumbers stay valid.
-	sort.Slice(toArchive, func(i, j int) bool {
-		return toArchive[i].LineNumber > toArchive[j].LineNumber
-	})
-	for _, task := range toArchive {
-		end := task.LineNumber + task.BlockLineCount()
-		tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
-	}
+	tf.removeTaskBlocks(toArchive)
 	tf.parse(strings.Join(tf.lines, "\n"))
 
 	insertLine := tf.findOrCreateSection("Archive")
@@ -721,8 +680,7 @@ func (tf *TodoFile) Lint() LintResult {
 		line := tf.lines[i]
 
 		// Check if this is a section header (## Header)
-		sectionRegex := regexp.MustCompile(`^##\s+`)
-		if sectionRegex.MatchString(line) {
+		if sectionHeaderLineRegex.MatchString(line) {
 			// Look ahead to see if there is any content before the next section or end of file
 			hasContent := false
 			j := i + 1
@@ -731,7 +689,7 @@ func (tf *TodoFile) Lint() LintResult {
 				nextLine := tf.lines[j]
 
 				// If we hit another section header, stop looking
-				if sectionRegex.MatchString(nextLine) {
+				if sectionHeaderLineRegex.MatchString(nextLine) {
 					break
 				}
 
@@ -760,14 +718,11 @@ func (tf *TodoFile) Lint() LintResult {
 	}
 
 	// Fix heading spacing - ensure exactly one blank line above and below ## headers
-	mainHeaderRegex := regexp.MustCompile(`^#\s+`)
-	sectionHeaderRegex := regexp.MustCompile(`^##\s+`)
-
 	for i := 0; i < len(tf.lines); i++ {
 		line := tf.lines[i]
 
 		// Check if this is a section header (## Header)
-		if sectionHeaderRegex.MatchString(line) {
+		if sectionHeaderLineRegex.MatchString(line) {
 			// Check line(s) above - ensure exactly one blank line
 			if i > 0 {
 				lineAbove := tf.lines[i-1]
@@ -893,17 +848,15 @@ func (tf *TodoFile) Lint() LintResult {
 
 	// Track current section to detect Notes
 	currentSection := ""
-	mainHeaderRegex2 := regexp.MustCompile(`^#\s+`)
-	sectionHeaderRegex2 := regexp.MustCompile(`^##\s+(.+)$`)
 
 	for i := 0; i < len(tf.lines); i++ {
 		line := tf.lines[i]
 
 		// Track which section we're in
-		if mainHeaderRegex2.MatchString(line) && !strings.HasPrefix(line, "##") {
+		if mainHeaderRegex.MatchString(line) && !strings.HasPrefix(line, "##") {
 			currentSection = ""
-		} else if match := sectionHeaderRegex2.FindStringSubmatch(line); match != nil {
-			currentSection = strings.TrimSpace(match[1])
+		} else if sectionName := ParseHeaderLine(line); sectionName != nil {
+			currentSection = *sectionName
 		}
 
 		// Skip empty lines and headers
@@ -1015,7 +968,7 @@ func pluralize(count int, singular string) string {
 	if count == 1 {
 		return "1 " + singular
 	}
-	return string(rune('0'+count)) + " " + singular + "s"
+	return strconv.Itoa(count) + " " + singular + "s"
 }
 
 // Serialize returns the file content as a string
@@ -1088,14 +1041,13 @@ func (tf *TodoFile) ensureSectionLast(name string) {
 	// Find the section
 	lineStart := -1
 	lineEnd := -1
-	sectionHeaderRegex := regexp.MustCompile(`^##\s+`)
 
 	for i, line := range tf.lines {
 		if match := ParseHeaderLine(line); match != nil && strings.EqualFold(*match, name) {
 			lineStart = i
 			// Find where this section ends (next section or end of file)
 			for j := i + 1; j < len(tf.lines); j++ {
-				if sectionHeaderRegex.MatchString(tf.lines[j]) {
+				if sectionHeaderLineRegex.MatchString(tf.lines[j]) {
 					lineEnd = j
 					break
 				}

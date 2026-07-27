@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -15,6 +16,7 @@ var (
 func init() {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not determine home directory (%v); storing mdd config under the current directory\n", err)
 		homeDir = "."
 	}
 	configDir = filepath.Join(homeDir, ".config", "markdowndo")

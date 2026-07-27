@@ -15,12 +15,20 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 )
+
+// httpClient is used for every network call update.go makes. A bounded
+// timeout keeps a hung or slow-loris server from blocking `mdd update`
+// indefinitely — net/http's Client.Timeout covers the full round trip
+// (connect, headers, and body read), so this alone is enough without also
+// wiring a context.WithTimeout around each call.
+var httpClient = &http.Client{Timeout: 30 * time.Second}
 
 // latestReleaseTag fetches the tag name of the latest GitHub release for
 // this repo. Release tags are bare semver (e.g. "3.2.0", no "v" prefix).
 func latestReleaseTag() (string, error) {
-	resp, err := http.Get("https://api.github.com/repos/i-am-fran/markdown-do/releases/latest")
+	resp, err := httpClient.Get("https://api.github.com/repos/i-am-fran/markdown-do/releases/latest")
 	if err != nil {
 		return "", err
 	}
@@ -99,7 +107,7 @@ func parseChecksums(data []byte, wantName string) (string, error) {
 // file that will ultimately be replaced, so the later swap-rename is
 // same-filesystem (and therefore atomic).
 func downloadFile(url, dir, pattern string) (string, error) {
-	resp, err := http.Get(url)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return "", err
 	}
@@ -123,7 +131,7 @@ func downloadFile(url, dir, pattern string) (string, error) {
 
 // downloadBytes GETs url and returns the response body.
 func downloadBytes(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -224,6 +232,14 @@ func performUpdate(tag, execPath string) (string, error) {
 	return swapBinary(execPath, binPath)
 }
 
+// normalizeVersionTag strips an optional leading "v" (and surrounding
+// whitespace) so a release tagged "v3.2.2" and a Version constant of
+// "3.2.2" (or vice versa) are recognized as the same version instead of
+// falsely appearing to mismatch.
+func normalizeVersionTag(v string) string {
+	return strings.TrimPrefix(strings.TrimSpace(v), "v")
+}
+
 // UpdateBinary downloads the latest release binary for the current
 // platform, verifies its checksum, and swaps it in for the running mdd
 // executable.
@@ -232,7 +248,7 @@ func UpdateBinary() error {
 	if err != nil {
 		return fmt.Errorf("could not determine the latest release: %w", err)
 	}
-	if tag == Version {
+	if normalizeVersionTag(tag) == normalizeVersionTag(Version) {
 		fmt.Println(green(fmt.Sprintf("Already up to date (%s).", Version)))
 		return nil
 	}

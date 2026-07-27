@@ -3,6 +3,8 @@ package cli
 import (
 	"regexp"
 	"strings"
+
+	"github.com/i-am-fran/markdown-do/internal/core"
 )
 
 // ParsedArgs is the result of parsing CLI arguments into a command and its
@@ -19,10 +21,12 @@ type ParsedArgs struct {
 }
 
 // idShapeRegex matches tokens that look like a task reference: a position
-// number, or a stable ID tag (e.g. "ABC-001", matching the pattern used by
-// core.idTagRegex/stableIDRegex). The dash is optional to also match IDs
-// tagged before MDD29 (e.g. "ABC01").
-var idShapeRegex = regexp.MustCompile(`^(?:\d+|[A-Za-z]{3}-?\d+)$`)
+// number, or a stable ID tag (e.g. "ABC-001", built from the same
+// core.IDTagShapePattern used by the core package's own ID regexes so the
+// two packages can't drift). The dash is optional to also match IDs tagged
+// before MDD29 (e.g. "ABC01"); matching is case-insensitive here since IDs
+// are normalized before lookup downstream.
+var idShapeRegex = regexp.MustCompile(`^(?:\d+|(?i:` + core.IDTagShapePattern + `))$`)
 
 // idArgCommands are only recognized as that command when their first
 // argument is ID-shaped; otherwise the whole input falls through to an
