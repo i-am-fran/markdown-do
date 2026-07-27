@@ -77,6 +77,20 @@ func TestFormatTaskInProgressRoundTrip(t *testing.T) {
 	}
 }
 
+func TestFormatTaskPreservesIndent(t *testing.T) {
+	original := "  - [ ] Child item"
+	task := ParseTaskLine(original, 0, 1, nil)
+	if task == nil {
+		t.Fatal("expected task to parse, got nil")
+	}
+	if task.Indent != "  " {
+		t.Errorf("expected Indent %q, got %q", "  ", task.Indent)
+	}
+	if got := FormatTask(task); got != original {
+		t.Errorf("round trip mismatch: got %q, want %q", got, original)
+	}
+}
+
 func TestFormatTaskBlockRoundTrip(t *testing.T) {
 	task := &Task{Text: "Buy milk", Status: TaskPending, Notes: []string{"note one", "note two"}}
 	block := FormatTaskBlock(task)

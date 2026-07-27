@@ -443,6 +443,7 @@ func (tf *TodoFile) UpdateTask(id int, text string) bool {
 		Text:       text,
 		Status:     task.Status,
 		LineNumber: task.LineNumber,
+		Indent:     task.Indent,
 		Section:    task.Section,
 	})
 	tf.lines[task.LineNumber] = updatedLine
@@ -482,6 +483,7 @@ func (tf *TodoFile) ToggleTask(id int, enableInProgress bool) bool {
 		Text:       task.Text,
 		Status:     newStatus,
 		LineNumber: task.LineNumber,
+		Indent:     task.Indent,
 		Section:    task.Section,
 	})
 	tf.lines[task.LineNumber] = updatedLine
@@ -502,6 +504,7 @@ func (tf *TodoFile) SetTaskStatus(id int, status TaskStatus) bool {
 		Text:       task.Text,
 		Status:     status,
 		LineNumber: task.LineNumber,
+		Indent:     task.Indent,
 		Section:    task.Section,
 	})
 	tf.lines[task.LineNumber] = updatedLine
@@ -604,7 +607,7 @@ func (tf *TodoFile) AddTaskNote(id int, text string) bool {
 	}
 
 	insertAt := task.LineNumber + task.BlockLineCount()
-	noteLine := "  - " + strings.TrimSpace(text)
+	noteLine := task.Indent + "  - " + strings.TrimSpace(text)
 	tf.lines = append(tf.lines[:insertAt], append([]string{noteLine}, tf.lines[insertAt:]...)...)
 	tf.parse(strings.Join(tf.lines, "\n"))
 	return true

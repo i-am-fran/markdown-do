@@ -22,6 +22,7 @@ type Task struct {
 	Text       string
 	Status     TaskStatus
 	LineNumber int
+	Indent     string   // leading whitespace preserved from the source line (e.g. a nested checklist item)
 	Section    *string  // nil means no section
 	Notes      []string // trimmed text of trailing indented bullet lines
 }
@@ -133,14 +134,14 @@ func FormatTask(task *Task) string {
 	if task.StableID != "" {
 		text = "[" + task.StableID + "] " + text
 	}
-	return "- " + checkbox + " " + text
+	return task.Indent + "- " + checkbox + " " + text
 }
 
 // FormatTaskBlock formats a task's checkbox line followed by its note lines.
 func FormatTaskBlock(task *Task) []string {
 	block := []string{FormatTask(task)}
 	for _, note := range task.Notes {
-		block = append(block, "  - "+note)
+		block = append(block, task.Indent+"  - "+note)
 	}
 	return block
 }
@@ -175,6 +176,7 @@ func ParseTaskLine(line string, lineNumber int, id int, section *string) *Task {
 		Text:       text,
 		Status:     status,
 		LineNumber: lineNumber,
+		Indent:     match[1],
 		Section:    section,
 	}
 }

@@ -250,6 +250,45 @@ func TestParseIndentedChecklistLineIsNewTaskNotNote(t *testing.T) {
 	if tasks[1].Text != "Child checklist item" {
 		t.Errorf("expected second task text %q, got %q", "Child checklist item", tasks[1].Text)
 	}
+	if tasks[1].Indent != "  " {
+		t.Errorf("expected second task Indent %q, got %q", "  ", tasks[1].Indent)
+	}
+}
+
+// TestSaveRoundTripsIndentedChecklistItem pins the fix for indentation being
+// silently discarded: ParseTaskLine used to throw away the leading
+// whitespace it captured, and FormatTask always emitted a top-level "- ",
+// so any mutation of an indented/nested checklist item flattened it.
+func TestSaveRoundTripsIndentedChecklistItem(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "TODO.md")
+	tf := NewTodoFile(path, "# TODO\n\n- [ ] Parent task\n  - [ ] Child checklist item\n")
+
+	if err := tf.Save(); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	reloaded, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+	if !strings.Contains(reloaded.Serialize(), "  - [ ] Child checklist item") {
+		t.Errorf("expected indentation preserved through save/reload, got:\n%s", reloaded.Serialize())
+	}
+}
+
+func TestAddTaskNoteOnIndentedTaskNestsUnderIt(t *testing.T) {
+	content := "# TODO\n\n- [ ] Parent task\n  - [ ] Child checklist item\n"
+	tf := NewTodoFile("TODO.md", content)
+	child := tf.GetTasks()[1]
+
+	if ok := tf.AddTaskNote(child.ID, "a note"); !ok {
+		t.Fatal("expected AddTaskNote to succeed")
+	}
+
+	if !strings.Contains(tf.Serialize(), "    - a note") {
+		t.Errorf("expected the note nested two levels deep under the indented task, got:\n%s", tf.Serialize())
+	}
 }
 
 func TestParseConsecutiveTasksEachWithNotes(t *testing.T) {
