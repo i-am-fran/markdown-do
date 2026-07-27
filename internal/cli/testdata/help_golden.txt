@@ -76,7 +76,10 @@ A note on task text:
   A word like "complete" or "list" is only treated as a command when
   what follows it looks like that command's arguments (e.g. "complete"
   needs a task ID next). Otherwise it's added as a task, so
-  "mdd Complete the tax return" still just adds a task. If your task
+  "mdd Complete the tax return" still just adds a task. A single bare
+  word that's a near-miss of a command name — wrong case, missing its
+  required argument, or a likely typo (e.g. "lis", "toggel") — is
+  refused with a suggestion instead of silently added. If your task
   text is ever misread as a command, use "mdd add" to force it:
 
     mdd add "Find a good plumber"
