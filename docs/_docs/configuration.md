@@ -21,6 +21,8 @@ Settings are stored in `~/.config/markdowndo/config.json`, editable via `mdd con
 | `confirmDestructive` | `false` | Require a y/n prompt before `remove`/`clear` (skip with `-y`/`--yes`). |
 | `sectionAliases` | `{}` | Custom `@alias` shortcuts layered on top of the built-in ones. |
 
+If `config.json` can't be parsed (invalid JSON, corrupted by hand-editing, etc.), mdd prints a warning to stderr naming the file and falls back to defaults for that run, rather than silently using defaults with no indication anything was wrong.
+
 ### File Discovery {#file-discovery}
 
 Markdown-do looks for these files, in order:
