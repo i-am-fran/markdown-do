@@ -14,7 +14,7 @@
 
 ## Ideas
 
-- [ ] [MDD-032] Build a real `mdd update` (binary download+swap from GitHub releases) — needs a release pipeline first (extend build-all + gh release upload, or GoReleaser) to actually produce and upload OS/arch binaries; the current mdd update just wraps go install
+- [x] [MDD-032] Build a real `mdd update` (binary download+swap from GitHub releases) — needs a release pipeline first (extend build-all + gh release upload, or GoReleaser) to actually produce and upload OS/arch binaries; the current mdd update just wraps go install
 - [ ] [MDD-020] Add a flag to add completed date (only when done via CLI) to completed tasks
 - [ ] [MDD-019] Add an option to sync with Github tasks??
 - [ ] [MDD-018] Allow to filter mdd list archive/all/todo or something like that

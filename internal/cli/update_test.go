@@ -1,0 +1,296 @@
+package cli
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"testing"
+)
+
+func TestAssetNameForPlatform(t *testing.T) {
+	cases := []struct {
+		goos, goarch string
+		want         string
+	}{
+		{"darwin", "amd64", "mdd-darwin-amd64"},
+		{"darwin", "arm64", "mdd-darwin-arm64"},
+		{"linux", "amd64", "mdd-linux-amd64"},
+		{"linux", "arm64", "mdd-linux-arm64"},
+		{"windows", "amd64", "mdd-windows-amd64.exe"},
+	}
+	for _, tc := range cases {
+		got, err := assetNameForPlatform(tc.goos, tc.goarch)
+		if err != nil {
+			t.Errorf("assetNameForPlatform(%q, %q) unexpected error: %v", tc.goos, tc.goarch, err)
+			continue
+		}
+		if got != tc.want {
+			t.Errorf("assetNameForPlatform(%q, %q) = %q, want %q", tc.goos, tc.goarch, got, tc.want)
+		}
+	}
+
+	unsupported := []struct{ goos, goarch string }{
+		{"linux", "386"},
+		{"windows", "arm64"},
+	}
+	for _, tc := range unsupported {
+		_, err := assetNameForPlatform(tc.goos, tc.goarch)
+		if err == nil {
+			t.Errorf("assetNameForPlatform(%q, %q) expected error, got nil", tc.goos, tc.goarch)
+			continue
+		}
+		if !strings.Contains(err.Error(), tc.goos+"/"+tc.goarch) {
+			t.Errorf("assetNameForPlatform(%q, %q) error %q doesn't mention the platform", tc.goos, tc.goarch, err.Error())
+		}
+	}
+}
+
+func TestParseChecksums(t *testing.T) {
+	data := []byte(
+		"deadbeef00  mdd-darwin-amd64\n" +
+			"cafebabe11 *mdd-linux-amd64\n" +
+			"not a valid line\n" +
+			"\n" +
+			"ABCDEF0022  mdd-windows-amd64.exe\n",
+	)
+
+	got, err := parseChecksums(data, "mdd-darwin-amd64")
+	if err != nil || got != "deadbeef00" {
+		t.Errorf("parseChecksums darwin: got (%q, %v), want (%q, nil)", got, err, "deadbeef00")
+	}
+
+	got, err = parseChecksums(data, "mdd-linux-amd64")
+	if err != nil || got != "cafebabe11" {
+		t.Errorf("parseChecksums linux (binary-mode *prefix): got (%q, %v), want (%q, nil)", got, err, "cafebabe11")
+	}
+
+	got, err = parseChecksums(data, "mdd-windows-amd64.exe")
+	if err != nil || got != "abcdef0022" {
+		t.Errorf("parseChecksums windows (lowercased): got (%q, %v), want (%q, nil)", got, err, "abcdef0022")
+	}
+
+	if _, err := parseChecksums(data, "mdd-missing"); err == nil {
+		t.Error("parseChecksums with no matching entry: expected error, got nil")
+	}
+}
+
+// fakeReleaseServer serves /<tag>/<asset> with binContent and
+// /<tag>/checksums.txt with a checksums.txt naming asset -> its real sha256,
+// unless overrideChecksum is non-empty, in which case that value is used
+// instead (to simulate a corrupted/mismatched release).
+func fakeReleaseServer(t *testing.T, tag, asset string, binContent []byte, overrideChecksum string) *httptest.Server {
+	t.Helper()
+	sum := overrideChecksum
+	if sum == "" {
+		h := sha256.Sum256(binContent)
+		sum = hex.EncodeToString(h[:])
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/"+tag+"/"+asset, func(w http.ResponseWriter, r *http.Request) {
+		w.Write(binContent)
+	})
+	mux.HandleFunc("/"+tag+"/checksums.txt", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "%s  %s\n", sum, asset)
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+func TestPerformUpdate_HappyPath(t *testing.T) {
+	asset, err := assetNameForPlatform(runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		t.Skipf("unsupported platform for this test: %v", err)
+	}
+	tag := "9.9.9"
+	binContent := []byte("fake mdd binary contents")
+	srv := fakeReleaseServer(t, tag, asset, binContent, "")
+	t.Setenv("MDD_UPDATE_BASE_URL", srv.URL)
+
+	dir := t.TempDir()
+	execPath := filepath.Join(dir, "mdd")
+	if err := os.WriteFile(execPath, []byte("old binary"), 0o755); err != nil {
+		t.Fatalf("seeding execPath: %v", err)
+	}
+
+	oldPath, err := performUpdate(tag, execPath)
+	if err != nil {
+		t.Fatalf("performUpdate: %v", err)
+	}
+	if runtime.GOOS != "windows" && oldPath != "" {
+		t.Errorf("expected no .old path on non-Windows, got %q", oldPath)
+	}
+
+	got, err := os.ReadFile(execPath)
+	if err != nil {
+		t.Fatalf("reading execPath after update: %v", err)
+	}
+	if string(got) != string(binContent) {
+		t.Errorf("execPath contents = %q, want %q", got, binContent)
+	}
+
+	if runtime.GOOS != "windows" {
+		info, err := os.Stat(execPath)
+		if err != nil {
+			t.Fatalf("stat execPath: %v", err)
+		}
+		if info.Mode().Perm() != 0o755 {
+			t.Errorf("execPath mode = %v, want 0755", info.Mode().Perm())
+		}
+	}
+}
+
+func TestPerformUpdate_ChecksumMismatch(t *testing.T) {
+	asset, err := assetNameForPlatform(runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		t.Skipf("unsupported platform for this test: %v", err)
+	}
+	tag := "9.9.9"
+	srv := fakeReleaseServer(t, tag, asset, []byte("fake mdd binary contents"), "0000000000000000000000000000000000000000000000000000000000000000")
+	t.Setenv("MDD_UPDATE_BASE_URL", srv.URL)
+
+	dir := t.TempDir()
+	execPath := filepath.Join(dir, "mdd")
+	original := []byte("old binary")
+	if err := os.WriteFile(execPath, original, 0o755); err != nil {
+		t.Fatalf("seeding execPath: %v", err)
+	}
+
+	if _, err := performUpdate(tag, execPath); err == nil {
+		t.Fatal("performUpdate with mismatched checksum: expected error, got nil")
+	}
+
+	got, err := os.ReadFile(execPath)
+	if err != nil {
+		t.Fatalf("reading execPath after failed update: %v", err)
+	}
+	if string(got) != string(original) {
+		t.Errorf("execPath was modified despite checksum mismatch: got %q, want unchanged %q", got, original)
+	}
+}
+
+func TestPerformUpdate_MissingAsset(t *testing.T) {
+	asset, err := assetNameForPlatform(runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		t.Skipf("unsupported platform for this test: %v", err)
+	}
+	tag := "9.9.9"
+	mux := http.NewServeMux()
+	mux.HandleFunc("/"+tag+"/checksums.txt", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "deadbeef  %s\n", asset)
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+	t.Setenv("MDD_UPDATE_BASE_URL", srv.URL)
+
+	dir := t.TempDir()
+	execPath := filepath.Join(dir, "mdd")
+	if err := os.WriteFile(execPath, []byte("old binary"), 0o755); err != nil {
+		t.Fatalf("seeding execPath: %v", err)
+	}
+
+	if _, err := performUpdate(tag, execPath); err == nil {
+		t.Fatal("performUpdate with a 404 asset: expected error, got nil")
+	}
+}
+
+func TestSwapBinaryUnixStrategy(t *testing.T) {
+	dir := t.TempDir()
+	current := filepath.Join(dir, "current")
+	newFile := filepath.Join(dir, "new")
+	if err := os.WriteFile(current, []byte("old"), 0o644); err != nil {
+		t.Fatalf("seeding current: %v", err)
+	}
+	if err := os.WriteFile(newFile, []byte("new"), 0o644); err != nil {
+		t.Fatalf("seeding new: %v", err)
+	}
+
+	if err := swapBinaryUnix(current, newFile); err != nil {
+		t.Fatalf("swapBinaryUnix: %v", err)
+	}
+
+	got, err := os.ReadFile(current)
+	if err != nil {
+		t.Fatalf("reading current after swap: %v", err)
+	}
+	if string(got) != "new" {
+		t.Errorf("current contents = %q, want %q", got, "new")
+	}
+	info, err := os.Stat(current)
+	if err != nil {
+		t.Fatalf("stat current: %v", err)
+	}
+	if info.Mode().Perm() != 0o755 {
+		t.Errorf("current mode = %v, want 0755", info.Mode().Perm())
+	}
+	if _, err := os.Stat(newFile); !os.IsNotExist(err) {
+		t.Errorf("expected newFile to be gone after rename, stat err = %v", err)
+	}
+}
+
+func TestSwapBinaryWindowsStyleStrategy(t *testing.T) {
+	dir := t.TempDir()
+	current := filepath.Join(dir, "mdd.exe")
+	newFile := filepath.Join(dir, "new.exe")
+	if err := os.WriteFile(current, []byte("old"), 0o644); err != nil {
+		t.Fatalf("seeding current: %v", err)
+	}
+	if err := os.WriteFile(newFile, []byte("new"), 0o644); err != nil {
+		t.Fatalf("seeding new: %v", err)
+	}
+
+	oldPath, err := swapBinaryWindowsStyle(current, newFile)
+	if err != nil {
+		t.Fatalf("swapBinaryWindowsStyle: %v", err)
+	}
+	if oldPath != current+".old" {
+		t.Errorf("oldPath = %q, want %q", oldPath, current+".old")
+	}
+
+	gotOld, err := os.ReadFile(oldPath)
+	if err != nil {
+		t.Fatalf("reading .old file: %v", err)
+	}
+	if string(gotOld) != "old" {
+		t.Errorf(".old contents = %q, want %q", gotOld, "old")
+	}
+
+	gotCurrent, err := os.ReadFile(current)
+	if err != nil {
+		t.Fatalf("reading current after swap: %v", err)
+	}
+	if string(gotCurrent) != "new" {
+		t.Errorf("current contents = %q, want %q", gotCurrent, "new")
+	}
+}
+
+func TestSwapBinaryWindowsStyleStrategy_RollsBackOnFailure(t *testing.T) {
+	dir := t.TempDir()
+	current := filepath.Join(dir, "mdd.exe")
+	missingNew := filepath.Join(dir, "does-not-exist.exe")
+	original := []byte("old")
+	if err := os.WriteFile(current, original, 0o644); err != nil {
+		t.Fatalf("seeding current: %v", err)
+	}
+
+	if _, err := swapBinaryWindowsStyle(current, missingNew); err == nil {
+		t.Fatal("swapBinaryWindowsStyle with a missing new binary: expected error, got nil")
+	}
+
+	got, err := os.ReadFile(current)
+	if err != nil {
+		t.Fatalf("reading current after failed swap (rollback should restore it): %v", err)
+	}
+	if string(got) != string(original) {
+		t.Errorf("current contents after rollback = %q, want %q", got, original)
+	}
+	if _, err := os.Stat(current + ".old"); !os.IsNotExist(err) {
+		t.Errorf("expected no leftover .old file after rollback, stat err = %v", err)
+	}
+}

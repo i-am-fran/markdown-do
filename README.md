@@ -38,7 +38,7 @@ make install
 go install github.com/i-am-fran/markdown-do/cmd/mdd@<version>
 ```
 
-Replace `<version>` with the latest tag from the [releases page](https://github.com/i-am-fran/markdown-do/releases) (e.g. `@3.2.0`) — plain `@latest` doesn't resolve correctly here, since releases are tagged without a leading `v`. Once you have `mdd` installed, `mdd update` looks up and installs the latest release for you.
+Replace `<version>` with the latest tag from the [releases page](https://github.com/i-am-fran/markdown-do/releases) (e.g. `@3.2.0`) — plain `@latest` doesn't resolve correctly here, since releases are tagged without a leading `v`. Once you have `mdd` installed, `mdd update` downloads and swaps in the latest release binary for you (it needs write access to wherever `mdd` currently lives, not Go).
 
 ## Docs & full command reference
 

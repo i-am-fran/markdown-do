@@ -1,0 +1,36 @@
+name: Release
+
+# Fires whenever a human publishes a release (gh release create <tag> --notes "...").
+# Tags in this repo are bare semver (no "v" prefix, e.g. "3.2.1").
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - run: make build-all
+
+      - name: Generate checksums
+        working-directory: build
+        run: sha256sum mdd-* > checksums.txt
+
+      - name: Upload release assets
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            ./build/mdd-* ./build/checksums.txt \
+            --clobber --repo "${{ github.repository }}"

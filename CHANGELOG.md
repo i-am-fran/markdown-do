@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.2.2] - 2026-07-27
 
+### Added
+- A `.github/workflows/release.yml` pipeline now builds all five platform
+  binaries (`make build-all`) and a `checksums.txt`, and attaches them to
+  the GitHub release whenever one is published. `mdd update` now actually
+  downloads and swaps in the matching release binary for the running
+  process, verifying its sha256 checksum first, instead of shelling out to
+  `go install` (MDD32).
+
 ### Changed
 - `mdd` no longer writes `.mdd-cache` / `.mdd-undo` into the project
   directory it's operating on. Both now live under
