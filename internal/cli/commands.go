@@ -296,31 +296,11 @@ func AddTask(text string, path string) error {
 	return nil
 }
 
-// dieOnErr prints err's own message and exits(1) — used where err.Error()
-// is already the most useful message (load failures, validation errors).
-func dieOnErr(err error) {
-	if err != nil {
-		fmt.Fprintln(os.Stderr, red(err.Error()))
-		os.Exit(1)
-	}
-}
-
-// dieIfTaskNotFound prints a generic "Task %s not found" message and
-// exits(1) — used where the underlying error is a low-information
-// "task %d not found" that reads oddly against a string/stable ID.
-func dieIfTaskNotFound(idStr string, err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, red("Task %s not found\n"), idStr)
-		os.Exit(1)
-	}
-}
-
-// mustLoadTaskFile collapses the load-task-file-or-die pattern shared by
-// every single-ID CLI command.
-func mustLoadTaskFile(idStr string) (*core.TodoFile, *core.Task, int) {
+// loadTaskFileOrErr collapses the load-task-file-or-return-error pattern
+// shared by every single-ID CLI command.
+func loadTaskFileOrErr(idStr string) (*core.TodoFile, *core.Task, int, error) {
 	todoFile, task, localID, _, err := loadTaskFile(idStr)
-	dieOnErr(err)
-	return todoFile, task, localID
+	return todoFile, task, localID, err
 }
 
 // confirmPrompt shows msg and reads a y/n answer from stdin. It returns true
@@ -340,7 +320,10 @@ func confirmPrompt(msg string, yes bool) bool {
 
 // DeleteTask deletes a task by ID
 func DeleteTask(idStr string, yes bool) error {
-	todoFile, task, localID := mustLoadTaskFile(idStr)
+	todoFile, task, localID, err := loadTaskFileOrErr(idStr)
+	if err != nil {
+		return err
+	}
 
 	if !confirmPrompt(fmt.Sprintf("Delete task: %s?", task.Text), yes) {
 		fmt.Println("Cancelled")
@@ -348,7 +331,9 @@ func DeleteTask(idStr string, yes bool) error {
 	}
 
 	deleted, err := PerformDeleteTask(todoFile, localID)
-	dieOnErr(err)
+	if err != nil {
+		return err
+	}
 
 	fmt.Print(yellow("Deleted: "))
 	fmt.Println(deleted.Text)
@@ -357,10 +342,15 @@ func DeleteTask(idStr string, yes bool) error {
 
 // EditTask edits a task's text
 func EditTask(idStr, newText string) error {
-	todoFile, _, localID := mustLoadTaskFile(idStr)
+	todoFile, _, localID, err := loadTaskFileOrErr(idStr)
+	if err != nil {
+		return err
+	}
 
 	updated, err := PerformEditTask(todoFile, localID, newText)
-	dieIfTaskNotFound(idStr, err)
+	if err != nil {
+		return fmt.Errorf("task %s not found", idStr)
+	}
 
 	fmt.Print(green("Updated: "))
 	fmt.Println(formatTaskLine(updated, "", 0))
@@ -369,10 +359,15 @@ func EditTask(idStr, newText string) error {
 
 // AddTaskNote adds a note to a task
 func AddTaskNote(idStr, noteText string) error {
-	todoFile, _, localID := mustLoadTaskFile(idStr)
+	todoFile, _, localID, err := loadTaskFileOrErr(idStr)
+	if err != nil {
+		return err
+	}
 
 	updated, err := PerformAddTaskNote(todoFile, localID, noteText)
-	dieOnErr(err)
+	if err != nil {
+		return err
+	}
 
 	fmt.Print(green("Added note to: "))
 	fmt.Println(formatTaskLine(updated, "", 0))
@@ -381,10 +376,15 @@ func AddTaskNote(idStr, noteText string) error {
 
 // ToggleTask toggles a task's status
 func ToggleTask(idStr string) error {
-	todoFile, _, localID := mustLoadTaskFile(idStr)
+	todoFile, _, localID, err := loadTaskFileOrErr(idStr)
+	if err != nil {
+		return err
+	}
 
 	updated, err := PerformToggleTask(todoFile, localID)
-	dieIfTaskNotFound(idStr, err)
+	if err != nil {
+		return fmt.Errorf("task %s not found", idStr)
+	}
 
 	action := "Reopened"
 	switch updated.Status {
@@ -457,18 +457,19 @@ func CompleteTask(idsStr []string) error {
 	}
 
 	if len(idsStr) == 1 {
-		dieIfTaskNotFound(idsStr[0], errIfEmpty(completed))
+		if len(completed) == 0 {
+			return fmt.Errorf("task %s not found", idsStr[0])
+		}
 		fmt.Print(green("Completed: "))
 		fmt.Println(formatTaskLine(&completed[0], "", 0))
 		return nil
 	}
 
 	if len(completed) == 0 {
-		fmt.Fprintln(os.Stderr, red("No tasks were completed"))
 		if len(failedIDs) > 0 {
-			fmt.Fprintf(os.Stderr, red("Failed to complete tasks: %v\n"), failedIDs)
+			return fmt.Errorf("no tasks were completed — failed to complete: %v", failedIDs)
 		}
-		os.Exit(1)
+		return fmt.Errorf("no tasks were completed")
 	}
 
 	fmt.Println(green(fmt.Sprintf("Completed %d task(s):", len(completed))))
@@ -480,15 +481,6 @@ func CompleteTask(idsStr []string) error {
 		fmt.Fprintf(os.Stderr, yellow("\nWarning: Failed to complete some tasks: %v\n"), failedIDs)
 	}
 
-	return nil
-}
-
-// errIfEmpty returns a non-nil error when tasks is empty, for reuse with
-// dieIfTaskNotFound's error-presence check.
-func errIfEmpty(tasks []core.Task) error {
-	if len(tasks) == 0 {
-		return fmt.Errorf("no tasks completed")
-	}
 	return nil
 }
 
@@ -748,21 +740,27 @@ func ConfigSet(key, value string) error {
 		if !valid {
 			return fmt.Errorf("invalid editor %q — options: system, vim, nano, default-app", value)
 		}
-		dieOnErr(config.UpdateSettings(map[string]interface{}{"editor": config.EditorOption(value)}))
+		if err := config.UpdateSettings(map[string]interface{}{"editor": config.EditorOption(value)}); err != nil {
+			return err
+		}
 
 	case key == "showCompleted" || key == "enableInProgress" || key == "confirmDestructive":
 		b, err := strconv.ParseBool(value)
 		if err != nil {
 			return fmt.Errorf("%q must be true or false", key)
 		}
-		dieOnErr(config.UpdateSettings(map[string]interface{}{key: b}))
+		if err := config.UpdateSettings(map[string]interface{}{key: b}); err != nil {
+			return err
+		}
 
 	case strings.HasPrefix(key, "alias."):
 		name := strings.ToLower(strings.TrimPrefix(key, "alias."))
 		if name == "" {
 			return fmt.Errorf("alias name required, e.g. mdd config set alias.xx Features")
 		}
-		dieOnErr(config.UpdateSettings(map[string]interface{}{"sectionAlias": [2]string{name, value}}))
+		if err := config.UpdateSettings(map[string]interface{}{"sectionAlias": [2]string{name, value}}); err != nil {
+			return err
+		}
 
 	default:
 		return fmt.Errorf("unknown setting %q", key)
@@ -781,8 +779,7 @@ func SetTaskIDs(prefix string) error {
 
 	count, err := PerformSetTaskIDs(todoFile, prefix)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, red(err.Error()))
-		os.Exit(1)
+		return err
 	}
 
 	suffix := "s"
