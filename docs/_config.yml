@@ -1,0 +1,29 @@
+remote_theme: i-am-fran/web-docs-template
+plugins:
+  - jekyll-remote-theme
+
+collections:
+  docs:
+    output: false
+
+title: "Markdown-do"
+tagline: "A CLI for managing TODO.md files as plain markdown checkboxes. Add, complete, and reorganize tasks from the terminal, then commit the file like anything else in your repo."
+description: "Markdown-do reads and writes plain markdown TODO.md files from the terminal: checkboxes, sections, task IDs, notes. No database, no daemon, just a file you can commit."
+github_url: "https://github.com/i-am-fran/markdown-do"
+author_url: "https://iamfran.com"
+author_label: "iamfran.com"
+repository: "i-am-fran/markdown-do"
+url: "https://i-am-fran.github.io"
+baseurl: "/markdown-do"
+logo: "/assets/mdd-small.png"
+
+markdown: kramdown
+kramdown:
+  auto_ids: true
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - .bundle
