@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/i-am-fran/markdown-do/internal/fsutil"
 )
 
 // idTagRegex matches a stable ID tag's prefix and number. The dash is
@@ -1115,6 +1117,17 @@ func (tf *TodoFile) ensureSectionLast(name string) {
 // "mdd undo" can restore it. If the file doesn't exist yet on disk (the
 // very first save), there's nothing to back up.
 func (tf *TodoFile) Save() error {
+	// Held for the whole save (undo backup + main content) so two
+	// concurrent `mdd` invocations against the same file can't interleave
+	// their writes. This doesn't close the wider load-mutate-save race
+	// across a whole CLI invocation (see CLAUDE.md's Concurrency note) —
+	// only the write itself is made atomic and mutually exclusive.
+	lock, err := fsutil.AcquireLock(tf.FilePath)
+	if err != nil {
+		return fmt.Errorf("could not lock %s for writing: %w", tf.FilePath, err)
+	}
+	defer lock.Unlock()
+
 	tf.ensureSectionLast("Archive")
 	tf.ensureSectionLast("Notes")
 	tf.reorderTasks()
@@ -1125,37 +1138,53 @@ func (tf *TodoFile) Save() error {
 	}
 
 	if prev, err := os.ReadFile(tf.FilePath); err == nil {
-		_ = os.WriteFile(undoFilePath(tf.FilePath), prev, 0644)
+		backupPath, err := undoFilePath(tf.FilePath)
+		if err != nil {
+			return fmt.Errorf("could not prepare undo backup directory: %w", err)
+		}
+		if err := fsutil.AtomicWriteFile(backupPath, prev, 0644); err != nil {
+			return fmt.Errorf("could not write undo backup: %w", err)
+		}
 	}
 
-	return os.WriteFile(tf.FilePath, []byte(content), 0644)
+	return fsutil.AtomicWriteFile(tf.FilePath, []byte(content), 0644)
 }
 
 // undoFilePath returns the path to the undo backup file for a given TODO
 // file, stored under stateDir (keyed by a hash of the absolute TODO file
 // path) rather than as a sibling file in the project directory.
-func undoFilePath(todoFilePath string) string {
+func undoFilePath(todoFilePath string) (string, error) {
 	abs := todoFilePath
 	if a, err := filepath.Abs(todoFilePath); err == nil {
 		abs = a
 	}
 
 	dir := filepath.Join(stateDir, "undo")
-	_ = os.MkdirAll(dir, 0755)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", err
+	}
 
-	return filepath.Join(dir, hashPath(abs))
+	return filepath.Join(dir, hashPath(abs)), nil
 }
 
 // HasUndo reports whether an undo backup exists for filePath.
 func HasUndo(filePath string) bool {
-	_, err := os.Stat(undoFilePath(filePath))
+	path, err := undoFilePath(filePath)
+	if err != nil {
+		return false
+	}
+	_, err = os.Stat(path)
 	return err == nil
 }
 
 // LoadUndoBackup reads the undo backup's content for filePath. It returns
 // an error if no backup exists.
 func LoadUndoBackup(filePath string) (string, error) {
-	data, err := os.ReadFile(undoFilePath(filePath))
+	path, err := undoFilePath(filePath)
+	if err != nil {
+		return "", err
+	}
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

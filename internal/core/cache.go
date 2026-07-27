@@ -2,9 +2,12 @@ package core
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/i-am-fran/markdown-do/internal/fsutil"
 )
 
 // TaskCache represents a cached task location
@@ -55,7 +58,13 @@ func SaveCache(cache *Cache) error {
 		return err
 	}
 
-	return os.WriteFile(cachePath, data, 0644)
+	lock, err := fsutil.AcquireLock(cachePath)
+	if err != nil {
+		return fmt.Errorf("could not lock %s for writing: %w", cachePath, err)
+	}
+	defer lock.Unlock()
+
+	return fsutil.AtomicWriteFile(cachePath, data, 0644)
 }
 
 // LoadCache loads the cache from disk

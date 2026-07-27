@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/i-am-fran/markdown-do/internal/fsutil"
 )
 
 var (
@@ -88,7 +90,13 @@ func SaveSettings(settings Settings) error {
 		return err
 	}
 
-	if err := os.WriteFile(configFile, data, 0644); err != nil {
+	lock, err := fsutil.AcquireLock(configFile)
+	if err != nil {
+		return fmt.Errorf("could not lock %s for writing: %w", configFile, err)
+	}
+	defer lock.Unlock()
+
+	if err := fsutil.AtomicWriteFile(configFile, data, 0644); err != nil {
 		return err
 	}
 

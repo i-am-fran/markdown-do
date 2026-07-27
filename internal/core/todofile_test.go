@@ -3,7 +3,10 @@ package core
 import (
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
+
+	"github.com/i-am-fran/markdown-do/internal/fsutil"
 )
 
 func TestSetTaskIDsAssignsSequentialTags(t *testing.T) {
@@ -661,6 +664,67 @@ func TestSaveBacksUpPreviousContent(t *testing.T) {
 	}
 	if !strings.Contains(backup, "Buy milk") {
 		t.Errorf("expected backup to contain pre-delete content, got: %q", backup)
+	}
+}
+
+func TestSaveFailsWhenLockHeld(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "TODO.md")
+	tf := NewTodoFile(path, "# TODO\n\n- [ ] Buy milk\n")
+
+	lock, err := fsutil.AcquireLock(path)
+	if err != nil {
+		t.Fatalf("AcquireLock failed: %v", err)
+	}
+	defer lock.Unlock()
+
+	if err := tf.Save(); err == nil {
+		t.Fatal("expected Save to fail while another process holds the lock")
+	}
+}
+
+// TestConcurrentSavesDoNotCorruptFile stress-tests Save() from many
+// goroutines at once. Without a lock + atomic write, concurrent
+// read-modify-write cycles could interleave and leave the file truncated
+// or with mixed-up content; every attempt here must either succeed cleanly
+// or fail with an error, and the file on disk must always end up valid,
+// parseable markdown afterward.
+func TestConcurrentSavesDoNotCorruptFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "TODO.md")
+	seed := NewTodoFile(path, "# TODO\n\n- [ ] Buy milk\n")
+	if err := seed.Save(); err != nil {
+		t.Fatalf("seed Save failed: %v", err)
+	}
+
+	const goroutines = 8
+	var wg sync.WaitGroup
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func(n int) {
+			defer wg.Done()
+			tf, err := Load(path)
+			if err != nil {
+				return
+			}
+			tf.AddTask("Task from goroutine")
+			tf.Save() // best-effort; contention errors are expected and fine
+		}(i)
+	}
+	wg.Wait()
+
+	final, err := Load(path)
+	if err != nil {
+		t.Fatalf("expected the final file to still be loadable, got: %v", err)
+	}
+	tasks := final.GetTasks()
+	if len(tasks) == 0 {
+		t.Fatal("expected at least the seed task to survive")
+	}
+	for _, task := range tasks {
+		if strings.TrimSpace(task.Text) == "" {
+			t.Errorf("expected no corrupted/empty tasks, got %+v", tasks)
+		}
 	}
 }
 
