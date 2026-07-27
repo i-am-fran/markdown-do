@@ -27,6 +27,8 @@ Commands that change a task's status or content. All of them take an `<id>` — 
 
 `mdd toggle <id>` cycles a task's status. By default that's a simple flip: pending <-> completed. With the `enableInProgress` setting on, it becomes a 3-way cycle: pending -> in-progress -> completed -> pending.
 
+`-t` is a short-hand alias for `toggle`.
+
 ```bash
 mdd toggle 2
 ```
@@ -34,6 +36,8 @@ mdd toggle 2
 ### complete {#cmd-complete}
 
 `mdd complete <id> [id2 id3 ...]` marks one or more tasks complete directly, skipping the toggle cycle. Each ID is resolved independently, so `mdd complete 1 2 3` still completes #2 and #3 even if #1 doesn't exist — you get a warning about the one that failed instead of the whole command aborting.
+
+`-c` is a short-hand alias for `complete`, and takes multiple IDs the same way (e.g. `mdd -c 1 2 3`).
 
 ```bash
 mdd complete 1
@@ -44,6 +48,8 @@ mdd complete 1 2 3
 
 `mdd edit <id> <text>` replaces a task's text outright — it's a full overwrite, not an append. Multi-word text needs no quotes.
 
+`-e` is a short-hand alias for `edit`.
+
 ```bash
 mdd edit 1 Fix the login bug instead
 ```
@@ -52,6 +58,8 @@ mdd edit 1 Fix the login bug instead
 
 `mdd annotate <id> <text>` adds an indented note line under one specific task, shown inline wherever that task is listed. Not the same as `notes`, which is file-wide rather than attached to a task. Notes travel with the task through edit, move, complete, and delete.
 
+`-an` is a short-hand alias for `annotate`.
+
 ```bash
 mdd annotate 1 Needs a second reviewer
 ```
@@ -59,6 +67,8 @@ mdd annotate 1 Needs a second reviewer
 ### remove {#cmd-remove}
 
 `mdd remove <id>` deletes one task. Prompts for a y/n confirmation first if the `confirmDestructive` setting is on; add `-y`/`--yes` to skip it, which is also handy when calling `mdd` from a script.
+
+`-d` is a short-hand alias for `remove`.
 
 | Flag | Description |
 | --- | --- |
@@ -72,6 +82,8 @@ mdd remove 3 -y
 ### clear {#cmd-clear}
 
 `mdd clear` deletes every completed task in the file at once. Same confirmation behavior as `remove`.
+
+`-dc` is a short-hand alias for `clear`.
 
 | Flag | Description |
 | --- | --- |

@@ -23,6 +23,8 @@ headings:
 
 `mdd open` opens `TODO.md` in the editor set by the `editor` setting (see Configuration below).
 
+`-o` is a short-hand alias for `open`.
+
 ```bash
 mdd open
 ```
@@ -30,6 +32,8 @@ mdd open
 ### lint {#cmd-lint}
 
 `mdd lint` checks the file for formatting issues and fixes what it can safely fix automatically, printing a line number, description, and status (`found` or `fixed`) for everything it touched.
+
+`-lint` is a short-hand alias for `lint`.
 
 | Check | Behaviour |
 | --- | --- |

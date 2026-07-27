@@ -43,6 +43,8 @@ mdd add "Renew SSL cert" --path ~/projects/infra
 
 `mdd notes <text>` adds a line to the file-wide `## Notes` section (created automatically if it doesn't exist yet) — for context that isn't itself a task, like a reminder or a decision you want on record. This is different from `annotate`, which attaches a note to one specific task.
 
+`-n` is a short-hand alias for `notes`.
+
 ```bash
 mdd notes "API rate limit is 100 req/min"
 mdd notes Deploy window is 2-4am UTC

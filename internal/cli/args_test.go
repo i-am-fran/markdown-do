@@ -84,6 +84,24 @@ func TestParseArgs(t *testing.T) {
 
 		// unrecognized dash-prefixed tokens
 		{"unrecognized dash flag is unknown", []string{"-c", "something"}, ParsedArgs{Command: "unknown", Args: []string{"-c", "something"}, Text: "-c something"}},
+
+		// short-hand aliases (MDD-044): resolve to the same canonical
+		// command/shape rules as the full verb, so behavior is identical.
+		{"-c aliases to complete", []string{"-c", "2"}, ParsedArgs{Command: "complete", Args: []string{"2"}, Text: "2"}},
+		{"-c with multiple ids aliases to complete", []string{"-c", "1", "2", "3"}, ParsedArgs{Command: "complete", Args: []string{"1", "2", "3"}, Text: "1 2 3"}},
+		{"-c alone (no id) is unknown, not silently added", []string{"-c"}, ParsedArgs{Command: "unknown", Args: []string{"-c"}, Text: "-c"}},
+		{"-t aliases to toggle", []string{"-t", "3"}, ParsedArgs{Command: "toggle", Args: []string{"3"}, Text: "3"}},
+		{"-e aliases to edit", []string{"-e", "1", "New", "text"}, ParsedArgs{Command: "edit", Args: []string{"1", "New", "text"}, Text: "1 New text"}},
+		{"-an aliases to annotate", []string{"-an", "1", "note", "text"}, ParsedArgs{Command: "annotate", Args: []string{"1", "note", "text"}, Text: "1 note text"}},
+		{"-d aliases to remove", []string{"-d", "5"}, ParsedArgs{Command: "remove", Args: []string{"5"}, Text: "5"}},
+		{"-l aliases to list", []string{"-l"}, ParsedArgs{Command: "list", Args: []string{}, Text: ""}},
+		{"-l -r aliases to list recursively", []string{"-l", "-r"}, ParsedArgs{Command: "list", Args: []string{}, Text: "", Recursive: true}},
+		{"-f aliases to find", []string{"-f", "bug"}, ParsedArgs{Command: "find", Args: []string{"bug"}, Text: "bug"}},
+		{"-n aliases to notes", []string{"-n", "remember", "this"}, ParsedArgs{Command: "notes", Args: []string{"remember", "this"}, Text: "remember this"}},
+		{"-o aliases to open", []string{"-o"}, ParsedArgs{Command: "open", Args: []string{}, Text: ""}},
+		{"-dc aliases to clear", []string{"-dc"}, ParsedArgs{Command: "clear", Args: []string{}, Text: ""}},
+		{"-lint aliases to lint", []string{"-lint"}, ParsedArgs{Command: "lint", Args: []string{}, Text: ""}},
+		{"-id aliases to tag", []string{"-id", "ABC"}, ParsedArgs{Command: "tag", Args: []string{"ABC"}, Text: "ABC"}},
 	}
 
 	for _, tt := range tests {

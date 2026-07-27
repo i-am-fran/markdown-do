@@ -15,6 +15,8 @@ A task's position number shifts every time the file is re-sorted or a task above
 
 `mdd tag <PREFIX>` tags every task in the file with sequential IDs: `PREFIX-001`, `PREFIX-002`, and so on. `PREFIX` must be exactly 3 letters (case-insensitive — `abc` is normalized to `ABC`). Once a sequence is active, any task you add afterward automatically picks up the next ID in it.
 
+`-id` is a short-hand alias for `tag` (e.g. `mdd -id ABC`). `untag` has no short alias.
+
 ```bash
 mdd tag ABC             # Tags all tasks: [ABC-001], [ABC-002], ...
 mdd complete ABC-001     # Reference a task by its stable ID

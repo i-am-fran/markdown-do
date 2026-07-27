@@ -13,7 +13,7 @@ import (
 	"github.com/i-am-fran/markdown-do/internal/core"
 )
 
-const Version = "3.2.2"
+const Version = "3.3.0"
 
 var (
 	green         = color.New(color.FgGreen).SprintFunc()
@@ -905,22 +905,22 @@ func ShowHelp() {
 `)
 
 	fmt.Printf("%s\n", bold("Viewing & Finding:"))
-	fmt.Print(`  mdd list             List tasks
+	fmt.Print(`  mdd list             List tasks                                     (also: -l)
   mdd list -r          List tasks recursively (subdirectories)
   mdd list -a          List only active tasks (pending + in-progress)
   mdd list --done      List only completed tasks
-  mdd find <keyword>   Find tasks by keyword
+  mdd find <keyword>   Find tasks by keyword                              (also: -f)
   mdd find <kw> -r     Find tasks by keyword, recursively
 
 `)
 
 	fmt.Printf("%s\n", bold("Managing Tasks:"))
-	fmt.Print(`  mdd toggle <id>             Toggle task status (pending <-> completed)
-  mdd complete <id> [id2...]  Complete one or more tasks by ID
-  mdd edit <id> <text>        Edit task text
-  mdd annotate <id> <text>    Add a note to a task (shown inline wherever it's listed)
-  mdd remove <id>             Delete task by ID
-  mdd clear                   Delete all completed tasks
+	fmt.Print(`  mdd toggle <id>             Toggle task status (pending <-> completed)  (also: -t)
+  mdd complete <id> [id2...]  Complete one or more tasks by ID              (also: -c)
+  mdd edit <id> <text>        Edit task text                               (also: -e)
+  mdd annotate <id> <text>    Add a note to a task (shown inline wherever it's listed)  (also: -an)
+  mdd remove <id>             Delete task by ID                            (also: -d)
+  mdd clear                   Delete all completed tasks                   (also: -dc)
                               (both prompt first if confirmDestructive is on;
                                add -y/--yes to skip the prompt)
   mdd archive                 Move all completed tasks to the ## Archive
@@ -930,10 +930,10 @@ func ShowHelp() {
 `)
 
 	fmt.Printf("%s\n", bold("Utilities:"))
-	fmt.Print(`  mdd notes <text>   Add a note to the ## Notes section
-  mdd open           Open TODO file in editor
-  mdd lint           Lint and fix TODO file formatting
-  mdd tag <PREFIX>   Tag every task with sequential IDs (PREFIX01, PREFIX02, ...)
+	fmt.Print(`  mdd notes <text>   Add a note to the ## Notes section                        (also: -n)
+  mdd open           Open TODO file in editor                              (also: -o)
+  mdd lint           Lint and fix TODO file formatting                     (also: -lint)
+  mdd tag <PREFIX>   Tag every task with sequential IDs (PREFIX01, PREFIX02, ...)  (also: -id)
   mdd untag          Remove all task ID tags
   mdd config list    Show all settings
   mdd config get k   Show one setting, e.g. mdd config get editor

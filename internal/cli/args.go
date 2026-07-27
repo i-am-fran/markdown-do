@@ -70,6 +70,27 @@ var freeTextCommands = map[string]bool{
 	"completion": true,
 }
 
+// shortAliases restores the pre-2.0 short flags as pure aliases for today's
+// verbs. They resolve to a canonical command name before the shape-based
+// disambiguation below runs, so all idArgCommands/zeroArgCommands/
+// freeTextCommands rules above apply to them unchanged. -cm and -ls/-fs are
+// deliberately not restored: complete already takes N ids directly, and
+// recursion is a standalone -r modifier that composes with any command.
+var shortAliases = map[string]string{
+	"-l":    "list",
+	"-f":    "find",
+	"-t":    "toggle",
+	"-c":    "complete",
+	"-e":    "edit",
+	"-an":   "annotate",
+	"-d":    "remove",
+	"-n":    "notes",
+	"-o":    "open",
+	"-dc":   "clear",
+	"-lint": "lint",
+	"-id":   "tag",
+}
+
 // ParseArgs parses command line arguments into a command and its arguments.
 func ParseArgs(args []string) ParsedArgs {
 	for _, a := range args {
@@ -134,13 +155,18 @@ func ParseArgs(args []string) ParsedArgs {
 	word := rest[0]
 	tail := rest[1:]
 
+	canonical := word
+	if alias, ok := shortAliases[word]; ok {
+		canonical = alias
+	}
+
 	switch {
-	case idArgCommands[word] && len(tail) > 0 && idShapeRegex.MatchString(tail[0]):
-		return newParsedArgs(word, tail, recursive, yes, statusFilter, path)
-	case zeroArgCommands[word] && len(tail) == 0:
-		return newParsedArgs(word, tail, recursive, yes, statusFilter, path)
-	case freeTextCommands[word]:
-		return newParsedArgs(word, tail, recursive, yes, statusFilter, path)
+	case idArgCommands[canonical] && len(tail) > 0 && idShapeRegex.MatchString(tail[0]):
+		return newParsedArgs(canonical, tail, recursive, yes, statusFilter, path)
+	case zeroArgCommands[canonical] && len(tail) == 0:
+		return newParsedArgs(canonical, tail, recursive, yes, statusFilter, path)
+	case freeTextCommands[canonical]:
+		return newParsedArgs(canonical, tail, recursive, yes, statusFilter, path)
 	case strings.HasPrefix(word, "-"):
 		// An unrecognized dash flag (likely a pre-2.0 flag like -c/-d/-lint)
 		// is reported loudly instead of being silently added as task text.
