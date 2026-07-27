@@ -21,15 +21,25 @@ type Cache struct {
 	LastListing time.Time         `json:"last_listing"`
 }
 
-// GetCacheFilePath returns the path to the cache file
+// GetCacheFilePath returns the path to the cache file for the current
+// directory, stored under stateDir (keyed by a hash of the absolute cwd)
+// rather than inside the project directory itself.
 func GetCacheFilePath() (string, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return "", err
 	}
+	absCwd, err := filepath.Abs(cwd)
+	if err != nil {
+		return "", err
+	}
 
-	// Use .mdd-cache in the current directory
-	return filepath.Join(cwd, ".mdd-cache"), nil
+	dir := filepath.Join(stateDir, "cache")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", err
+	}
+
+	return filepath.Join(dir, hashPath(absCwd)+".json"), nil
 }
 
 // SaveCache saves the cache to disk

@@ -1145,9 +1145,9 @@ func (tf *TodoFile) ensureSectionLast(name string) {
 }
 
 // Save saves the file to disk. Before overwriting, it backs up the file's
-// current on-disk content to a sibling ".mdd-undo" file so "mdd undo" can
-// restore it. If the file doesn't exist yet on disk (the very first save),
-// there's nothing to back up.
+// current on-disk content to an undo backup file (see undoFilePath) so
+// "mdd undo" can restore it. If the file doesn't exist yet on disk (the
+// very first save), there's nothing to back up.
 func (tf *TodoFile) Save() error {
 	tf.ensureSectionLast("Archive")
 	tf.ensureSectionLast("Notes")
@@ -1166,9 +1166,18 @@ func (tf *TodoFile) Save() error {
 }
 
 // undoFilePath returns the path to the undo backup file for a given TODO
-// file: a sibling ".mdd-undo" in the same directory.
+// file, stored under stateDir (keyed by a hash of the absolute TODO file
+// path) rather than as a sibling file in the project directory.
 func undoFilePath(todoFilePath string) string {
-	return filepath.Join(filepath.Dir(todoFilePath), ".mdd-undo")
+	abs := todoFilePath
+	if a, err := filepath.Abs(todoFilePath); err == nil {
+		abs = a
+	}
+
+	dir := filepath.Join(stateDir, "undo")
+	_ = os.MkdirAll(dir, 0755)
+
+	return filepath.Join(dir, hashPath(abs))
 }
 
 // HasUndo reports whether an undo backup exists for filePath.

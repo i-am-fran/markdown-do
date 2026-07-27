@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.2] - 2026-07-27
+
+### Changed
+- `mdd` no longer writes `.mdd-cache` / `.mdd-undo` into the project
+  directory it's operating on. Both now live under
+  `~/.config/markdowndo/` (keyed by a hash of the relevant absolute path)
+  alongside `config.json` (MDD35).
+
+### Fixed
+- `internal/cli` package tests read the real `~/.config/markdowndo/config.json`
+  with no isolation, so `TestPerformToggleTask` failed whenever
+  `enableInProgress` was set to `true` on the machine running `go test`.
+  Tests now point settings at a scratch directory for the whole package
+  run, the same way cache/undo state was already isolated (MDD36).
+
 ## [3.2.1] - 2026-07-25
 
 ### Fixed

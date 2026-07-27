@@ -1,14 +1,18 @@
 # Markdown-do
 
-- [ ] [MDD-035] What should we about mdd-cache file
+- [ ] [MDD-040] add list --active to show only open issues. Do the same for done/completed
+- [ ] [MDD-039] After I add a note, feedback should include the note number/ID so I can quickly take actions on it. Or maybe there should be a way to easily add a note to it, for example
+- [ ] [MDD-038] Allow to add tasks and path, to add them to a specific folder
+- [ ] [MDD-037] Force to add task using quotes, to not add mistakes like lis
 - [ ] [MDD-033] Run a code review
 - [ ] [MDD-028] Add manual at `man mdd`
 - [ ] [MDD-027] Add some tests
 - [ ] [MDD-029] Wire up PerformMoveTask as mdd move, or delete it if not worth it — currently dead code only reachable by its own tests since the TUI's move-to-section hotkey that used it is gone (from AI)
+- [x] [MDD-035] What should we about mdd-cache file
 
 ## Bugs
 
-- [ ] [MDD-036] TestPerformToggleTask (internal/cli/logic_test.go) reads the real ~/.config/markdowndo/config.json with no test isolation, so it fails whenever enableInProgress is true on the machine running `go test` (from AI)
+- [x] [MDD-036] TestPerformToggleTask (internal/cli/logic_test.go) reads the real ~/.config/markdowndo/config.json with no test isolation, so it fails whenever enableInProgress is true on the machine running `go test` (from AI)
 
 ## Ideas
 

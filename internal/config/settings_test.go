@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -10,20 +9,13 @@ import (
 // the test and clears the in-memory cache before and after.
 func withTempConfig(t *testing.T, content string) {
 	t.Helper()
-	dir := t.TempDir()
-	origDir, origFile := configDir, configFile
-	configDir = dir
-	configFile = filepath.Join(dir, "config.json")
+	restore := SetConfigDirForTesting(t.TempDir())
 	if content != "" {
 		if err := os.WriteFile(configFile, []byte(content), 0644); err != nil {
 			t.Fatal(err)
 		}
 	}
-	ClearCache()
-	t.Cleanup(func() {
-		configDir, configFile = origDir, origFile
-		ClearCache()
-	})
+	t.Cleanup(restore)
 }
 
 func TestGetSettingsFillsMissingKeysWithDefaults(t *testing.T) {

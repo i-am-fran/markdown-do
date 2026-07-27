@@ -129,3 +129,18 @@ func ResetSettings() error {
 func ClearCache() {
 	cached = nil
 }
+
+// SetConfigDirForTesting overrides the directory used for config.json and
+// returns a function that restores the previous value. Intended for tests
+// only, so package-level tests never read or write the real
+// ~/.config/markdowndo on the machine running `go test`.
+func SetConfigDirForTesting(dir string) (restore func()) {
+	origDir, origFile := configDir, configFile
+	configDir = dir
+	configFile = filepath.Join(dir, "config.json")
+	cached = nil
+	return func() {
+		configDir, configFile = origDir, origFile
+		cached = nil
+	}
+}
