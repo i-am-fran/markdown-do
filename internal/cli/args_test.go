@@ -21,7 +21,7 @@ func TestParseArgs(t *testing.T) {
 		{"edit with numeric id and text", []string{"edit", "1", "New", "text"}, ParsedArgs{Command: "edit", Args: []string{"1", "New", "text"}, Text: "1 New text"}},
 		{"remove with numeric id", []string{"remove", "5"}, ParsedArgs{Command: "remove", Args: []string{"5"}, Text: "5"}},
 		{"annotate with numeric id", []string{"annotate", "1", "note", "text"}, ParsedArgs{Command: "annotate", Args: []string{"1", "note", "text"}, Text: "1 note text"}},
-		{"complete with no args falls through to add", []string{"complete"}, ParsedArgs{Command: "add", Args: []string{"complete"}, Text: "complete"}},
+		{"bare complete (missing id) is a typo suggesting complete", []string{"complete"}, ParsedArgs{Command: "typo", Args: []string{"complete"}, Text: "complete", Suggestion: "complete"}},
 
 		// zeroArgCommands: recognized only when the tail is empty.
 		{"list alone", []string{"list"}, ParsedArgs{Command: "list", Args: []string{}, Text: ""}},
@@ -49,6 +49,20 @@ func TestParseArgs(t *testing.T) {
 		// implicit add
 		{"plain text is an implicit add", []string{"Buy", "groceries"}, ParsedArgs{Command: "add", Args: []string{"Buy", "groceries"}, Text: "Buy groceries"}},
 		{"empty args", []string{}, ParsedArgs{}},
+
+		// typo/"did you mean" guard (MDD-037): only fires for a single bare
+		// word, never for multi-word task text like "complete falls through
+		// to add" above.
+		{"typo: lis suggests list", []string{"lis"}, ParsedArgs{Command: "typo", Args: []string{"lis"}, Text: "lis", Suggestion: "list"}},
+		{"typo: lsit (transposition) suggests list", []string{"lsit"}, ParsedArgs{Command: "typo", Args: []string{"lsit"}, Text: "lsit", Suggestion: "list"}},
+		{"typo: toggel suggests toggle", []string{"toggel"}, ParsedArgs{Command: "typo", Args: []string{"toggel"}, Text: "toggel", Suggestion: "toggle"}},
+		{"typo: achive suggests archive", []string{"achive"}, ParsedArgs{Command: "typo", Args: []string{"achive"}, Text: "achive", Suggestion: "archive"}},
+		{"typo: compelte suggests complete", []string{"compelte"}, ParsedArgs{Command: "typo", Args: []string{"compelte"}, Text: "compelte", Suggestion: "complete"}},
+		{"typo: wrong case exact match suggests complete", []string{"Complete"}, ParsedArgs{Command: "typo", Args: []string{"Complete"}, Text: "Complete", Suggestion: "complete"}},
+		{"typo: bare edit (missing id) suggests edit", []string{"edit"}, ParsedArgs{Command: "typo", Args: []string{"edit"}, Text: "edit", Suggestion: "edit"}},
+		{"typo guard ignores unrelated single word", []string{"Groceries"}, ParsedArgs{Command: "add", Args: []string{"Groceries"}, Text: "Groceries"}},
+		{"typo guard ignores unrelated single word (2)", []string{"Standup"}, ParsedArgs{Command: "add", Args: []string{"Standup"}, Text: "Standup"}},
+		{"typo guard excludes short commands from fuzzy match", []string{"Tap"}, ParsedArgs{Command: "add", Args: []string{"Tap"}, Text: "Tap"}},
 
 		// flags
 		{"-y sets Yes", []string{"clear", "-y"}, ParsedArgs{Command: "clear", Args: []string{}, Text: "", Yes: true}},

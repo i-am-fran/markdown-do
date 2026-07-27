@@ -189,6 +189,10 @@ func handleCLI(args cli.ParsedArgs) error {
 		}
 		return cli.AddTask(args.Text, args.Path)
 
+	case "typo":
+		usageError("did you mean 'mdd %s'? Run 'mdd add %q' to add it as a task instead", args.Suggestion, args.Text)
+		return nil
+
 	case "unknown":
 		usageError("unrecognized flag %q — run 'mdd help' for the current commands, or 'mdd add \"...\"' to add a task starting with a dash", args.Args[0])
 		return nil

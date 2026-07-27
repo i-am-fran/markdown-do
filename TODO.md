@@ -1,20 +1,17 @@
 # Markdown-do
 
 - [ ] [MDD-039] After I add a note, feedback should include the note number/ID so I can quickly take actions on it. Or maybe there should be a way to easily add a note to it, for example
-- [ ] [MDD-037] Force to add task using quotes, to not add mistakes like lis
 - [ ] [MDD-033] Run a code review
 - [ ] [MDD-028] Add manual at `man mdd`
 - [ ] [MDD-027] Add some tests
 - [ ] [MDD-029] Wire up PerformMoveTask as mdd move, or delete it if not worth it — currently dead code only reachable by its own tests since the TUI's move-to-section hotkey that used it is gone (from AI)
-- [x] [MDD-040] add list --active to show only open issues. Do the same for done/completed
-- [x] [MDD-038] Allow to add tasks and path, to add them to a specific folder
+- [x] [MDD-037] Force to add task using quotes, to not add mistakes like adding a task "lis"
 
 ## Bugs
 
 
 ## Ideas
 
-- [x] [MDD-032] Build a real `mdd update` (binary download+swap from GitHub releases) — needs a release pipeline first (extend build-all + gh release upload, or GoReleaser) to actually produce and upload OS/arch binaries; the current mdd update just wraps go install
 - [ ] [MDD-020] Add a flag to add completed date (only when done via CLI) to completed tasks
 - [ ] [MDD-019] Add an option to sync with Github tasks??
 - [ ] [MDD-018] Allow to filter mdd list archive/all/todo or something like that
@@ -22,7 +19,7 @@
 
 ## Admin
 
-- [ ] [MDD-015] Record intro video/demo
+- [ ] [MDD-041] Write down what makes markdown-do unique
 
 ## Archive
 
@@ -52,3 +49,7 @@
 - [x] [MDD-023] If a task ends with `?` I get an error, unless I use quote marks — not an mdd bug: it's the shell (e.g. zsh nomatch) glob-expanding unquoted `?`/`*` before mdd runs; documented in `mdd help` and CLAUDE.md rather than fixed in code
 - [x] [MDD-035] What should we about mdd-cache file
 - [x] [MDD-036] TestPerformToggleTask (internal/cli/logic_test.go) reads the real ~/.config/markdowndo/config.json with no test isolation, so it fails whenever enableInProgress is true on the machine running `go test` (from AI) (from Bugs)
+- [x] [MDD-040] add list --active to show only open issues. Do the same for done/completed
+- [x] [MDD-038] Allow to add tasks and path, to add them to a specific folder
+- [x] [MDD-032] Build a real `mdd update` (binary download+swap from GitHub releases) — needs a release pipeline first (extend build-all + gh release upload, or GoReleaser) to actually produce and upload OS/arch binaries; the current mdd update just wraps go install (from Ideas)
+- [x] [MDD-015] Record intro video/demo (from Admin)

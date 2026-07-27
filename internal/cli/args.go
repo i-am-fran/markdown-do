@@ -11,13 +11,14 @@ import (
 // arguments. Command is "" only when the input was empty or contained
 // nothing but flags.
 type ParsedArgs struct {
-	Command      string   // "add", a known verb, or "unknown" for an unrecognized dash flag
+	Command      string   // "add", "typo", a known verb, or "unknown" for an unrecognized dash flag
 	Args         []string // remaining positional tokens (the command word removed)
 	Text         string   // Args joined with " "
 	Recursive    bool     // -r / --recursive present anywhere in the input
 	Yes          bool     // -y / --yes present anywhere in the input
 	StatusFilter string   // "active" (-a/--active), "done" (--done), or "" for no filter; used by list
 	Path         string   // -p / --path value; directory to target instead of cwd, used by add
+	Suggestion   string   // for Command == "typo": the known command name being suggested
 }
 
 // idShapeRegex matches tokens that look like a task reference: a position
@@ -145,6 +146,18 @@ func ParseArgs(args []string) ParsedArgs {
 		// is reported loudly instead of being silently added as task text.
 		return newParsedArgs("unknown", rest, recursive, yes, statusFilter, path)
 	default:
+		// A single bare word that's a near-miss of a known command (a typo,
+		// wrong case, or missing its required argument) is refused instead
+		// of silently becoming a task; multi-word input is never affected
+		// (len(rest) > 1 means there's real sentence content, e.g. "Complete
+		// the tax return").
+		if len(rest) == 1 {
+			if suggestion, ok := suggestCommand(word); ok {
+				p := newParsedArgs("typo", rest, recursive, yes, statusFilter, path)
+				p.Suggestion = suggestion
+				return p
+			}
+		}
 		return newParsedArgs("add", rest, recursive, yes, statusFilter, path)
 	}
 }
