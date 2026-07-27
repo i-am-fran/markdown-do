@@ -223,6 +223,17 @@ func (tf *TodoFile) GetCompletedTasks() []Task {
 	return result
 }
 
+// GetActiveTasks returns all non-completed tasks (pending and in-progress)
+func (tf *TodoFile) GetActiveTasks() []Task {
+	var result []Task
+	for _, t := range tf.tasks {
+		if t.Status != TaskCompleted {
+			result = append(result, t)
+		}
+	}
+	return result
+}
+
 // GetSections returns a copy of all sections
 func (tf *TodoFile) GetSections() []Section {
 	result := make([]Section, len(tf.sections))

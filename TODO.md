@@ -1,18 +1,16 @@
 # Markdown-do
 
-- [ ] [MDD-040] add list --active to show only open issues. Do the same for done/completed
 - [ ] [MDD-039] After I add a note, feedback should include the note number/ID so I can quickly take actions on it. Or maybe there should be a way to easily add a note to it, for example
-- [ ] [MDD-038] Allow to add tasks and path, to add them to a specific folder
 - [ ] [MDD-037] Force to add task using quotes, to not add mistakes like lis
 - [ ] [MDD-033] Run a code review
 - [ ] [MDD-028] Add manual at `man mdd`
 - [ ] [MDD-027] Add some tests
 - [ ] [MDD-029] Wire up PerformMoveTask as mdd move, or delete it if not worth it — currently dead code only reachable by its own tests since the TUI's move-to-section hotkey that used it is gone (from AI)
-- [x] [MDD-035] What should we about mdd-cache file
+- [x] [MDD-040] add list --active to show only open issues. Do the same for done/completed
+- [x] [MDD-038] Allow to add tasks and path, to add them to a specific folder
 
 ## Bugs
 
-- [x] [MDD-036] TestPerformToggleTask (internal/cli/logic_test.go) reads the real ~/.config/markdowndo/config.json with no test isolation, so it fails whenever enableInProgress is true on the machine running `go test` (from AI)
 
 ## Ideas
 
@@ -52,3 +50,5 @@
 - [x] [MDD-034] complete/toggle can reorder tasks mid-command, causing the printed confirmation to name the wrong task and multi-id 'complete N1 N2' to silently skip completing later IDs
 - [x] [MDD-024] Allow to escape special characters i.e. `{` by typing `\{` — added a generic `\X` escape pass in ParseTaskInput (task.go), so `\@` keeps a trailing `@` literal instead of being read as a section tag (the only character that was actually special)
 - [x] [MDD-023] If a task ends with `?` I get an error, unless I use quote marks — not an mdd bug: it's the shell (e.g. zsh nomatch) glob-expanding unquoted `?`/`*` before mdd runs; documented in `mdd help` and CLAUDE.md rather than fixed in code
+- [x] [MDD-035] What should we about mdd-cache file
+- [x] [MDD-036] TestPerformToggleTask (internal/cli/logic_test.go) reads the real ~/.config/markdowndo/config.json with no test isolation, so it fails whenever enableInProgress is true on the machine running `go test` (from AI) (from Bugs)

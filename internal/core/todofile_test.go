@@ -646,3 +646,18 @@ func TestSetTaskIDsPersistsAcrossLoad(t *testing.T) {
 		t.Errorf("expected tags to persist across Load, got %q, %q", tasks[0].StableID, tasks[1].StableID)
 	}
 }
+
+func TestGetActiveTasksExcludesCompletedOnly(t *testing.T) {
+	content := "# TODO\n\n- [ ] Pending task\n- [/] In-progress task\n- [x] Completed task\n"
+	tf := NewTodoFile("TODO.md", content)
+
+	active := tf.GetActiveTasks()
+	if len(active) != 2 {
+		t.Fatalf("expected 2 active tasks, got %d", len(active))
+	}
+	for _, task := range active {
+		if task.Status == TaskCompleted {
+			t.Errorf("expected no completed tasks in GetActiveTasks result, got %v", task)
+		}
+	}
+}

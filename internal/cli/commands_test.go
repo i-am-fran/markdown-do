@@ -67,3 +67,44 @@ func TestCompleteTaskMultiIDCompletesOriginalPositions(t *testing.T) {
 		t.Errorf("expected Task C still pending, got %v", statusOf("Task C"))
 	}
 }
+
+// `mdd add --path <dir>` must add the task to <dir>'s TODO.md, not the cwd's
+// (MDD-038).
+func TestAddTaskWithPathTargetsOtherDirectory(t *testing.T) {
+	cwdPath := chdirToTempTodoFile(t, "# TODO\n\n")
+
+	otherDir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatalf("EvalSymlinks failed: %v", err)
+	}
+
+	if err := AddTask("Buy milk", otherDir); err != nil {
+		t.Fatalf("AddTask failed: %v", err)
+	}
+
+	otherTodoFile, err := core.Load(filepath.Join(otherDir, "TODO.md"))
+	if err != nil {
+		t.Fatalf("failed to load TODO.md from target dir: %v", err)
+	}
+	tasks := otherTodoFile.GetTasks()
+	if len(tasks) != 1 || tasks[0].Text != "Buy milk" {
+		t.Fatalf("expected 1 task %q in target dir, got %v", "Buy milk", tasks)
+	}
+
+	cwdTodoFile, err := core.Load(cwdPath)
+	if err != nil {
+		t.Fatalf("failed to reload cwd TODO.md: %v", err)
+	}
+	if len(cwdTodoFile.GetTasks()) != 0 {
+		t.Errorf("expected cwd TODO.md untouched, got %v", cwdTodoFile.GetTasks())
+	}
+}
+
+func TestAddTaskWithPathRejectsMissingDirectory(t *testing.T) {
+	chdirToTempTodoFile(t, "# TODO\n\n")
+
+	err := AddTask("Buy milk", filepath.Join(t.TempDir(), "does-not-exist"))
+	if err == nil {
+		t.Fatal("expected error for nonexistent --path directory, got nil")
+	}
+}

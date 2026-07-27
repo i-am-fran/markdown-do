@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -139,8 +140,22 @@ func clearCacheWithWarning() {
 	}
 }
 
-// ListTasks lists all tasks
-func ListTasks(recursive bool) error {
+// matchesStatusFilter reports whether status passes the given list filter
+// ("active", "done", or "" for no filter).
+func matchesStatusFilter(status core.TaskStatus, filter string) bool {
+	switch filter {
+	case "active":
+		return status != core.TaskCompleted
+	case "done":
+		return status == core.TaskCompleted
+	default:
+		return true
+	}
+}
+
+// ListTasks lists all tasks, optionally filtered by status ("active" or
+// "done"; "" shows everything).
+func ListTasks(recursive bool, statusFilter string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -171,7 +186,12 @@ func ListTasks(recursive bool) error {
 					continue
 				}
 
-				tasks := todoFile.GetTasks()
+				var tasks []core.Task
+				for _, t := range todoFile.GetTasks() {
+					if matchesStatusFilter(t.Status, statusFilter) {
+						tasks = append(tasks, t)
+					}
+				}
 				if len(tasks) == 0 {
 					fmt.Println("  (no tasks)")
 				} else {
@@ -212,12 +232,19 @@ func ListTasks(recursive bool) error {
 		}
 
 		groups := todoFile.GetTasksGroupedBySectionOrdered()
-		if len(groups) == 0 {
-			fmt.Println("No tasks found")
-			return nil
-		}
 
+		printedAny := false
 		for _, group := range groups {
+			var tasks []core.Task
+			for _, t := range group.Tasks {
+				if matchesStatusFilter(t.Status, statusFilter) {
+					tasks = append(tasks, t)
+				}
+			}
+			if len(tasks) == 0 {
+				continue
+			}
+
 			if group.Section == nil {
 				fmt.Println(bold(cyan("Tasks:")))
 			} else {
@@ -225,18 +252,39 @@ func ListTasks(recursive bool) error {
 				fmt.Println(bold(magenta("## " + *group.Section)))
 			}
 
-			for _, task := range group.Tasks {
+			for _, task := range tasks {
 				fmt.Println(formatTaskLine(&task, "", 0))
 			}
+			printedAny = true
+		}
+
+		if !printedAny {
+			fmt.Println("No tasks found")
 		}
 	}
 
 	return nil
 }
 
-// AddTask adds a new task
-func AddTask(text string) error {
-	todoFile, filePath, err := LoadDefaultTodoFile()
+// AddTask adds a new task. If path is non-empty, the task is added to the
+// default TODO file in that directory instead of the current one.
+func AddTask(text string, path string) error {
+	var todoFile *core.TodoFile
+	var filePath string
+	var err error
+
+	if path != "" {
+		if !filepath.IsAbs(path) {
+			cwd, cwdErr := os.Getwd()
+			if cwdErr != nil {
+				return cwdErr
+			}
+			path = filepath.Join(cwd, path)
+		}
+		todoFile, filePath, err = LoadTodoFileFromDir(path)
+	} else {
+		todoFile, filePath, err = LoadDefaultTodoFile()
+	}
 	if err != nil {
 		return err
 	}
@@ -913,10 +961,13 @@ func ShowHelp() {
   mdd              Show this help
   mdd <task text>  Add a new task (quotes optional)
   mdd add <text>   Add a new task, explicitly (see "A note on task text" below)
+  mdd add <text> --path <dir>  Add to the TODO file in <dir> instead of cwd
 
 %s
   mdd list             List tasks
   mdd list -r          List tasks recursively (subdirectories)
+  mdd list -a          List only active tasks (pending + in-progress)
+  mdd list --done      List only completed tasks
   mdd find <keyword>   Find tasks by keyword
   mdd find <kw> -r     Find tasks by keyword, recursively
 

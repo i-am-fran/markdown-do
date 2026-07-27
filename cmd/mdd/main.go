@@ -62,7 +62,7 @@ func handleCLI(args cli.ParsedArgs) error {
 		return nil
 
 	case "list":
-		return cli.ListTasks(args.Recursive)
+		return cli.ListTasks(args.Recursive, args.StatusFilter)
 
 	case "find":
 		if len(args.Args) == 0 {
@@ -170,7 +170,7 @@ func handleCLI(args cli.ParsedArgs) error {
 		if args.Text == "" {
 			usageError("add requires task text, e.g. mdd add Buy groceries")
 		}
-		return cli.AddTask(args.Text)
+		return cli.AddTask(args.Text, args.Path)
 
 	case "unknown":
 		usageError("unrecognized flag %q — run 'mdd help' for the current commands, or 'mdd add \"...\"' to add a task starting with a dash", args.Args[0])

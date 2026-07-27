@@ -9,11 +9,13 @@ import (
 // arguments. Command is "" only when the input was empty or contained
 // nothing but flags.
 type ParsedArgs struct {
-	Command   string   // "add", a known verb, or "unknown" for an unrecognized dash flag
-	Args      []string // remaining positional tokens (the command word removed)
-	Text      string   // Args joined with " "
-	Recursive bool     // -r / --recursive present anywhere in the input
-	Yes       bool     // -y / --yes present anywhere in the input
+	Command      string   // "add", a known verb, or "unknown" for an unrecognized dash flag
+	Args         []string // remaining positional tokens (the command word removed)
+	Text         string   // Args joined with " "
+	Recursive    bool     // -r / --recursive present anywhere in the input
+	Yes          bool     // -y / --yes present anywhere in the input
+	StatusFilter string   // "active" (-a/--active), "done" (--done), or "" for no filter; used by list
+	Path         string   // -p / --path value; directory to target instead of cwd, used by add
 }
 
 // idShapeRegex matches tokens that look like a task reference: a position
@@ -35,9 +37,10 @@ var idArgCommands = map[string]bool{
 }
 
 // zeroArgCommands are only recognized as that command when nothing follows
-// them (other than -r/--recursive, already stripped by the time this check
-// runs); otherwise the input falls through to an implicit "add" so that
-// task text like "List of birthday gifts" isn't misinterpreted.
+// them (other than -r/--recursive/-a/--active/--done, already stripped by
+// the time this check runs); otherwise the input falls through to an
+// implicit "add" so that task text like "List of birthday gifts" isn't
+// misinterpreted.
 var zeroArgCommands = map[string]bool{
 	"list":    true,
 	"open":    true,
@@ -76,7 +79,11 @@ func ParseArgs(args []string) ParsedArgs {
 	var rest []string
 	recursive := false
 	yes := false
-	for _, a := range args {
+	statusFilter := ""
+	path := ""
+	malformedFlag := ""
+	for i := 0; i < len(args); i++ {
+		a := args[i]
 		if a == "-r" || a == "--recursive" {
 			recursive = true
 			continue
@@ -85,11 +92,38 @@ func ParseArgs(args []string) ParsedArgs {
 			yes = true
 			continue
 		}
+		if a == "-a" || a == "--active" {
+			if statusFilter != "" {
+				malformedFlag = a
+			}
+			statusFilter = "active"
+			continue
+		}
+		if a == "--done" {
+			if statusFilter != "" {
+				malformedFlag = a
+			}
+			statusFilter = "done"
+			continue
+		}
+		if a == "-p" || a == "--path" {
+			if i+1 >= len(args) {
+				malformedFlag = a
+				continue
+			}
+			i++
+			path = args[i]
+			continue
+		}
 		rest = append(rest, a)
 	}
 
+	if malformedFlag != "" {
+		return ParsedArgs{Command: "unknown", Args: []string{malformedFlag}, Text: malformedFlag}
+	}
+
 	if len(rest) == 0 {
-		return ParsedArgs{Recursive: recursive, Yes: yes}
+		return ParsedArgs{Recursive: recursive, Yes: yes, StatusFilter: statusFilter, Path: path}
 	}
 
 	word := rest[0]
@@ -97,26 +131,28 @@ func ParseArgs(args []string) ParsedArgs {
 
 	switch {
 	case idArgCommands[word] && len(tail) > 0 && idShapeRegex.MatchString(tail[0]):
-		return newParsedArgs(word, tail, recursive, yes)
+		return newParsedArgs(word, tail, recursive, yes, statusFilter, path)
 	case zeroArgCommands[word] && len(tail) == 0:
-		return newParsedArgs(word, tail, recursive, yes)
+		return newParsedArgs(word, tail, recursive, yes, statusFilter, path)
 	case freeTextCommands[word]:
-		return newParsedArgs(word, tail, recursive, yes)
+		return newParsedArgs(word, tail, recursive, yes, statusFilter, path)
 	case strings.HasPrefix(word, "-"):
 		// An unrecognized dash flag (likely a pre-2.0 flag like -c/-d/-lint)
 		// is reported loudly instead of being silently added as task text.
-		return newParsedArgs("unknown", rest, recursive, yes)
+		return newParsedArgs("unknown", rest, recursive, yes, statusFilter, path)
 	default:
-		return newParsedArgs("add", rest, recursive, yes)
+		return newParsedArgs("add", rest, recursive, yes, statusFilter, path)
 	}
 }
 
-func newParsedArgs(command string, args []string, recursive, yes bool) ParsedArgs {
+func newParsedArgs(command string, args []string, recursive, yes bool, statusFilter, path string) ParsedArgs {
 	return ParsedArgs{
-		Command:   command,
-		Args:      args,
-		Text:      strings.Join(args, " "),
-		Recursive: recursive,
-		Yes:       yes,
+		Command:      command,
+		Args:         args,
+		Text:         strings.Join(args, " "),
+		Recursive:    recursive,
+		Yes:          yes,
+		StatusFilter: statusFilter,
+		Path:         path,
 	}
 }

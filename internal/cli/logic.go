@@ -19,7 +19,26 @@ func LoadDefaultTodoFile() (*core.TodoFile, string, error) {
 		return nil, "", err
 	}
 
-	filePath, err := core.FindDefaultTodoFile(cwd)
+	return loadTodoFileFromDir(cwd)
+}
+
+// LoadTodoFileFromDir finds and loads the default TODO file in dir, e.g. for
+// the `add --path` flag. It does not create the file on disk. Returns an
+// error if dir does not exist.
+func LoadTodoFileFromDir(dir string) (*core.TodoFile, string, error) {
+	info, err := os.Stat(dir)
+	if err != nil {
+		return nil, "", fmt.Errorf("directory not found: %s", dir)
+	}
+	if !info.IsDir() {
+		return nil, "", fmt.Errorf("not a directory: %s", dir)
+	}
+
+	return loadTodoFileFromDir(dir)
+}
+
+func loadTodoFileFromDir(dir string) (*core.TodoFile, string, error) {
+	filePath, err := core.FindDefaultTodoFile(dir)
 	if err != nil {
 		return nil, "", err
 	}

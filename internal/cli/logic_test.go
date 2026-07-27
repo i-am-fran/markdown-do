@@ -41,6 +41,30 @@ func TestLoadDefaultTodoFile(t *testing.T) {
 	}
 }
 
+func TestLoadTodoFileFromDir(t *testing.T) {
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatalf("EvalSymlinks failed: %v", err)
+	}
+
+	todoFile, filePath, err := LoadTodoFileFromDir(dir)
+	if err != nil {
+		t.Fatalf("LoadTodoFileFromDir failed: %v", err)
+	}
+	if filePath != filepath.Join(dir, "TODO.md") {
+		t.Errorf("expected path %q, got %q", filepath.Join(dir, "TODO.md"), filePath)
+	}
+	if len(todoFile.GetTasks()) != 0 {
+		t.Errorf("expected no tasks for a nonexistent file, got %d", len(todoFile.GetTasks()))
+	}
+}
+
+func TestLoadTodoFileFromDirMissingDirectory(t *testing.T) {
+	if _, _, err := LoadTodoFileFromDir(filepath.Join(t.TempDir(), "does-not-exist")); err == nil {
+		t.Error("expected error for nonexistent directory, got nil")
+	}
+}
+
 func TestPerformAddTaskCreatesFileOnFirstUse(t *testing.T) {
 	dir := t.TempDir()
 	filePath := filepath.Join(dir, "TODO.md")
