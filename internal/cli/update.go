@@ -50,16 +50,6 @@ func latestReleaseTag() (string, error) {
 	return release.TagName, nil
 }
 
-// updateBaseURL returns the base URL under which release assets live.
-// MDD_UPDATE_BASE_URL overrides it for tests only; production always uses
-// the real GitHub download URL since the env var is unset.
-func updateBaseURL() string {
-	if v := os.Getenv("MDD_UPDATE_BASE_URL"); v != "" {
-		return strings.TrimSuffix(v, "/")
-	}
-	return "https://github.com/i-am-fran/markdown-do/releases/download"
-}
-
 // assetNameForPlatform maps a GOOS/GOARCH pair to the release asset name
 // produced by the Makefile's build-all target.
 func assetNameForPlatform(goos, goarch string) (string, error) {
@@ -217,6 +207,14 @@ func performUpdate(tag, execPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("downloading checksums.txt: %w", err)
 	}
+	sig, err := downloadBytes(base + "/checksums.txt.sig")
+	if err != nil {
+		return "", fmt.Errorf("downloading checksums.txt.sig: %w", err)
+	}
+	if err := verifyChecksumsSignature(sums, sig); err != nil {
+		return "", err
+	}
+
 	want, err := parseChecksums(sums, asset)
 	if err != nil {
 		return "", fmt.Errorf("release %s looks incomplete: %w", tag, err)

@@ -40,17 +40,20 @@ run:
 dev:
 	$(GORUN) $(MAIN)
 
-# Run tests
+# Run tests. -tags testhooks compiles in the test-only overrides (update
+# base URL, update public key, state/config dirs) that production builds
+# (build/install/build-all, all untagged) never see.
 test:
-	$(GOTEST) -v ./...
+	$(GOTEST) -tags testhooks -v ./...
 
 # Format code
 fmt:
 	$(GOFMT) ./...
 
-# Lint code (requires golangci-lint)
+# Lint code (requires golangci-lint). Same -tags testhooks as `test`, so
+# vet/lint sees the test-only files too.
 lint:
-	golangci-lint run
+	golangci-lint run --build-tags testhooks
 
 # Clean build artifacts
 clean:

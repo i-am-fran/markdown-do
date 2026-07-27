@@ -27,10 +27,21 @@ jobs:
         working-directory: build
         run: sha256sum mdd-* > checksums.txt
 
+      # Signs checksums.txt with the release-signing key so `mdd update`
+      # can verify authenticity, not just transport integrity (a plain
+      # sha256 alone only protects against corruption — see
+      # internal/cli/update_verify.go). MDD_RELEASE_SIGNING_KEY is a
+      # hex-encoded ed25519 private-key seed stored as a repo secret; its
+      # public half is embedded in internal/cli/update_verify.go.
+      - name: Sign checksums.txt
+        env:
+          MDD_RELEASE_SIGNING_KEY: ${{ secrets.MDD_RELEASE_SIGNING_KEY }}
+        run: go run ./cmd/mdd __sign-checksums build/checksums.txt > build/checksums.txt.sig
+
       - name: Upload release assets
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           gh release upload "${{ github.event.release.tag_name }}" \
-            ./build/mdd-* ./build/checksums.txt \
+            ./build/mdd-* ./build/checksums.txt ./build/checksums.txt.sig \
             --clobber --repo "${{ github.repository }}"
