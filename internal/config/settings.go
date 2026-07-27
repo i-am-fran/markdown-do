@@ -2,8 +2,11 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/i-am-fran/markdown-do/internal/fsutil"
 )
 
 var (
@@ -15,6 +18,7 @@ var (
 func init() {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not determine home directory (%v); storing mdd config under the current directory\n", err)
 		homeDir = "."
 	}
 	configDir = filepath.Join(homeDir, ".config", "markdowndo")
@@ -49,7 +53,15 @@ func GetSettings() Settings {
 	if err == nil {
 		var loaded Settings
 		var present map[string]interface{}
-		if json.Unmarshal(data, &loaded) == nil && json.Unmarshal(data, &present) == nil {
+		unmarshalErr := json.Unmarshal(data, &loaded)
+		presentErr := json.Unmarshal(data, &present)
+		if unmarshalErr != nil || presentErr != nil {
+			firstErr := unmarshalErr
+			if firstErr == nil {
+				firstErr = presentErr
+			}
+			fmt.Fprintf(os.Stderr, "Warning: could not parse %s (%v) — using default settings\n", configFile, firstErr)
+		} else {
 			// Only override a default when the key is actually present in the
 			// file — a bool field silently missing from an older config.json
 			// must not be read as an explicit `false`.
@@ -86,7 +98,13 @@ func SaveSettings(settings Settings) error {
 		return err
 	}
 
-	if err := os.WriteFile(configFile, data, 0644); err != nil {
+	lock, err := fsutil.AcquireLock(configFile)
+	if err != nil {
+		return fmt.Errorf("could not lock %s for writing: %w", configFile, err)
+	}
+	defer func() { _ = lock.Unlock() }()
+
+	if err := fsutil.AtomicWriteFile(configFile, data, 0644); err != nil {
 		return err
 	}
 

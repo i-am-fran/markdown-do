@@ -21,7 +21,7 @@ func chdirTemp(t *testing.T) string {
 	if err := os.Chdir(dir); err != nil {
 		t.Fatalf("Chdir failed: %v", err)
 	}
-	t.Cleanup(func() { os.Chdir(origWd) })
+	t.Cleanup(func() { _ = os.Chdir(origWd) })
 	return dir
 }
 

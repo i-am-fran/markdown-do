@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 
 	restoreConfig()
 	restoreState()
-	os.RemoveAll(stateDir)
-	os.RemoveAll(configDir)
+	_ = os.RemoveAll(stateDir)
+	_ = os.RemoveAll(configDir)
 	os.Exit(code)
 }

@@ -27,7 +27,7 @@ func TestLoadDefaultTodoFile(t *testing.T) {
 	if err := os.Chdir(dir); err != nil {
 		t.Fatalf("Chdir failed: %v", err)
 	}
-	defer os.Chdir(origWd)
+	defer func() { _ = os.Chdir(origWd) }()
 
 	todoFile, filePath, err := LoadDefaultTodoFile()
 	if err != nil {

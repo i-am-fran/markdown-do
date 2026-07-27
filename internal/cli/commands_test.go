@@ -28,7 +28,7 @@ func chdirToTempTodoFile(t *testing.T, content string) string {
 	if err := os.Chdir(dir); err != nil {
 		t.Fatalf("Chdir failed: %v", err)
 	}
-	t.Cleanup(func() { os.Chdir(origWd) })
+	t.Cleanup(func() { _ = os.Chdir(origWd) })
 	return path
 }
 
@@ -106,5 +106,68 @@ func TestAddTaskWithPathRejectsMissingDirectory(t *testing.T) {
 	err := AddTask("Buy milk", filepath.Join(t.TempDir(), "does-not-exist"))
 	if err == nil {
 		t.Fatal("expected error for nonexistent --path directory, got nil")
+	}
+}
+
+// The following tests exercise error paths in commands.go that used to call
+// os.Exit(1) directly (via dieOnErr/dieIfTaskNotFound) instead of returning
+// an error like every other command — which made them untestable in-process
+// (they would have killed the test binary). Now that every cli function
+// consistently returns its error up to main.go's single exit point, these
+// paths can be tested directly.
+
+func TestDeleteTaskUnknownIDReturnsError(t *testing.T) {
+	chdirToTempTodoFile(t, "# TODO\n\n- [ ] Buy milk\n")
+
+	if err := DeleteTask("99", true); err == nil {
+		t.Fatal("expected an error for an unknown task id, got nil")
+	}
+}
+
+func TestToggleTaskUnknownIDReturnsError(t *testing.T) {
+	chdirToTempTodoFile(t, "# TODO\n\n- [ ] Buy milk\n")
+
+	if err := ToggleTask("99"); err == nil {
+		t.Fatal("expected an error for an unknown task id, got nil")
+	}
+}
+
+func TestEditTaskUnknownIDReturnsError(t *testing.T) {
+	chdirToTempTodoFile(t, "# TODO\n\n- [ ] Buy milk\n")
+
+	if err := EditTask("99", "New text"); err == nil {
+		t.Fatal("expected an error for an unknown task id, got nil")
+	}
+}
+
+func TestAddTaskNoteUnknownIDReturnsError(t *testing.T) {
+	chdirToTempTodoFile(t, "# TODO\n\n- [ ] Buy milk\n")
+
+	if err := AddTaskNote("99", "a note"); err == nil {
+		t.Fatal("expected an error for an unknown task id, got nil")
+	}
+}
+
+func TestCompleteTaskUnknownSingleIDReturnsError(t *testing.T) {
+	chdirToTempTodoFile(t, "# TODO\n\n- [ ] Buy milk\n")
+
+	if err := CompleteTask([]string{"99"}); err == nil {
+		t.Fatal("expected an error for an unknown task id, got nil")
+	}
+}
+
+func TestCompleteTaskAllIDsFailReturnsError(t *testing.T) {
+	chdirToTempTodoFile(t, "# TODO\n\n- [ ] Buy milk\n")
+
+	if err := CompleteTask([]string{"98", "99"}); err == nil {
+		t.Fatal("expected an error when every id fails to complete, got nil")
+	}
+}
+
+func TestSetTaskIDsInvalidPrefixReturnsError(t *testing.T) {
+	chdirToTempTodoFile(t, "# TODO\n\n- [ ] Buy milk\n")
+
+	if err := SetTaskIDs("abcd"); err == nil {
+		t.Fatal("expected an error for an invalid 4-letter prefix, got nil")
 	}
 }

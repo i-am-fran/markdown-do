@@ -42,7 +42,7 @@ func TestCompleteSectionAliasAndHeaders(t *testing.T) {
 	if err := os.Chdir(dir); err != nil {
 		t.Fatalf("Chdir failed: %v", err)
 	}
-	defer os.Chdir(origWd)
+	defer func() { _ = os.Chdir(origWd) }()
 
 	content := "# TODO\n\n## Bugs\n\n- [ ] fix it\n\n## Budget\n\n- [ ] save money\n"
 	if err := os.WriteFile(filepath.Join(dir, "TODO.md"), []byte(content), 0644); err != nil {
@@ -65,7 +65,7 @@ func TestCompleteSectionAliasBuiltin(t *testing.T) {
 	if err := os.Chdir(dir); err != nil {
 		t.Fatalf("Chdir failed: %v", err)
 	}
-	defer os.Chdir(origWd)
+	defer func() { _ = os.Chdir(origWd) }()
 
 	got := Complete([]string{"@f"})
 	want := []string{"@ff"}

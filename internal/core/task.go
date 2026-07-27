@@ -22,6 +22,7 @@ type Task struct {
 	Text       string
 	Status     TaskStatus
 	LineNumber int
+	Indent     string   // leading whitespace preserved from the source line (e.g. a nested checklist item)
 	Section    *string  // nil means no section
 	Notes      []string // trimmed text of trailing indented bullet lines
 }
@@ -84,13 +85,30 @@ func SectionAliases() map[string]string {
 	return out
 }
 
+const (
+	idTagPrefixPattern = `[A-Z]{3}`
+	idTagNumberPattern = `\d+`
+	// IDTagShapePattern is the shared "shape" of a stable ID tag: a 3-letter
+	// prefix, optional dash, digits (e.g. "ABC-001", or "ABC01" for IDs
+	// tagged before MDD29). Exported so other packages (e.g. cli's
+	// task-reference argument parsing) build on the same definition instead
+	// of re-deriving it.
+	IDTagShapePattern = idTagPrefixPattern + `-?` + idTagNumberPattern
+)
+
 var (
 	headerRegex   = regexp.MustCompile(`^##\s+(.+)$`)
 	taskRegex     = regexp.MustCompile(`^(\s*)-\s*\[([ xX/])\]\s*(.*)$`)
 	sectionRegex  = regexp.MustCompile(`(?:^|\s)@(\w+)\s*$`)
-	stableIDRegex = regexp.MustCompile(`^\[([A-Z]{3}-?\d+)\]\s*`)
+	stableIDRegex = regexp.MustCompile(`^\[(` + IDTagShapePattern + `)\]\s*`)
 	idPrefixRegex = regexp.MustCompile(`^[A-Za-z]{3}$`)
 	noteRegex     = regexp.MustCompile(`^\s+-\s+(\S.*)$`)
+
+	// mainHeaderRegex matches a single "# Title" line (not "## Section").
+	mainHeaderRegex = regexp.MustCompile(`^#\s+`)
+	// sectionHeaderLineRegex matches any "## ..." section header line
+	// (loosely, without capturing the name — see headerRegex for that).
+	sectionHeaderLineRegex = regexp.MustCompile(`^##\s+`)
 )
 
 // ParseHeaderLine extracts section name from a header line
@@ -116,14 +134,14 @@ func FormatTask(task *Task) string {
 	if task.StableID != "" {
 		text = "[" + task.StableID + "] " + text
 	}
-	return "- " + checkbox + " " + text
+	return task.Indent + "- " + checkbox + " " + text
 }
 
 // FormatTaskBlock formats a task's checkbox line followed by its note lines.
 func FormatTaskBlock(task *Task) []string {
 	block := []string{FormatTask(task)}
 	for _, note := range task.Notes {
-		block = append(block, "  - "+note)
+		block = append(block, task.Indent+"  - "+note)
 	}
 	return block
 }
@@ -158,6 +176,7 @@ func ParseTaskLine(line string, lineNumber int, id int, section *string) *Task {
 		Text:       text,
 		Status:     status,
 		LineNumber: lineNumber,
+		Indent:     match[1],
 		Section:    section,
 	}
 }

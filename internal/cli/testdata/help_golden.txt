@@ -1,0 +1,99 @@
+
+mdd - Markdown-do: Manage TODO.md files
+
+Usage:
+  mdd              Show this help
+  mdd <task text>  Add a new task (quotes optional)
+  mdd add <text>   Add a new task, explicitly (see "A note on task text" below)
+  mdd add <text> --path <dir>  Add to the TODO file in <dir> instead of cwd
+
+Viewing & Finding:
+  mdd list             List tasks
+  mdd list -r          List tasks recursively (subdirectories)
+  mdd list -a          List only active tasks (pending + in-progress)
+  mdd list --done      List only completed tasks
+  mdd find <keyword>   Find tasks by keyword
+  mdd find <kw> -r     Find tasks by keyword, recursively
+
+Managing Tasks:
+  mdd toggle <id>             Toggle task status (pending <-> completed)
+  mdd complete <id> [id2...]  Complete one or more tasks by ID
+  mdd edit <id> <text>        Edit task text
+  mdd annotate <id> <text>    Add a note to a task (shown inline wherever it's listed)
+  mdd remove <id>             Delete task by ID
+  mdd clear                   Delete all completed tasks
+                              (both prompt first if confirmDestructive is on;
+                               add -y/--yes to skip the prompt)
+  mdd archive                 Move all completed tasks to the ## Archive
+                              section, noting where each came from
+  mdd undo                    Revert the last change (run again to redo it)
+
+Utilities:
+  mdd notes <text>   Add a note to the ## Notes section
+  mdd open           Open TODO file in editor
+  mdd lint           Lint and fix TODO file formatting
+  mdd tag <PREFIX>   Tag every task with sequential IDs (PREFIX01, PREFIX02, ...)
+  mdd untag          Remove all task ID tags
+  mdd config list    Show all settings
+  mdd config get k   Show one setting, e.g. mdd config get editor
+  mdd config set k v Change a setting, e.g. mdd config set editor vim
+  mdd config edit    Open config.json directly in your editor
+  mdd completion bash|zsh  Print a shell completion script (see below)
+  mdd update         Download and swap in the latest release binary
+  mdd version        Show version (also: -v, --version)
+  mdd help           Show this help (also: -h, --help)
+
+Sections:
+  End a task with "@Section" to file it there (created automatically
+  if it doesn't exist yet). Built-in shortcuts, case-insensitive:
+
+    @ff  -> Features        @ii  -> Ideas
+    @bb  -> Bugs            @ww  -> Warnings
+
+  Any other @name creates/uses a custom section, e.g. @Admin.
+
+Escaping & quoting:
+  Prefix a character with \ to keep it literal instead of special, e.g.
+  "mdd 'Meet Bob \@bb'" adds a task ending in a literal @bb instead of
+  filing it under Bugs. Use \\ for a literal backslash.
+
+  Some shells treat unquoted ?/* as glob patterns and will error ("no
+  matches found") instead of passing them to mdd — quote task text that
+  contains them, e.g. mdd "Ping the vendor?".
+
+Task IDs:
+  <id> above accepts either a task's position number, or its ID tag
+  once IDs have been assigned with tag (e.g. "mdd complete ABC-001").
+
+Shell Completion:
+  Tab-complete commands (e.g. "mdd ar" -> "mdd archive") and section
+  tags (e.g. "@Bu" -> "@Bugs"). Add one line to your shell rc file:
+
+    source <(mdd completion bash)   # ~/.bashrc
+    source <(mdd completion zsh)    # ~/.zshrc
+
+A note on task text:
+  A word like "complete" or "list" is only treated as a command when
+  what follows it looks like that command's arguments (e.g. "complete"
+  needs a task ID next). Otherwise it's added as a task, so
+  "mdd Complete the tax return" still just adds a task. If your task
+  text is ever misread as a command, use "mdd add" to force it:
+
+    mdd add "Find a good plumber"
+
+Examples:
+  mdd Buy groceries            Add a task to the inbox
+  mdd "Fix login bug @bb"      Add a task to the Bugs section
+  mdd "Dark mode @Features"    Add a task to the Features section
+  mdd list                     Show all tasks
+  mdd toggle 2                 Toggle task #2
+  mdd complete 1               Complete task #1
+  mdd complete 1 2 3           Complete tasks #1, #2, and #3
+  mdd edit 1 Fix the bug       Edit task #1
+  mdd annotate 1 Needs review  Add a note to task #1
+  mdd remove 3                 Delete task #3
+  mdd archive                  Move all completed tasks to ## Archive
+  mdd find bug                 Find tasks containing "bug"
+  mdd tag ABC                  Tag all tasks: [ABC-001], [ABC-002], ...
+  mdd complete ABC-001         Complete the task tagged ABC-001
+  mdd untag                    Remove all ID tags

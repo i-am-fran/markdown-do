@@ -15,16 +15,24 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 )
+
+// httpClient is used for every network call update.go makes. A bounded
+// timeout keeps a hung or slow-loris server from blocking `mdd update`
+// indefinitely — net/http's Client.Timeout covers the full round trip
+// (connect, headers, and body read), so this alone is enough without also
+// wiring a context.WithTimeout around each call.
+var httpClient = &http.Client{Timeout: 30 * time.Second}
 
 // latestReleaseTag fetches the tag name of the latest GitHub release for
 // this repo. Release tags are bare semver (e.g. "3.2.0", no "v" prefix).
 func latestReleaseTag() (string, error) {
-	resp, err := http.Get("https://api.github.com/repos/i-am-fran/markdown-do/releases/latest")
+	resp, err := httpClient.Get("https://api.github.com/repos/i-am-fran/markdown-do/releases/latest")
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("GitHub API returned %s", resp.Status)
@@ -40,16 +48,6 @@ func latestReleaseTag() (string, error) {
 		return "", errors.New("GitHub API response had no tag_name")
 	}
 	return release.TagName, nil
-}
-
-// updateBaseURL returns the base URL under which release assets live.
-// MDD_UPDATE_BASE_URL overrides it for tests only; production always uses
-// the real GitHub download URL since the env var is unset.
-func updateBaseURL() string {
-	if v := os.Getenv("MDD_UPDATE_BASE_URL"); v != "" {
-		return strings.TrimSuffix(v, "/")
-	}
-	return "https://github.com/i-am-fran/markdown-do/releases/download"
 }
 
 // assetNameForPlatform maps a GOOS/GOARCH pair to the release asset name
@@ -99,11 +97,11 @@ func parseChecksums(data []byte, wantName string) (string, error) {
 // file that will ultimately be replaced, so the later swap-rename is
 // same-filesystem (and therefore atomic).
 func downloadFile(url, dir, pattern string) (string, error) {
-	resp, err := http.Get(url)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("GET %s: %s", url, resp.Status)
 	}
@@ -112,10 +110,10 @@ func downloadFile(url, dir, pattern string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 
 	if _, err := io.Copy(out, resp.Body); err != nil {
-		os.Remove(out.Name())
+		_ = os.Remove(out.Name())
 		return "", err
 	}
 	return out.Name(), nil
@@ -123,11 +121,11 @@ func downloadFile(url, dir, pattern string) (string, error) {
 
 // downloadBytes GETs url and returns the response body.
 func downloadBytes(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GET %s: %s", url, resp.Status)
 	}
@@ -140,7 +138,7 @@ func sha256HexOfFile(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
@@ -203,12 +201,20 @@ func performUpdate(tag, execPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("downloading %s: %w", asset, err)
 	}
-	defer os.Remove(binPath) // no-op once swapBinary has moved it into place
+	defer func() { _ = os.Remove(binPath) }() // no-op once swapBinary has moved it into place
 
 	sums, err := downloadBytes(base + "/checksums.txt")
 	if err != nil {
 		return "", fmt.Errorf("downloading checksums.txt: %w", err)
 	}
+	sig, err := downloadBytes(base + "/checksums.txt.sig")
+	if err != nil {
+		return "", fmt.Errorf("downloading checksums.txt.sig: %w", err)
+	}
+	if err := verifyChecksumsSignature(sums, sig); err != nil {
+		return "", err
+	}
+
 	want, err := parseChecksums(sums, asset)
 	if err != nil {
 		return "", fmt.Errorf("release %s looks incomplete: %w", tag, err)
@@ -224,6 +230,14 @@ func performUpdate(tag, execPath string) (string, error) {
 	return swapBinary(execPath, binPath)
 }
 
+// normalizeVersionTag strips an optional leading "v" (and surrounding
+// whitespace) so a release tagged "v3.2.2" and a Version constant of
+// "3.2.2" (or vice versa) are recognized as the same version instead of
+// falsely appearing to mismatch.
+func normalizeVersionTag(v string) string {
+	return strings.TrimPrefix(strings.TrimSpace(v), "v")
+}
+
 // UpdateBinary downloads the latest release binary for the current
 // platform, verifies its checksum, and swaps it in for the running mdd
 // executable.
@@ -232,7 +246,7 @@ func UpdateBinary() error {
 	if err != nil {
 		return fmt.Errorf("could not determine the latest release: %w", err)
 	}
-	if tag == Version {
+	if normalizeVersionTag(tag) == normalizeVersionTag(Version) {
 		fmt.Println(green(fmt.Sprintf("Already up to date (%s).", Version)))
 		return nil
 	}

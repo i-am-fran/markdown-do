@@ -31,6 +31,23 @@ func main() {
 		return
 	}
 
+	// Hidden release-signing helper, invoked only by
+	// .github/workflows/release.yml (never by end users) to sign
+	// checksums.txt during a release build.
+	if os.Args[1] == "__sign-checksums" {
+		if len(os.Args) != 3 {
+			fmt.Fprintln(os.Stderr, "usage: mdd __sign-checksums <path-to-checksums.txt>")
+			os.Exit(1)
+		}
+		sig, err := cli.SignChecksumsFile(os.Args[2])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Error:", err)
+			os.Exit(1)
+		}
+		fmt.Println(sig)
+		return
+	}
+
 	args := cli.ParseArgs(os.Args[1:])
 
 	// If nothing but flags were passed (no command), fall back to help.

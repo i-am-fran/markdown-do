@@ -9,11 +9,13 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/i-am-fran/markdown-do/internal/fsutil"
 )
 
 // idTagRegex matches a stable ID tag's prefix and number. The dash is
 // optional so IDs tagged before MDD29 (e.g. "ABC01") still parse.
-var idTagRegex = regexp.MustCompile(`^([A-Z]{3})-?(\d+)$`)
+var idTagRegex = regexp.MustCompile(`^(` + idTagPrefixPattern + `)-?(` + idTagNumberPattern + `)$`)
 
 // TodoFile manages a TODO.md file
 type TodoFile struct {
@@ -253,44 +255,6 @@ func (tf *TodoFile) GetTasksBySection(sectionName *string) []Task {
 	return result
 }
 
-// GetTasksGroupedBySection returns tasks grouped by section
-func (tf *TodoFile) GetTasksGroupedBySection() map[*string][]Task {
-	groups := make(map[*string][]Task)
-
-	// nil key for tasks without section
-	var nilKey *string
-	groups[nilKey] = nil
-
-	// Create entries for all sections in order
-	for i := range tf.sections {
-		groups[&tf.sections[i].Name] = nil
-	}
-
-	// Group tasks
-	for _, task := range tf.tasks {
-		if task.Section == nil {
-			groups[nilKey] = append(groups[nilKey], task)
-		} else {
-			// Find the matching section key
-			for i := range tf.sections {
-				if tf.sections[i].Name == *task.Section {
-					groups[&tf.sections[i].Name] = append(groups[&tf.sections[i].Name], task)
-					break
-				}
-			}
-		}
-	}
-
-	// Remove empty groups
-	for key, tasks := range groups {
-		if len(tasks) == 0 {
-			delete(groups, key)
-		}
-	}
-
-	return groups
-}
-
 // GetTasksGroupedBySectionOrdered returns tasks grouped by section in order
 func (tf *TodoFile) GetTasksGroupedBySectionOrdered() []struct {
 	Section *string
@@ -452,8 +416,6 @@ func (tf *TodoFile) findOrCreateSection(sectionTag string) int {
 func (tf *TodoFile) findInsertPosition() int {
 	// Insert at the top (inbox behavior) - after the main header but before existing tasks
 	// Find the first # header (main title like "# TODO")
-	mainHeaderRegex := regexp.MustCompile(`^#\s+`)
-
 	for i, line := range tf.lines {
 		// Found main header (single #, not ## section)
 		if mainHeaderRegex.MatchString(line) && !strings.HasPrefix(line, "##") {
@@ -483,6 +445,7 @@ func (tf *TodoFile) UpdateTask(id int, text string) bool {
 		Text:       text,
 		Status:     task.Status,
 		LineNumber: task.LineNumber,
+		Indent:     task.Indent,
 		Section:    task.Section,
 	})
 	tf.lines[task.LineNumber] = updatedLine
@@ -522,6 +485,7 @@ func (tf *TodoFile) ToggleTask(id int, enableInProgress bool) bool {
 		Text:       task.Text,
 		Status:     newStatus,
 		LineNumber: task.LineNumber,
+		Indent:     task.Indent,
 		Section:    task.Section,
 	})
 	tf.lines[task.LineNumber] = updatedLine
@@ -542,6 +506,7 @@ func (tf *TodoFile) SetTaskStatus(id int, status TaskStatus) bool {
 		Text:       task.Text,
 		Status:     status,
 		LineNumber: task.LineNumber,
+		Indent:     task.Indent,
 		Section:    task.Section,
 	})
 	tf.lines[task.LineNumber] = updatedLine
@@ -575,6 +540,22 @@ func formatNoteLines(notes []string) []string {
 	return lines
 }
 
+// removeTaskBlocks deletes every task in tasks (and its notes) from
+// tf.lines, always processing bottom-to-top (highest LineNumber first) so
+// removing one task's block never shifts the LineNumbers of tasks still to
+// be removed. tasks is not mutated. Callers must re-parse afterward.
+func (tf *TodoFile) removeTaskBlocks(tasks []Task) {
+	sorted := make([]Task, len(tasks))
+	copy(sorted, tasks)
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].LineNumber > sorted[j].LineNumber
+	})
+	for _, task := range sorted {
+		end := task.LineNumber + task.BlockLineCount()
+		tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
+	}
+}
+
 // MoveTask moves a task to a different section
 func (tf *TodoFile) MoveTask(taskID int, targetSection *string) bool {
 	task := tf.GetTask(taskID)
@@ -583,8 +564,7 @@ func (tf *TodoFile) MoveTask(taskID int, targetSection *string) bool {
 	}
 
 	// Remove block (task line + notes) from current location
-	end := task.LineNumber + task.BlockLineCount()
-	tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
+	tf.removeTaskBlocks([]Task{*task})
 	tf.parse(strings.Join(tf.lines, "\n"))
 
 	// Find new position
@@ -616,8 +596,7 @@ func (tf *TodoFile) DeleteTask(id int) bool {
 		return false
 	}
 
-	end := task.LineNumber + task.BlockLineCount()
-	tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
+	tf.removeTaskBlocks([]Task{*task})
 	tf.parse(strings.Join(tf.lines, "\n"))
 	return true
 }
@@ -630,7 +609,7 @@ func (tf *TodoFile) AddTaskNote(id int, text string) bool {
 	}
 
 	insertAt := task.LineNumber + task.BlockLineCount()
-	noteLine := "  - " + strings.TrimSpace(text)
+	noteLine := task.Indent + "  - " + strings.TrimSpace(text)
 	tf.lines = append(tf.lines[:insertAt], append([]string{noteLine}, tf.lines[insertAt:]...)...)
 	tf.parse(strings.Join(tf.lines, "\n"))
 	return true
@@ -643,16 +622,7 @@ func (tf *TodoFile) DeleteCompletedTasks() int {
 		return 0
 	}
 
-	// Delete from bottom to top to preserve line numbers
-	sort.Slice(completed, func(i, j int) bool {
-		return completed[i].LineNumber > completed[j].LineNumber
-	})
-
-	for _, task := range completed {
-		end := task.LineNumber + task.BlockLineCount()
-		tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
-	}
-
+	tf.removeTaskBlocks(completed)
 	tf.parse(strings.Join(tf.lines, "\n"))
 	return len(completed)
 }
@@ -684,13 +654,7 @@ func (tf *TodoFile) ArchiveCompletedTasks() int {
 	}
 
 	// Remove the tasks from bottom to top so earlier LineNumbers stay valid.
-	sort.Slice(toArchive, func(i, j int) bool {
-		return toArchive[i].LineNumber > toArchive[j].LineNumber
-	})
-	for _, task := range toArchive {
-		end := task.LineNumber + task.BlockLineCount()
-		tf.lines = append(tf.lines[:task.LineNumber], tf.lines[end:]...)
-	}
+	tf.removeTaskBlocks(toArchive)
 	tf.parse(strings.Join(tf.lines, "\n"))
 
 	insertLine := tf.findOrCreateSection("Archive")
@@ -721,8 +685,7 @@ func (tf *TodoFile) Lint() LintResult {
 		line := tf.lines[i]
 
 		// Check if this is a section header (## Header)
-		sectionRegex := regexp.MustCompile(`^##\s+`)
-		if sectionRegex.MatchString(line) {
+		if sectionHeaderLineRegex.MatchString(line) {
 			// Look ahead to see if there is any content before the next section or end of file
 			hasContent := false
 			j := i + 1
@@ -731,7 +694,7 @@ func (tf *TodoFile) Lint() LintResult {
 				nextLine := tf.lines[j]
 
 				// If we hit another section header, stop looking
-				if sectionRegex.MatchString(nextLine) {
+				if sectionHeaderLineRegex.MatchString(nextLine) {
 					break
 				}
 
@@ -760,14 +723,11 @@ func (tf *TodoFile) Lint() LintResult {
 	}
 
 	// Fix heading spacing - ensure exactly one blank line above and below ## headers
-	mainHeaderRegex := regexp.MustCompile(`^#\s+`)
-	sectionHeaderRegex := regexp.MustCompile(`^##\s+`)
-
 	for i := 0; i < len(tf.lines); i++ {
 		line := tf.lines[i]
 
 		// Check if this is a section header (## Header)
-		if sectionHeaderRegex.MatchString(line) {
+		if sectionHeaderLineRegex.MatchString(line) {
 			// Check line(s) above - ensure exactly one blank line
 			if i > 0 {
 				lineAbove := tf.lines[i-1]
@@ -893,17 +853,15 @@ func (tf *TodoFile) Lint() LintResult {
 
 	// Track current section to detect Notes
 	currentSection := ""
-	mainHeaderRegex2 := regexp.MustCompile(`^#\s+`)
-	sectionHeaderRegex2 := regexp.MustCompile(`^##\s+(.+)$`)
 
 	for i := 0; i < len(tf.lines); i++ {
 		line := tf.lines[i]
 
 		// Track which section we're in
-		if mainHeaderRegex2.MatchString(line) && !strings.HasPrefix(line, "##") {
+		if mainHeaderRegex.MatchString(line) && !strings.HasPrefix(line, "##") {
 			currentSection = ""
-		} else if match := sectionHeaderRegex2.FindStringSubmatch(line); match != nil {
-			currentSection = strings.TrimSpace(match[1])
+		} else if sectionName := ParseHeaderLine(line); sectionName != nil {
+			currentSection = *sectionName
 		}
 
 		// Skip empty lines and headers
@@ -1015,7 +973,7 @@ func pluralize(count int, singular string) string {
 	if count == 1 {
 		return "1 " + singular
 	}
-	return string(rune('0'+count)) + " " + singular + "s"
+	return strconv.Itoa(count) + " " + singular + "s"
 }
 
 // Serialize returns the file content as a string
@@ -1088,14 +1046,13 @@ func (tf *TodoFile) ensureSectionLast(name string) {
 	// Find the section
 	lineStart := -1
 	lineEnd := -1
-	sectionHeaderRegex := regexp.MustCompile(`^##\s+`)
 
 	for i, line := range tf.lines {
 		if match := ParseHeaderLine(line); match != nil && strings.EqualFold(*match, name) {
 			lineStart = i
 			// Find where this section ends (next section or end of file)
 			for j := i + 1; j < len(tf.lines); j++ {
-				if sectionHeaderRegex.MatchString(tf.lines[j]) {
+				if sectionHeaderLineRegex.MatchString(tf.lines[j]) {
 					lineEnd = j
 					break
 				}
@@ -1160,6 +1117,17 @@ func (tf *TodoFile) ensureSectionLast(name string) {
 // "mdd undo" can restore it. If the file doesn't exist yet on disk (the
 // very first save), there's nothing to back up.
 func (tf *TodoFile) Save() error {
+	// Held for the whole save (undo backup + main content) so two
+	// concurrent `mdd` invocations against the same file can't interleave
+	// their writes. This doesn't close the wider load-mutate-save race
+	// across a whole CLI invocation (see CLAUDE.md's Concurrency note) —
+	// only the write itself is made atomic and mutually exclusive.
+	lock, err := fsutil.AcquireLock(tf.FilePath)
+	if err != nil {
+		return fmt.Errorf("could not lock %s for writing: %w", tf.FilePath, err)
+	}
+	defer func() { _ = lock.Unlock() }()
+
 	tf.ensureSectionLast("Archive")
 	tf.ensureSectionLast("Notes")
 	tf.reorderTasks()
@@ -1170,37 +1138,53 @@ func (tf *TodoFile) Save() error {
 	}
 
 	if prev, err := os.ReadFile(tf.FilePath); err == nil {
-		_ = os.WriteFile(undoFilePath(tf.FilePath), prev, 0644)
+		backupPath, err := undoFilePath(tf.FilePath)
+		if err != nil {
+			return fmt.Errorf("could not prepare undo backup directory: %w", err)
+		}
+		if err := fsutil.AtomicWriteFile(backupPath, prev, 0644); err != nil {
+			return fmt.Errorf("could not write undo backup: %w", err)
+		}
 	}
 
-	return os.WriteFile(tf.FilePath, []byte(content), 0644)
+	return fsutil.AtomicWriteFile(tf.FilePath, []byte(content), 0644)
 }
 
 // undoFilePath returns the path to the undo backup file for a given TODO
 // file, stored under stateDir (keyed by a hash of the absolute TODO file
 // path) rather than as a sibling file in the project directory.
-func undoFilePath(todoFilePath string) string {
+func undoFilePath(todoFilePath string) (string, error) {
 	abs := todoFilePath
 	if a, err := filepath.Abs(todoFilePath); err == nil {
 		abs = a
 	}
 
 	dir := filepath.Join(stateDir, "undo")
-	_ = os.MkdirAll(dir, 0755)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", err
+	}
 
-	return filepath.Join(dir, hashPath(abs))
+	return filepath.Join(dir, hashPath(abs)), nil
 }
 
 // HasUndo reports whether an undo backup exists for filePath.
 func HasUndo(filePath string) bool {
-	_, err := os.Stat(undoFilePath(filePath))
+	path, err := undoFilePath(filePath)
+	if err != nil {
+		return false
+	}
+	_, err = os.Stat(path)
 	return err == nil
 }
 
 // LoadUndoBackup reads the undo backup's content for filePath. It returns
 // an error if no backup exists.
 func LoadUndoBackup(filePath string) (string, error) {
-	data, err := os.ReadFile(undoFilePath(filePath))
+	path, err := undoFilePath(filePath)
+	if err != nil {
+		return "", err
+	}
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
