@@ -8,7 +8,7 @@ A fast, minimal, opinionated CLI tool for managing TODO.md files using standard 
 
 - **Plain markdown** - Tasks are standard `- [ ]` checkboxes, readable anywhere
 - **Sections** - Organize tasks with `## Headers`, quick-add with `@aliases`
-- **Fast CLI** - Add, toggle, complete, find, and manage tasks without leaving your terminal
+- **Fast CLI** - Add, toggle, complete, find, and manage tasks without leaving your terminal, with short-hand aliases (`-c`, `-l`, `-e`, ...) for everyday commands
 - **Stable task IDs** - Tag tasks for reliable reference across sessions
 - **Recursive search** - Find tasks across all TODO files in subdirectories
 - **Lint & fix** - Auto-fix common formatting issues
