@@ -37,8 +37,8 @@ func AcquireLock(path string) (*Lock, error) {
 	for {
 		f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 		if err == nil {
-			fmt.Fprintf(f, "%d\n", os.Getpid())
-			f.Close()
+			_, _ = fmt.Fprintf(f, "%d\n", os.Getpid())
+			_ = f.Close()
 			return &Lock{path: lockPath}, nil
 		}
 		if !os.IsExist(err) {
@@ -46,7 +46,7 @@ func AcquireLock(path string) (*Lock, error) {
 		}
 
 		if info, statErr := os.Stat(lockPath); statErr == nil && time.Since(info.ModTime()) > staleAfter {
-			os.Remove(lockPath) // best-effort steal; the next loop iteration retries the create
+			_ = os.Remove(lockPath) // best-effort steal; the next loop iteration retries the create
 		}
 
 		if time.Now().After(deadline) {

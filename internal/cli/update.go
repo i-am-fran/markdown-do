@@ -201,7 +201,7 @@ func performUpdate(tag, execPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("downloading %s: %w", asset, err)
 	}
-	defer os.Remove(binPath) // no-op once swapBinary has moved it into place
+	defer func() { _ = os.Remove(binPath) }() // no-op once swapBinary has moved it into place
 
 	sums, err := downloadBytes(base + "/checksums.txt")
 	if err != nil {
