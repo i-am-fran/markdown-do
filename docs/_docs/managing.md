@@ -17,6 +17,8 @@ headings:
     label: clear
   - id: cmd-archive
     label: archive
+  - id: cmd-undo
+    label: undo
 ---
 
 Commands that change a task's status or content. All of them take an `<id>` — a task's position number from `mdd list`, or a stable ID tag once you've run `mdd tag` (see Task IDs below).
@@ -86,4 +88,12 @@ mdd clear -y
 
 ```bash
 mdd archive
+```
+
+### undo {#cmd-undo}
+
+`mdd undo` reverts the last change made to the TODO file. Because the restore is written through the normal save path, running `mdd undo` again re-applies the change it just undid — it's a toggle, not a multi-step history.
+
+```bash
+mdd undo
 ```

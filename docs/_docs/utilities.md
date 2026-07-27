@@ -11,6 +11,8 @@ headings:
     label: config
   - id: cmd-completion
     label: completion
+  - id: cmd-update
+    label: update
   - id: cmd-version
     label: version
   - id: cmd-help
@@ -74,6 +76,14 @@ mdd config edit
 ```bash
 source <(mdd completion bash)   # add to ~/.bashrc
 source <(mdd completion zsh)    # add to ~/.zshrc
+```
+
+### update {#cmd-update}
+
+`mdd update` downloads the latest release binary and swaps it in for the one currently running. The downloaded `checksums.txt` is verified against an ed25519 signature embedded in the binary before anything is replaced, so a compromised or tampered download is rejected rather than installed.
+
+```bash
+mdd update
 ```
 
 ### version {#cmd-version}
