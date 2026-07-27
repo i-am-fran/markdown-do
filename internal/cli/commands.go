@@ -18,7 +18,6 @@ const Version = "3.2.2"
 var (
 	green         = color.New(color.FgGreen).SprintFunc()
 	yellow        = color.New(color.FgYellow).SprintFunc()
-	red           = color.New(color.FgRed).SprintFunc()
 	cyan          = color.New(color.FgCyan).SprintFunc()
 	magenta       = color.New(color.FgMagenta).SprintFunc()
 	bold          = color.New(color.Bold).SprintFunc()
@@ -313,7 +312,7 @@ func confirmPrompt(msg string, yes bool) bool {
 
 	fmt.Printf("%s [y/N] ", msg)
 	var answer string
-	fmt.Scanln(&answer)
+	fmt.Scanln(&answer) //nolint:errcheck // a scan failure (e.g. EOF) just leaves answer empty, treated as "no" below
 	answer = strings.ToLower(strings.TrimSpace(answer))
 	return answer == "y" || answer == "yes"
 }
@@ -601,7 +600,7 @@ func openPathInEditor(filePath string) error {
 		args = []string{filePath}
 	}
 
-	fmt.Println(fmt.Sprintf("Opening %s...", filePath))
+	fmt.Printf("Opening %s...\n", filePath)
 
 	cmd := exec.Command(command, args...)
 	cmd.Stdin = os.Stdin
@@ -818,7 +817,7 @@ func LintFile() error {
 		return err
 	}
 
-	fmt.Println(fmt.Sprintf("Linting %s...", filePath))
+	fmt.Printf("Linting %s...\n", filePath)
 	fmt.Println()
 
 	tasks := todoFile.GetTasks()
@@ -849,9 +848,9 @@ func LintFile() error {
 			suffix = ""
 		}
 		if inProgressCount > 0 {
-			fmt.Println(fmt.Sprintf("Checked %d task%s (%d pending, %d in progress, %d completed)", len(tasks), suffix, pendingCount, inProgressCount, completedCount))
+			fmt.Printf("Checked %d task%s (%d pending, %d in progress, %d completed)\n", len(tasks), suffix, pendingCount, inProgressCount, completedCount)
 		} else {
-			fmt.Println(fmt.Sprintf("Checked %d task%s (%d pending, %d completed)", len(tasks), suffix, pendingCount, completedCount))
+			fmt.Printf("Checked %d task%s (%d pending, %d completed)\n", len(tasks), suffix, pendingCount, completedCount)
 		}
 		return nil
 	}
@@ -881,7 +880,7 @@ func LintFile() error {
 	if len(tasks) == 1 {
 		suffix = ""
 	}
-	fmt.Println(fmt.Sprintf("Checked %d task%s (%d pending, %d completed)", len(tasks), suffix, pendingCount, completedCount))
+	fmt.Printf("Checked %d task%s (%d pending, %d completed)\n", len(tasks), suffix, pendingCount, completedCount)
 	return nil
 }
 

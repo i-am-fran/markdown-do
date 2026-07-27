@@ -62,7 +62,7 @@ func SaveCache(cache *Cache) error {
 	if err != nil {
 		return fmt.Errorf("could not lock %s for writing: %w", cachePath, err)
 	}
-	defer lock.Unlock()
+	defer func() { _ = lock.Unlock() }()
 
 	return fsutil.AtomicWriteFile(cachePath, data, 0644)
 }

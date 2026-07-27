@@ -63,7 +63,7 @@ func TestGetSettingsWarnsOnMalformedJSON(t *testing.T) {
 	origStderr := os.Stderr
 	os.Stderr = w
 	s := GetSettings()
-	w.Close()
+	_ = w.Close()
 	os.Stderr = origStderr
 
 	captured, err := io.ReadAll(r)

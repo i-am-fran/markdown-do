@@ -676,7 +676,7 @@ func TestSaveFailsWhenLockHeld(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AcquireLock failed: %v", err)
 	}
-	defer lock.Unlock()
+	defer func() { _ = lock.Unlock() }()
 
 	if err := tf.Save(); err == nil {
 		t.Fatal("expected Save to fail while another process holds the lock")
@@ -707,8 +707,8 @@ func TestConcurrentSavesDoNotCorruptFile(t *testing.T) {
 			if err != nil {
 				return
 			}
-			tf.AddTask("Task from goroutine")
-			tf.Save() // best-effort; contention errors are expected and fine
+			_, _ = tf.AddTask("Task from goroutine")
+			_ = tf.Save() // best-effort; contention errors are expected and fine
 		}(i)
 	}
 	wg.Wait()

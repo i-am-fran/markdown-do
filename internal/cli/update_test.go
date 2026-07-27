@@ -108,13 +108,13 @@ func fakeReleaseServer(t *testing.T, tag, asset string, binContent []byte, overr
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/"+tag+"/"+asset, func(w http.ResponseWriter, r *http.Request) {
-		w.Write(binContent)
+		_, _ = w.Write(binContent)
 	})
 	mux.HandleFunc("/"+tag+"/checksums.txt", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, checksums)
+		_, _ = fmt.Fprint(w, checksums)
 	})
 	mux.HandleFunc("/"+tag+"/checksums.txt.sig", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, sig)
+		_, _ = fmt.Fprint(w, sig)
 	})
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
@@ -201,7 +201,7 @@ func TestPerformUpdate_MissingAsset(t *testing.T) {
 	tag := "9.9.9"
 	mux := http.NewServeMux()
 	mux.HandleFunc("/"+tag+"/checksums.txt", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "deadbeef  %s\n", asset)
+		_, _ = fmt.Fprintf(w, "deadbeef  %s\n", asset)
 	})
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
@@ -249,13 +249,13 @@ func TestPerformUpdate_RejectsInvalidSignature(t *testing.T) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/"+tag+"/"+asset, func(w http.ResponseWriter, r *http.Request) {
-		w.Write(binContent)
+		_, _ = w.Write(binContent)
 	})
 	mux.HandleFunc("/"+tag+"/checksums.txt", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, checksums)
+		_, _ = fmt.Fprint(w, checksums)
 	})
 	mux.HandleFunc("/"+tag+"/checksums.txt.sig", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, badSig)
+		_, _ = fmt.Fprint(w, badSig)
 	})
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)

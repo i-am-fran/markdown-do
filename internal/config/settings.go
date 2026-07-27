@@ -102,7 +102,7 @@ func SaveSettings(settings Settings) error {
 	if err != nil {
 		return fmt.Errorf("could not lock %s for writing: %w", configFile, err)
 	}
-	defer lock.Unlock()
+	defer func() { _ = lock.Unlock() }()
 
 	if err := fsutil.AtomicWriteFile(configFile, data, 0644); err != nil {
 		return err

@@ -82,7 +82,7 @@ func TestAcquireLockExclusivity(t *testing.T) {
 	if err != nil {
 		t.Fatalf("first AcquireLock failed: %v", err)
 	}
-	defer lock.Unlock()
+	defer func() { _ = lock.Unlock() }()
 
 	if _, err := os.Stat(path + ".lock"); err != nil {
 		t.Fatalf("expected lock file to exist: %v", err)
@@ -114,7 +114,7 @@ func TestAcquireLockSucceedsAfterUnlock(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected AcquireLock to succeed after Unlock, got: %v", err)
 	}
-	second.Unlock()
+	_ = second.Unlock()
 }
 
 func TestAcquireLockStealsAbandonedLock(t *testing.T) {
@@ -135,7 +135,7 @@ func TestAcquireLockStealsAbandonedLock(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected AcquireLock to steal the abandoned lock, got: %v", err)
 	}
-	defer lock.Unlock()
+	defer func() { _ = lock.Unlock() }()
 	if elapsed >= maxWait {
 		t.Errorf("expected a stale lock to be stolen well under maxWait (%v), took %v", maxWait, elapsed)
 	}

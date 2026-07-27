@@ -1126,7 +1126,7 @@ func (tf *TodoFile) Save() error {
 	if err != nil {
 		return fmt.Errorf("could not lock %s for writing: %w", tf.FilePath, err)
 	}
-	defer lock.Unlock()
+	defer func() { _ = lock.Unlock() }()
 
 	tf.ensureSectionLast("Archive")
 	tf.ensureSectionLast("Notes")

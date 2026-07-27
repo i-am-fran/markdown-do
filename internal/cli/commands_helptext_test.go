@@ -24,7 +24,7 @@ func TestShowHelpOutputUnchanged(t *testing.T) {
 	origStdout := os.Stdout
 	os.Stdout = w
 	ShowHelp()
-	w.Close()
+	_ = w.Close()
 	os.Stdout = origStdout
 
 	got, err := io.ReadAll(r)
