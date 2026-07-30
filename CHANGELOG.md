@@ -2,21 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to Semantic Versioning, tagged with a `v` prefix
-(e.g. `v3.4.0`) as required by Go's module tooling for `go install .../mdd@latest`
-to resolve correctly.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+`2026.07.1` was a one-release attempt at CalVer, reverted before its
+practical fallout was clear; from `3.4.0` on this project is back to, and
+stays on, Semantic Versioning tagged with a `v` prefix, as required by Go's
+module tooling for `go install .../mdd@latest` to resolve correctly.
 
 ## [3.4.0] - 2026-07-30
 
-### Added
-- A bare `mdd` invocation (no arguments) now prints an ASCII hero banner —
-  a boxed "markdown do" block-art wordmark, version, a link to iamfran.com,
-  and the handful of most-used commands — instead of the full help text.
-  `mdd help`/`-h`/`--help` still print the complete command reference,
-  unchanged.
-
 ### Fixed
+- Reverted the `2026.07.1` switch to CalVer. A CalVer year-as-major (`2026`)
+  doesn't fit a Go-installed module: it would force this module's import
+  path to change every year to satisfy Go's major-version-suffix
+  convention. Back to Semantic Versioning for good.
 - The module path is now `github.com/i-am-fran/markdown-do/v3` (was
   `github.com/i-am-fran/markdown-do`, no suffix). Go requires the import
   path to carry a matching `/vN` suffix once a module's major version
@@ -25,6 +23,25 @@ to resolve correctly.
   path must match major version". `go install
   github.com/i-am-fran/markdown-do/v3/cmd/mdd@latest` is now the correct,
   working install command.
+- Release tags now carry the `v` prefix Go's module tooling requires
+  (`v3.4.0`) — previously releases were tagged bare (`3.2.1`, `2026.07.1`),
+  which is invisible to `go install`/`go get` version resolution, so
+  `@latest` always resolved to the ancient `v1.0.0` tag instead of the
+  real latest release.
+
+## [2026.07.1] - 2026-07-30
+
+### Added
+- A bare `mdd` invocation (no arguments) now prints an ASCII hero banner —
+  a boxed "markdown do" block-art wordmark, version, a link to iamfran.com,
+  and the handful of most-used commands — instead of the full help text.
+  `mdd help`/`-h`/`--help` still print the complete command reference,
+  unchanged.
+
+### Changed
+- Version numbering switched from Semantic Versioning to CalVer
+  (`YYYY.MM.RELEASE.PATCH`) starting with this release — reverted in
+  `3.4.0` (see above).
 
 ## [3.3.0] - 2026-07-27
 
