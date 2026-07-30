@@ -1,4 +1,4 @@
-module github.com/i-am-fran/markdown-do
+module github.com/i-am-fran/markdown-do/v3
 
 go 1.23.0
 

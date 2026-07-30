@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/i-am-fran/markdown-do/internal/core"
+	"github.com/i-am-fran/markdown-do/v3/internal/core"
 )
 
 // allCommands is the full list of top-level command verbs, derived from the

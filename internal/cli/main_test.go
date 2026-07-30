@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/i-am-fran/markdown-do/internal/config"
-	"github.com/i-am-fran/markdown-do/internal/core"
+	"github.com/i-am-fran/markdown-do/v3/internal/config"
+	"github.com/i-am-fran/markdown-do/v3/internal/core"
 )
 
 // TestMain points core's cache/undo state and config's settings.json at

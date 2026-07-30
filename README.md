@@ -35,7 +35,7 @@ make install
 ### Go install
 
 ```bash
-go install github.com/i-am-fran/markdown-do/cmd/mdd@latest
+go install github.com/i-am-fran/markdown-do/v3/cmd/mdd@latest
 ```
 
 Once you have `mdd` installed, `mdd update` downloads and swaps in the latest release binary for you (it needs write access to wherever `mdd` currently lives, not Go).

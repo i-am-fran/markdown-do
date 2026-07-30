@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/i-am-fran/markdown-do/internal/core"
+	"github.com/i-am-fran/markdown-do/v3/internal/core"
 )
 
 // ParsedArgs is the result of parsing CLI arguments into a command and its

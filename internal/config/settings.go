@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/i-am-fran/markdown-do/internal/fsutil"
+	"github.com/i-am-fran/markdown-do/v3/internal/fsutil"
 )
 
 var (

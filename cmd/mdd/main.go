@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/i-am-fran/markdown-do/internal/cli"
-	"github.com/i-am-fran/markdown-do/internal/config"
-	"github.com/i-am-fran/markdown-do/internal/core"
+	"github.com/i-am-fran/markdown-do/v3/internal/cli"
+	"github.com/i-am-fran/markdown-do/v3/internal/config"
+	"github.com/i-am-fran/markdown-do/v3/internal/core"
 )
 
 func main() {

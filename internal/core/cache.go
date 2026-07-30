@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/i-am-fran/markdown-do/internal/fsutil"
+	"github.com/i-am-fran/markdown-do/v3/internal/fsutil"
 )
 
 // TaskCache represents a cached task location

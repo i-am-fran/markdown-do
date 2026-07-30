@@ -32,7 +32,7 @@ make install
 Or install directly with Go:
 
 ```bash
-go install github.com/i-am-fran/markdown-do/cmd/mdd@latest
+go install github.com/i-am-fran/markdown-do/v3/cmd/mdd@latest
 ```
 
 ### Quick Start {#quick-start}

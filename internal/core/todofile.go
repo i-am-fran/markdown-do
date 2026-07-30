@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/i-am-fran/markdown-do/internal/fsutil"
+	"github.com/i-am-fran/markdown-do/v3/internal/fsutil"
 )
 
 // idTagRegex matches a stable ID tag's prefix and number. The dash is

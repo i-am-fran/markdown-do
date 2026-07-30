@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/i-am-fran/markdown-do/internal/fsutil"
+	"github.com/i-am-fran/markdown-do/v3/internal/fsutil"
 )
 
 func TestSetTaskIDsAssignsSequentialTags(t *testing.T) {

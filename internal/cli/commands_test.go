@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/i-am-fran/markdown-do/internal/core"
+	"github.com/i-am-fran/markdown-do/v3/internal/core"
 )
 
 // chdirToTempTodoFile creates a TODO.md with the given content in a fresh

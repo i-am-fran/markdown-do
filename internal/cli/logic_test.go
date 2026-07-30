@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/i-am-fran/markdown-do/internal/core"
+	"github.com/i-am-fran/markdown-do/v3/internal/core"
 )
 
 func newTestTodoFile(t *testing.T, content string) *core.TodoFile {

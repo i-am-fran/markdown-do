@@ -16,6 +16,16 @@ to resolve correctly.
   `mdd help`/`-h`/`--help` still print the complete command reference,
   unchanged.
 
+### Fixed
+- The module path is now `github.com/i-am-fran/markdown-do/v3` (was
+  `github.com/i-am-fran/markdown-do`, no suffix). Go requires the import
+  path to carry a matching `/vN` suffix once a module's major version
+  reaches 2+, or `go install`/`go get` reject the tag outright — a prior
+  attempt at `v3.4.0` without the suffix failed immediately with "module
+  path must match major version". `go install
+  github.com/i-am-fran/markdown-do/v3/cmd/mdd@latest` is now the correct,
+  working install command.
+
 ## [3.3.0] - 2026-07-27
 
 ### Added

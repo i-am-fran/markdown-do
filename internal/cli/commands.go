@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/i-am-fran/markdown-do/internal/config"
-	"github.com/i-am-fran/markdown-do/internal/core"
+	"github.com/i-am-fran/markdown-do/v3/internal/config"
+	"github.com/i-am-fran/markdown-do/v3/internal/core"
 )
 
 const Version = "3.4.0"
