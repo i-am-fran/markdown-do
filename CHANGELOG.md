@@ -10,8 +10,9 @@ this project adheres to CalVer (`YYYY.MM.RELEASE.PATCH`).
 
 ### Added
 - A bare `mdd` invocation (no arguments) now prints an ASCII hero banner —
-  the `mdd` wordmark, version, and a link to iamfran.com — above the usual
-  help text. `mdd help`/`-h`/`--help` are unchanged.
+  a boxed "markdown do" block-art wordmark, version, and a link to
+  iamfran.com — above the usual help text. `mdd help`/`-h`/`--help` are
+  unchanged.
 
 ### Changed
 - Version numbering switches to CalVer (`YYYY.MM.RELEASE.PATCH`), as

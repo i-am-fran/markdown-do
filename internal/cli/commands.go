@@ -890,12 +890,12 @@ func ShowVersion() {
 	fmt.Printf("markdown-do v%s\n", Version)
 }
 
-// mddWordmark is a figlet "standard" font rendering of "mdd".
-const mddWordmark = `               _     _
- _ __ ___   __| | __| |
-| '_ ` + "`" + ` _ \ / _` + "`" + ` |/ _` + "`" + ` |
-| | | | | | (_| | (_| |
-|_| |_| |_|\__,_|\__,_|`
+// mddWordmark is a boxed block-character rendering of "markdown do".
+const mddWordmark = `+----------------------------------------------+
+| ░█▄█░█▀█░█▀▄░█░█░█▀▄░█▀█░█░█░█▀█░░░░░█▀▄░█▀█ |
+| ░█░█░█▀█░█▀▄░█▀▄░█░█░█░█░█▄█░█░█░▄▄▄░█░█░█░█ |
+| ░▀░▀░▀░▀░▀░▀░▀░▀░▀▀░░▀▀▀░▀░▀░▀░▀░░░░░▀▀░░▀▀▀ |
++----------------------------------------------+`
 
 // ShowHero prints the ASCII wordmark banner shown only for a bare "mdd"
 // invocation (no arguments), before the full help text.
