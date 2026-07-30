@@ -2,19 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-`2026.07.1` was a one-release attempt at CalVer, reverted before its
-practical fallout was clear; from `3.4.0` on this project is back to, and
-stays on, Semantic Versioning tagged with a `v` prefix, as required by Go's
-module tooling for `go install .../mdd@latest` to resolve correctly.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to Semantic Versioning, tagged with a `v` prefix,
+as required by Go's module tooling for `go install .../mdd@latest` to
+resolve correctly.
 
 ## [3.4.0] - 2026-07-30
 
 ### Fixed
-- Reverted the `2026.07.1` switch to CalVer. A CalVer year-as-major (`2026`)
-  doesn't fit a Go-installed module: it would force this module's import
-  path to change every year to satisfy Go's major-version-suffix
-  convention. Back to Semantic Versioning for good.
 - The module path is now `github.com/i-am-fran/markdown-do/v3` (was
   `github.com/i-am-fran/markdown-do`, no suffix). Go requires the import
   path to carry a matching `/vN` suffix once a module's major version
@@ -24,10 +19,10 @@ module tooling for `go install .../mdd@latest` to resolve correctly.
   github.com/i-am-fran/markdown-do/v3/cmd/mdd@latest` is now the correct,
   working install command.
 - Release tags now carry the `v` prefix Go's module tooling requires
-  (`v3.4.0`) — previously releases were tagged bare (`3.2.1`, `2026.07.1`),
-  which is invisible to `go install`/`go get` version resolution, so
-  `@latest` always resolved to the ancient `v1.0.0` tag instead of the
-  real latest release.
+  (`v3.4.0`) — previously releases were tagged bare (`3.2.1`), which is
+  invisible to `go install`/`go get` version resolution, so `@latest`
+  always resolved to the ancient `v1.0.0` tag instead of the real latest
+  release.
 
 ## [2026.07.1] - 2026-07-30
 
@@ -37,11 +32,26 @@ module tooling for `go install .../mdd@latest` to resolve correctly.
   and the handful of most-used commands — instead of the full help text.
   `mdd help`/`-h`/`--help` still print the complete command reference,
   unchanged.
+- `mdd update` now verifies an ed25519 signature over `checksums.txt`
+  before trusting any checksum, closing the gap where sha256-only
+  verification protected against transport corruption but not a
+  compromised release pipeline/account. The release workflow signs
+  `checksums.txt` with a private key held in a GitHub secret; only the
+  public half ships in the binary.
+- `mdd` now writes TODO.md, `config.json`, and its cache/undo state through
+  an atomic write-then-rename, guarded by an advisory lock file, so a
+  crash mid-write can't corrupt state and two `mdd` processes can't
+  interleave writes to the same file.
 
-### Changed
-- Version numbering switched from Semantic Versioning to CalVer
-  (`YYYY.MM.RELEASE.PATCH`) starting with this release — reverted in
-  `3.4.0` (see above).
+### Fixed
+- Nested checklist items no longer lose their indentation on save.
+- A malformed `config.json` now prints a warning and falls back to
+  defaults instead of silently discarding the user's settings.
+- Refuses to silently file a mistyped command as a new task — e.g. `mdd
+  Complete`, bare `mdd complete`, or a likely typo like `mdd lis` now
+  suggests the real command instead of adding "Complete"/"lis" as task
+  text. Only applies to single-word input, so ordinary multi-word task
+  text is never affected (MDD37).
 
 ## [3.3.0] - 2026-07-27
 
@@ -63,6 +73,9 @@ module tooling for `go install .../mdd@latest` to resolve correctly.
   downloads and swaps in the matching release binary for the running
   process, verifying its sha256 checksum first, instead of shelling out to
   `go install` (MDD32).
+- `mdd list --active` / `--done` filter to only open or only completed
+  tasks; `mdd add --path DIR` adds a task to the TODO file in another
+  directory instead of the current one (MDD40, MDD38).
 
 ### Changed
 - `mdd` no longer writes `.mdd-cache` / `.mdd-undo` into the project
