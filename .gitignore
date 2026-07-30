@@ -24,3 +24,6 @@ CLAUDE.md
 branding/
 feedback/
 Private/
+
+# Worktrees
+.worktrees/
