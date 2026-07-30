@@ -15,10 +15,6 @@ this project adheres to CalVer (`YYYY.MM.RELEASE.PATCH`).
   `mdd help`/`-h`/`--help` still print the complete command reference,
   unchanged.
 
-### Changed
-- Version numbering switches to CalVer (`YYYY.MM.RELEASE.PATCH`), as
-  previously announced; this is the first release under the new scheme.
-
 ## [3.3.0] - 2026-07-27
 
 ### Added
