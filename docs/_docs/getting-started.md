@@ -29,10 +29,10 @@ make build
 make install
 ```
 
-Or install directly with Go (replace `<version>` with the latest tag from the [releases page](https://github.com/i-am-fran/markdown-do/releases){:target="_blank" rel="noopener noreferrer"}, e.g. `@3.2.1` — plain `@latest` doesn't resolve correctly since releases are tagged without a leading `v`):
+Or install directly with Go:
 
 ```bash
-go install github.com/i-am-fran/markdown-do/cmd/mdd@<version>
+go install github.com/i-am-fran/markdown-do/cmd/mdd@latest
 ```
 
 ### Quick Start {#quick-start}

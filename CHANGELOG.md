@@ -2,11 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-Versions prior to `2026.07.1` use Semantic Versioning; from that release on,
-this project adheres to CalVer (`YYYY.MM.RELEASE.PATCH`).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to Semantic Versioning, tagged with a `v` prefix
+(e.g. `v3.4.0`) as required by Go's module tooling for `go install .../mdd@latest`
+to resolve correctly.
 
-## [2026.07.1] - 2026-07-30
+## [3.4.0] - 2026-07-30
 
 ### Added
 - A bare `mdd` invocation (no arguments) now prints an ASCII hero banner —
