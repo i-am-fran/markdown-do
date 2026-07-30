@@ -1,7 +1,13 @@
 name: Release
 
 # Fires whenever a human publishes a release (gh release create <tag> --notes "...").
-# Tags in this repo are bare semver (no "v" prefix, e.g. "3.2.1").
+# Tags through 3.2.1/v1.0.0 were bare semver (no "v" prefix) or a stray
+# one-off "v"; that's a pre-existing bug, not a convention to match — bare
+# tags aren't recognized by Go's module tooling, so
+# `go install .../cmd/mdd@latest` silently ignores them. All tags from
+# here on are semver WITH a "v" prefix (e.g. "v3.3.0"), per
+# claude-instructions/cli-projects.md. Existing tags are left as legacy,
+# not rewritten.
 on:
   release:
     types: [published]
