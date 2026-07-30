@@ -897,12 +897,24 @@ const mddWordmark = `+----------------------------------------------+
 | ░▀░▀░▀░▀░▀░▀░▀░▀░▀▀░░▀▀▀░▀░▀░▀░▀░░░░░▀▀░░▀▀▀ |
 +----------------------------------------------+`
 
-// ShowHero prints the ASCII wordmark banner shown only for a bare "mdd"
-// invocation (no arguments), before the full help text.
+// ShowHero prints the ASCII wordmark banner and a short list of the most
+// common commands, shown only for a bare "mdd" invocation (no arguments).
+// The full command reference lives behind "mdd --help" instead of being
+// repeated here.
 func ShowHero() {
 	fmt.Println(bold(cyan(mddWordmark)))
 	fmt.Println()
 	fmt.Println(dim(fmt.Sprintf("  Markdown-Do · v%s · iamfran.com", Version)))
+	fmt.Println()
+	fmt.Print(`  mdd <task text>       Add a task
+  mdd list              List tasks                    (also: -l)
+  mdd complete <id>     Complete a task                (also: -c)
+  mdd toggle <id>       Toggle a task's status          (also: -t)
+  mdd edit <id> <text>  Edit a task                     (also: -e)
+  mdd remove <id>       Delete a task                   (also: -d)
+
+`)
+	fmt.Printf("  Run %s for the full command reference.\n\n", bold("mdd --help"))
 }
 
 // ShowHelp prints the help message. Each section is its own heading +
