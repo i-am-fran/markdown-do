@@ -14,8 +14,9 @@ func main() {
 	settings := config.GetSettings()
 	core.SetSectionAliases(settings.SectionAliases)
 
-	// No arguments at all -> show help
+	// No arguments at all -> show the hero banner, then help
 	if len(os.Args) == 1 {
+		cli.ShowHero()
 		cli.ShowHelp()
 		return
 	}

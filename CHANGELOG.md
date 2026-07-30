@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions prior to `2026.07.1` use Semantic Versioning; from that release on,
 this project adheres to CalVer (`YYYY.MM.RELEASE.PATCH`).
 
+## [2026.07.1] - 2026-07-30
+
+### Added
+- A bare `mdd` invocation (no arguments) now prints an ASCII hero banner —
+  the `mdd` wordmark, version, and a link to iamfran.com — above the usual
+  help text. `mdd help`/`-h`/`--help` are unchanged.
+
+### Changed
+- Version numbering switches to CalVer (`YYYY.MM.RELEASE.PATCH`), as
+  previously announced; this is the first release under the new scheme.
+
 ## [3.3.0] - 2026-07-27
 
 ### Added

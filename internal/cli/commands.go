@@ -13,7 +13,7 @@ import (
 	"github.com/i-am-fran/markdown-do/internal/core"
 )
 
-const Version = "3.3.0"
+const Version = "2026.07.1"
 
 var (
 	green         = color.New(color.FgGreen).SprintFunc()
@@ -21,6 +21,7 @@ var (
 	cyan          = color.New(color.FgCyan).SprintFunc()
 	magenta       = color.New(color.FgMagenta).SprintFunc()
 	bold          = color.New(color.Bold).SprintFunc()
+	dim           = color.New(color.FgHiBlack).SprintFunc()
 	strikethrough = color.New(color.CrossedOut).SprintFunc()
 )
 
@@ -887,6 +888,21 @@ func LintFile() error {
 // ShowVersion prints the version
 func ShowVersion() {
 	fmt.Printf("markdown-do v%s\n", Version)
+}
+
+// mddWordmark is a figlet "standard" font rendering of "mdd".
+const mddWordmark = `               _     _
+ _ __ ___   __| | __| |
+| '_ ` + "`" + ` _ \ / _` + "`" + ` |/ _` + "`" + ` |
+| | | | | | (_| | (_| |
+|_| |_| |_|\__,_|\__,_|`
+
+// ShowHero prints the ASCII wordmark banner shown only for a bare "mdd"
+// invocation (no arguments), before the full help text.
+func ShowHero() {
+	fmt.Println(bold(cyan(mddWordmark)))
+	fmt.Println()
+	fmt.Println(dim(fmt.Sprintf("  Markdown-Do · v%s · iamfran.com", Version)))
 }
 
 // ShowHelp prints the help message. Each section is its own heading +
