@@ -25,7 +25,7 @@ Adding is the default action — if what you type doesn't look like one of the c
 
 ### add {#cmd-add}
 
-`mdd <text>` and `mdd add <text>` do the same thing; quotes are only needed if your shell would otherwise split the text into multiple arguments. Task text must be at least 3 characters. New tasks land in the inbox at the top of the file unless you file them into a section with `@Section` (see Sections below) — and if the file already has an active ID sequence from `mdd tag`, the new task automatically picks up the next ID in it.
+`mdd <text>` and `mdd add <text>` do the same thing; quotes are only needed if your shell would otherwise split the text into multiple arguments. Task text must be at least 3 characters. New tasks land in the inbox at the top of the file unless you file them into a section with `@Section` (see [Sections](#sections)) — and if the file already has an active ID sequence from `mdd tag`, the new task automatically picks up the next ID in it.
 
 ```bash
 mdd Buy groceries

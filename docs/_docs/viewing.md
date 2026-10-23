@@ -20,10 +20,13 @@ Read-only commands for seeing what's in a `TODO.md`.
 | Flag | Description |
 | --- | --- |
 | `-r`, `--recursive` | List tasks from every `TODO.md`/`todo.md` found in subdirectories, grouped by directory |
+| `-a`, `--active` | Only open tasks (pending and in progress) |
+| `--done` | Only completed tasks |
 
 ```bash
 mdd list
 mdd list -r
+mdd list -a
 ```
 
 ### find {#cmd-find}

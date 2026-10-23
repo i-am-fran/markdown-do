@@ -21,7 +21,7 @@ headings:
     label: undo
 ---
 
-Commands that change a task's status or content. All of them take an `<id>` — a task's position number from `mdd list`, or a stable ID tag once you've run `mdd tag` (see Task IDs below).
+Commands that change a task's status or content. All of them take an `<id>` — a task's position number from `mdd list`, or a stable ID tag once you've run `mdd tag` (see [Task IDs](#task-ids)).
 
 ### toggle {#cmd-toggle}
 
@@ -96,7 +96,7 @@ mdd clear -y
 
 ### archive {#cmd-archive}
 
-`mdd archive` moves every completed task into a `## Archive` section instead of deleting it, appending "(from <Section>)" to each one so you can still tell where it came from. The Archive section is always kept last in the file, after `## Notes`. Unlike `remove`/`clear`, this isn't gated by `confirmDestructive` — nothing is actually deleted.
+`mdd archive` moves every completed task into a `## Archive` section instead of deleting it, appending "(from <Section>)" to each one so you can still tell where it came from. The Archive section is always kept at the end of the file, just above `## Notes`. Unlike `remove`/`clear`, this isn't gated by `confirmDestructive` — nothing is actually deleted.
 
 ```bash
 mdd archive

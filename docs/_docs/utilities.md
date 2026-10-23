@@ -21,7 +21,7 @@ headings:
 
 ### open {#cmd-open}
 
-`mdd open` opens `TODO.md` in the editor set by the `editor` setting (see Configuration below).
+`mdd open` opens `TODO.md` in the editor set by the `editor` setting (see [Settings](#settings)).
 
 `-o` is a short-hand alias for `open`.
 
@@ -52,7 +52,7 @@ mdd lint
 
 ### config {#cmd-config}
 
-`mdd config` reads and changes settings without hand-editing `config.json` — see Configuration below for the full settings table.
+`mdd config` reads and changes settings without hand-editing `config.json` — see [Settings](#settings) for the full table.
 
 | Subcommand | Description |
 | --- | --- |
@@ -100,7 +100,7 @@ mdd version
 
 ### help {#cmd-help}
 
-`mdd help` prints the full command reference. Same as passing `-h`/`--help` anywhere in the command, or running `mdd` with no arguments at all.
+`mdd help` prints the full command reference. Same as passing `-h`/`--help` anywhere in the command. Running `mdd` with no arguments prints a shorter banner with the version and the most-used commands.
 
 ```bash
 mdd help
